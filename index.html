@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viemMort" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Master Prime — Portal do Consultor</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -35,7 +35,7 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; min-height: 100vh; }
 .mono { font-family: 'DM Mono', monospace; }
-.hidden { display: none !imMortant; }
+.hidden { display: none !important; }
 .fw6 { font-weight: 600; }
 .fw7 { font-weight: 700; }
 .pos { color: var(--green); }
@@ -94,7 +94,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-ser
 @keyframes spin { to { transform:rotate(360deg); } }
 
 /* ═══ LAYOUT ═══ */
-#Mortal-screen { display:none; min-height:100vh; }
+#portal-screen { display:none; min-height:100vh; }
 .app { display:grid; grid-template-columns:240px 1fr; min-height:100vh; }
 .sidebar {
   background:var(--sidebar-bg); display:flex; flex-direction:column;
@@ -228,12 +228,12 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-ser
 }
 @media (min-width:769px) { .mobile-toggle { display:none; } }
 @media print {
-  * { -webkit-print-color-adjust:exact !imMortant; print-color-adjust:exact !imMortant; }
-  .sidebar,.sb-logout,.btn,.mobile-toggle { display:none !imMortant; }
-  .screen { display:block !imMortant; padding:0; }
-  .app { grid-template-columns:1fr !imMortant; display:block !imMortant; }
-  .det-header { background:#2D3F5E !imMortant; }
-  .card { break-inside:avoid; box-shadow:none !imMortant; }
+  * { -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+  .sidebar,.sb-logout,.btn,.mobile-toggle { display:none !important; }
+  .screen { display:block !important; padding:0; }
+  .app { grid-template-columns:1fr !important; display:block !important; }
+  .det-header { background:#2D3F5E !important; }
+  .card { break-inside:avoid; box-shadow:none !important; }
 }
 ::-webkit-scrollbar { width:5px; height:5px; }
 ::-webkit-scrollbar-track { background:transparent; }
@@ -254,7 +254,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-ser
 <div id="login-screen" style="display:none">
   <div class="login-card">
     <div class="login-logo">
-      <svg viemBox="0 0 220 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg viewBox="0 0 220 40" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="0" y="4" width="32" height="32" rx="6" fill="#2D3F5E"/>
         <text x="6" y="27" font-family="Inter" font-weight="800" font-size="18" fill="#C8C84A">M</text>
         <text x="42" y="18" font-family="Inter" font-weight="800" font-size="15" fill="#2D3F5E" letter-spacing=".5">MASTER</text>
@@ -283,13 +283,13 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-ser
 </div>
 
 <!-- ═══ PORTAL ═══ -->
-<div id="Mortal-screen" style="display:none">
+<div id="portal-screen" style="display:none">
   <button class="mobile-toggle" onclick="toggleSidebar()">&#9776;</button>
   <div class="sidebar-backdrop" onclick="toggleSidebar()"></div>
   <div class="app">
     <aside class="sidebar" id="sidebar">
       <div class="sb-logo">
-        <svg viemBox="0 0 200 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg viewBox="0 0 200 40" fill="none" xmlns="http://www.w3.org/2000/svg">
           <rect x="0" y="4" width="32" height="32" rx="6" fill="rgba(255,255,255,.12)"/>
           <text x="6" y="27" font-family="Inter" font-weight="800" font-size="18" fill="#C8C84A">M</text>
           <text x="42" y="18" font-family="Inter" font-weight="700" font-size="14" fill="#fff" letter-spacing=".5">MASTER</text>
@@ -420,8 +420,8 @@ const DB = {
       console.log('Conectado ao Supabase');
     } else {
       console.log('Modo demo (localStorage)');
-      if (!localStorage.getItem('mp_Mortal')) {
-        localStorage.setItem('mp_Mortal', JSON.stringify(this._defaultData()));
+      if (!localStorage.getItem('mp_portal')) {
+        localStorage.setItem('mp_portal', JSON.stringify(this._defaultData()));
       }
     }
   },
@@ -498,27 +498,27 @@ const DB = {
       meses: ['2025-02','2025-03'],
     };
   },
-  _local() { return JSON.parse(localStorage.getItem('mp_Mortal')); },
-  _saveLocal(d) { localStorage.setItem('mp_Mortal', JSON.stringify(d)); },
+  _local() { return JSON.parse(localStorage.getItem('mp_portal')); },
+  _saveLocal(d) { localStorage.setItem('mp_portal', JSON.stringify(d)); },
 
   // ── Users ──
   async getUser(cpf) {
     if (USE_SUPABASE) {
-      const {data} = await sb.from('Mortal_users').select('*').eq('cpf', cpf).single();
+      const {data} = await sb.from('portal_users').select('*').eq('cpf', cpf).single();
       return data;
     }
     return this._local().users.find(u => u.cpf === cpf) || null;
   },
   async getAllUsers() {
     if (USE_SUPABASE) {
-      const {data} = await sb.from('Mortal_users').select('*').order('nome');
+      const {data} = await sb.from('portal_users').select('*').order('nome');
       return data || [];
     }
     return this._local().users;
   },
   async createUser(user) {
     if (USE_SUPABASE) {
-      const {data,error} = await sb.from('Mortal_users').insert(user).select().single();
+      const {data,error} = await sb.from('portal_users').insert(user).select().single();
       if (error) throw error;
       return data;
     }
@@ -529,7 +529,7 @@ const DB = {
   },
   async updateUser(cpf, updates) {
     if (USE_SUPABASE) {
-      const {data,error} = await sb.from('Mortal_users').update(updates).eq('cpf', cpf).select().single();
+      const {data,error} = await sb.from('portal_users').update(updates).eq('cpf', cpf).select().single();
       if (error) throw error;
       return data;
     }
@@ -541,7 +541,7 @@ const DB = {
   },
   async deleteUser(cpf) {
     if (USE_SUPABASE) {
-      await sb.from('Mortal_users').delete().eq('cpf', cpf);
+      await sb.from('portal_users').delete().eq('cpf', cpf);
     } else {
       const d = this._local();
       d.users = d.users.filter(u => u.cpf !== cpf);
@@ -552,21 +552,21 @@ const DB = {
   // ── Demonstrativos ──
   async getMeses() {
     if (USE_SUPABASE) {
-      const {data} = await sb.from('Mortal_demonstrativos').select('mes').order('mes', {ascending:false});
+      const {data} = await sb.from('portal_demonstrativos').select('mes').order('mes', {ascending:false});
       return [...new Set((data||[]).map(d => d.mes))];
     }
     return [...(this._local().meses||[])].sort().reverse();
   },
   async getDemo(mes, nome) {
     if (USE_SUPABASE) {
-      const {data} = await sb.from('Mortal_demonstrativos').select('dados').eq('mes', mes).eq('nome', nome).single();
+      const {data} = await sb.from('portal_demonstrativos').select('dados').eq('mes', mes).eq('nome', nome).single();
       return data ? data.dados : null;
     }
     return this._local().demonstrativos?.[mes]?.[nome] || null;
   },
   async getDemosMes(mes) {
     if (USE_SUPABASE) {
-      const {data} = await sb.from('Mortal_demonstrativos').select('nome,dados').eq('mes', mes);
+      const {data} = await sb.from('portal_demonstrativos').select('nome,dados').eq('mes', mes);
       const result = {};
       (data||[]).forEach(d => result[d.nome] = d.dados);
       return result;
@@ -577,7 +577,7 @@ const DB = {
     if (USE_SUPABASE) {
       const rows = Object.entries(consultores).map(([nome, dados]) => ({mes, nome, dados}));
       // Upsert (replace existing month data)
-      const {error} = await sb.from('Mortal_demonstrativos').upsert(rows, {onConflict:'mes,nome'});
+      const {error} = await sb.from('portal_demonstrativos').upsert(rows, {onConflict:'mes,nome'});
       if (error) throw error;
     } else {
       const d = this._local();
@@ -589,7 +589,7 @@ const DB = {
   },
   async deleteMes(mes) {
     if (USE_SUPABASE) {
-      await sb.from('Mortal_demonstrativos').delete().eq('mes', mes);
+      await sb.from('portal_demonstrativos').delete().eq('mes', mes);
     } else {
       const d = this._local();
       delete d.demonstrativos[mes];
@@ -632,7 +632,7 @@ async function doLogin() {
 function doLogout() {
   currentUser=null; sessionStorage.removeItem('mp_session');
   document.getElementById('login-screen').style.display='flex';
-  document.getElementById('Mortal-screen').style.display='none';
+  document.getElementById('portal-screen').style.display='none';
   document.getElementById('login-cpf').value='';
   document.getElementById('login-senha').value='';
 }
@@ -646,7 +646,7 @@ async function checkSession() {
 async function enterPortal() {
   document.getElementById('loading-screen').style.display='none';
   document.getElementById('login-screen').style.display='none';
-  document.getElementById('Mortal-screen').style.display='block';
+  document.getElementById('portal-screen').style.display='block';
   document.getElementById('sb-avatar').textContent=getInitials(currentUser.nome);
   document.getElementById('sb-user-name').textContent=currentUser.nome;
   const role = currentUser.tipo==='admin'?'Administrador':currentUser.tipo==='socio'?'Socio':'Consultor';
@@ -752,10 +752,10 @@ async function renderHistorico() {
   if(!meus.length){el.innerHTML='<div class="empty-state"><div class="empty-state-icon">&#128197;</div><div class="empty-state-title">Nenhum historico</div><div class="empty-state-desc">Seus demonstrativos aparecerao aqui.</div></div>';return;}
   el.innerHTML='<div class="hist-grid">'+meus.map((item,i)=>{
     const tf=item.data.totalFinal||0, nl=(item.data.linhas||[]).length;
-    return `<div class="hist-card ${i===0?'current':''}" onclick="viemHist('${item.mes}')"><div class="hist-mes">${fmtMes(item.mes)}</div><div class="hist-lanctos">${nl} lancamentos</div><div class="hist-valor">${fmtBRL(tf)}</div><div style="margin-top:8px"><span class="tag ${i===0?'tag-green':'tag-gray'}">${i===0?'Mais recente':'Historico'}</span></div></div>`;
+    return `<div class="hist-card ${i===0?'current':''}" onclick="viewHist('${item.mes}')"><div class="hist-mes">${fmtMes(item.mes)}</div><div class="hist-lanctos">${nl} lancamentos</div><div class="hist-valor">${fmtBRL(tf)}</div><div style="margin-top:8px"><span class="tag ${i===0?'tag-green':'tag-gray'}">${i===0?'Mais recente':'Historico'}</span></div></div>`;
   }).join('')+'</div><div id="hist-detail" style="margin-top:24px"></div>';
 }
-async function viemHist(mes) {
+async function viewHist(mes) {
   const d=await DB.getDemo(mes,currentUser.nome);if(!d)return;
   const el=document.getElementById('hist-detail');
   if(el){el.innerHTML=renderDemo(d,mes);el.scrollIntoViem({behavior:'smooth',block:'start'});}
