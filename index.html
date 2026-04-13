@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viemMort" content="width=device-width, initial-scale=1.0">
+<title>Master Prime — Portal do Consultor</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════════════════
+   MASTER PRIME — PORTAL DO CONSULTOR
+   ══════════════════════════════════════════════════════ */
+:root {
+  --mp-navy:    #2D3F5E;
+  --mp-yellow:  #C8C84A;
+  --mp-teal:    #4DBCC8;
+  --mp-blue:    #7A9BC8;
+  --mp-white:   #FFFFFF;
+  --bg:         #F4F6FA;
+  --card:       #FFFFFF;
+  --sidebar-bg: #2D3F5E;
+  --border:     #E2E8F0;
+  --border2:    #CBD5E1;
+  --text:       #1E293B;
+  --text2:      #64748B;
+  --text3:      #94A3B8;
+  --green:  #16A34A;  --green-bg: #F0FDF4;
+  --red:    #DC2626;  --red-bg: #FEF2F2;
+  --amber:  #D97706;  --amber-bg: #FFFBEB;
+  --blue:   #2563EB;  --blue-bg:#EFF6FF;
+  --r: 10px;
+  --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
+  --shadow-md: 0 4px 6px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.05);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; min-height: 100vh; }
+.mono { font-family: 'DM Mono', monospace; }
+.hidden { display: none !imMortant; }
+.fw6 { font-weight: 600; }
+.fw7 { font-weight: 700; }
+.pos { color: var(--green); }
+.neg { color: var(--red); }
+
+/* ═══ LOGIN ═══ */
+#login-screen {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #2D3F5E 0%, #1a2a42 50%, #2D3F5E 100%);
+  position: relative; overflow: hidden;
+}
+#login-screen::before {
+  content:''; position:absolute; top:-50%; left:-50%; width:200%; height:200%;
+  background: radial-gradient(circle at 30% 40%, rgba(77,188,200,.08) 0%, transparent 50%),
+              radial-gradient(circle at 70% 60%, rgba(200,200,74,.06) 0%, transparent 50%);
+  animation: loginBg 20s ease-in-out infinite alternate;
+}
+@keyframes loginBg { 0%{transform:translate(0,0)} 100%{transform:translate(-5%,5%) rotate(3deg)} }
+.login-card {
+  position:relative; background:rgba(255,255,255,.97); border-radius:16px;
+  padding:48px 40px 40px; width:400px; max-width:92vw;
+  box-shadow: 0 25px 50px rgba(0,0,0,.25);
+}
+.login-logo { text-align:center; margin-bottom:32px; }
+.login-logo-text { font-size:22px; font-weight:800; color:var(--mp-navy); letter-spacing:-.5px; margin-top:12px; }
+.login-logo-sub { font-size:11px; color:var(--text2); margin-top:4px; text-transform:uppercase; letter-spacing:2px; font-weight:600; }
+.login-field { margin-bottom:20px; }
+.login-label { display:block; font-size:11px; font-weight:600; color:var(--text2); text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px; }
+.login-input {
+  width:100%; padding:12px 16px; border:1.5px solid var(--border2); border-radius:10px;
+  font-size:14px; color:var(--text); font-family:'Inter',sans-serif; outline:none;
+  transition: border-color .2s, box-shadow .2s; background:var(--bg);
+}
+.login-input:focus { border-color:var(--mp-teal); box-shadow:0 0 0 3px rgba(77,188,200,.15); background:#fff; }
+.login-input::placeholder { color:var(--text3); }
+.login-btn {
+  width:100%; padding:14px; border:none; border-radius:10px; background:var(--mp-navy);
+  color:#fff; font-size:14px; font-weight:700; cursor:pointer; transition:all .2s;
+  font-family:'Inter',sans-serif; margin-top:8px;
+}
+.login-btn:hover { background:#1E2D45; transform:translateY(-1px); box-shadow:0 4px 12px rgba(45,63,94,.3); }
+.login-btn:disabled { opacity:.6; cursor:not-allowed; transform:none; }
+.login-error { background:var(--red-bg); color:var(--red); padding:10px 14px; border-radius:8px; font-size:12px; margin-bottom:16px; border:1px solid #FECACA; display:none; }
+.login-footer { text-align:center; margin-top:24px; font-size:11px; color:var(--text3); }
+.login-link { color:var(--mp-teal); cursor:pointer; font-weight:600; text-decoration:none; }
+.login-link:hover { text-decoration:underline; }
+.pw-field { position:relative; }
+.pw-toggle { position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:var(--text3); font-size:16px; padding:4px; }
+
+/* ═══ LOADING ═══ */
+#loading-screen {
+  min-height:100vh; display:flex; align-items:center; justify-content:center;
+  background:var(--bg); flex-direction:column; gap:16px;
+}
+.spinner { width:40px; height:40px; border:3px solid var(--border); border-top-color:var(--mp-teal); border-radius:50%; animation:spin .8s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* ═══ LAYOUT ═══ */
+#Mortal-screen { display:none; min-height:100vh; }
+.app { display:grid; grid-template-columns:240px 1fr; min-height:100vh; }
+.sidebar {
+  background:var(--sidebar-bg); display:flex; flex-direction:column;
+  position:sticky; top:0; height:100vh; overflow-y:auto;
+}
+.sb-logo { padding:24px 20px 20px; border-bottom:1px solid rgba(255,255,255,.1); }
+.sb-ver { font-size:9px; color:rgba(255,255,255,.35); font-family:'DM Mono',monospace; margin-top:8px; letter-spacing:.5px; }
+.sb-section { padding:16px 20px 4px; font-size:9px; color:rgba(255,255,255,.35); text-transform:uppercase; letter-spacing:1.2px; font-weight:600; }
+.sb-item {
+  display:flex; align-items:center; gap:10px; padding:9px 20px; cursor:pointer;
+  color:rgba(255,255,255,.55); font-size:12.5px; font-weight:500;
+  border-left:2px solid transparent; transition:all .15s; user-select:none;
+}
+.sb-item:hover { color:rgba(255,255,255,.85); background:rgba(255,255,255,.05); }
+.sb-item.active { color:#fff; border-left-color:var(--mp-yellow); background:rgba(255,255,255,.08); }
+.sb-item .ic { width:16px; text-align:center; font-size:14px; flex-shrink:0; }
+.sb-user-card { margin-top:auto; padding:16px 20px; border-top:1px solid rgba(255,255,255,.1); }
+.sb-user-info { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+.sb-avatar { width:36px; height:36px; border-radius:50%; background:var(--mp-teal); color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; flex-shrink:0; }
+.sb-user-name { color:#fff; font-size:12px; font-weight:600; }
+.sb-user-role { color:rgba(255,255,255,.4); font-size:10px; margin-top:2px; }
+.sb-logout { width:100%; padding:8px; border:1px solid rgba(255,255,255,.15); border-radius:7px; background:rgba(255,255,255,.05); color:rgba(255,255,255,.6); font-size:11px; font-family:'Inter',sans-serif; cursor:pointer; transition:all .15s; font-weight:500; }
+.sb-logout:hover { background:rgba(255,255,255,.1); color:#fff; }
+
+/* ═══ MAIN ═══ */
+.main { overflow-y:auto; max-height:100vh; }
+.screen { display:none; padding:32px; max-width:1200px; }
+.screen.active { display:block; }
+.page-title { font-size:22px; font-weight:700; color:var(--mp-navy); margin-bottom:4px; }
+.page-sub { font-size:12px; color:var(--text2); margin-bottom:28px; }
+
+/* ═══ CARDS, STATS ═══ */
+.card { background:var(--card); border:1px solid var(--border); border-radius:var(--r); box-shadow:var(--shadow); overflow:hidden; margin-bottom:20px; }
+.card-head { padding:16px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+.card-title { font-size:13px; font-weight:600; color:var(--text); }
+.card-sub { font-size:11px; color:var(--text2); margin-top:2px; }
+.card-body { padding:20px; }
+.stats { display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:16px; margin-bottom:24px; }
+.stat { background:var(--card); border:1px solid var(--border); border-radius:var(--r); padding:20px; box-shadow:var(--shadow); }
+.stat-label { font-size:10px; color:var(--text2); text-transform:uppercase; letter-spacing:.5px; font-weight:600; margin-bottom:8px; }
+.stat-value { font-size:24px; font-weight:700; color:var(--mp-navy); font-family:'DM Mono',monospace; }
+.stat-sub { font-size:10px; color:var(--text2); margin-top:4px; }
+.stat-accent { border-top:3px solid var(--mp-yellow); }
+.stat-teal { border-top:3px solid var(--mp-teal); }
+.stat-green { border-top:3px solid var(--green); }
+
+/* ═══ DET HEADER ═══ */
+.det-header { background:var(--mp-navy); color:#fff; border-radius:var(--r); padding:24px; margin-bottom:20px; }
+.det-name { font-size:20px; font-weight:700; margin-bottom:4px; }
+.det-meta { font-size:11px; color:rgba(255,255,255,.6); }
+.det-stats { display:flex; gap:32px; margin-top:18px; flex-wrap:wrap; }
+.det-stat-label { font-size:9px; color:rgba(255,255,255,.5); text-transform:uppercase; letter-spacing:.5px; margin-bottom:4px; }
+.det-stat-value { font-size:18px; font-weight:700; font-family:'DM Mono',monospace; }
+
+/* ═══ TABLES ═══ */
+.tbl { width:100%; border-collapse:collapse; font-size:11.5px; }
+.tbl th { text-align:left; padding:10px 12px; background:#F8FAFC; color:var(--text2); font-size:9.5px; text-transform:uppercase; letter-spacing:.5px; font-weight:600; border-bottom:1px solid var(--border); white-space:nowrap; }
+.tbl td { padding:9px 12px; border-bottom:1px solid #F1F5F9; vertical-align:middle; }
+.tbl tr:last-child td { border-bottom:none; }
+.tbl tr:hover td { background:#F8FAFC; }
+.tbl tfoot td { padding:10px 12px; border-top:2px solid var(--border); font-weight:700; background:#F8FAFC; }
+.tbl .num { text-align:right; font-family:'DM Mono',monospace; }
+.tbl-wrap { overflow-x:auto; }
+
+/* ═══ TAGS ═══ */
+.tag { display:inline-flex; align-items:center; padding:2px 8px; border-radius:20px; font-size:9.5px; font-weight:600; font-family:'DM Mono',monospace; }
+.tag-navy { background:rgba(45,63,94,.1); color:var(--mp-navy); }
+.tag-teal { background:rgba(77,188,200,.15); color:#1A7A84; }
+.tag-green { background:var(--green-bg); color:var(--green); }
+.tag-red { background:var(--red-bg); color:var(--red); }
+.tag-amber { background:var(--amber-bg); color:var(--amber); }
+.tag-blue { background:var(--blue-bg); color:var(--blue); }
+.tag-gray { background:#F1F5F9; color:var(--text2); }
+.tag-yellow { background:rgba(200,200,74,.15); color:#6B6B00; }
+
+/* ═══ HISTORY ═══ */
+.hist-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:16px; }
+.hist-card { background:var(--card); border:1px solid var(--border); border-radius:var(--r); padding:20px; box-shadow:var(--shadow); cursor:pointer; transition:all .2s; }
+.hist-card:hover { border-color:var(--mp-teal); box-shadow:var(--shadow-md); transform:translateY(-2px); }
+.hist-card.current { border-color:var(--mp-yellow); border-width:2px; }
+.hist-mes { font-size:16px; font-weight:700; color:var(--mp-navy); margin-bottom:4px; }
+.hist-lanctos { font-size:11px; color:var(--text2); margin-bottom:12px; }
+.hist-valor { font-size:20px; font-weight:700; font-family:'DM Mono',monospace; color:var(--green); }
+
+/* ═══ ALERTS, BUTTONS ═══ */
+.alert { display:flex; align-items:flex-start; gap:10px; padding:12px 16px; border-radius:8px; font-size:12px; line-height:1.5; margin-bottom:12px; }
+.alert-info { background:var(--blue-bg); color:#1E40AF; border:1px solid #BFDBFE; }
+.alert-ok { background:var(--green-bg); color:#166534; border:1px solid #BBF7D0; }
+.alert-warn { background:var(--amber-bg); color:#92400E; border:1px solid #FDE68A; }
+.alert-err { background:var(--red-bg); color:#991B1B; border:1px solid #FECACA; }
+.btn { display:inline-flex; align-items:center; gap:6px; padding:9px 16px; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; border:none; font-family:'Inter',sans-serif; transition:all .15s; }
+.btn-primary { background:var(--mp-navy); color:#fff; }
+.btn-primary:hover { background:#1E2D45; }
+.btn-accent { background:var(--mp-yellow); color:var(--mp-navy); }
+.btn-accent:hover { background:#B5B540; }
+.btn-outline { background:transparent; color:var(--text); border:1px solid var(--border2); }
+.btn-outline:hover { background:var(--bg); }
+.btn-sm { padding:6px 12px; font-size:11px; }
+.btn-danger { background:var(--red-bg); color:var(--red); border:1px solid #FECACA; }
+.btn-danger:hover { background:#FEE2E2; }
+
+/* ═══ ADMIN ═══ */
+.upload-zone { border:2px dashed var(--border2); border-radius:var(--r); padding:40px 24px; text-align:center; cursor:pointer; transition:all .2s; background:var(--bg); position:relative; }
+.upload-zone:hover { border-color:var(--mp-teal); background:#F0FBFC; }
+.upload-zone input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+.user-mgmt-row { display:flex; align-items:center; gap:12px; padding:12px 16px; border-bottom:1px solid #F1F5F9; transition:background .15s; }
+.user-mgmt-row:hover { background:#F8FAFC; }
+.user-mgmt-row:last-child { border-bottom:none; }
+
+/* ═══ EMPTY STATE ═══ */
+.empty-state { text-align:center; padding:60px 24px; color:var(--text2); }
+.empty-state-icon { font-size:48px; margin-bottom:16px; opacity:.5; }
+.empty-state-title { font-size:16px; font-weight:600; color:var(--text); margin-bottom:8px; }
+.empty-state-desc { font-size:13px; max-width:400px; margin:0 auto; line-height:1.6; }
+
+/* ═══ CONFIG BANNER ═══ */
+.config-banner { background:#FEF3C7; border:1px solid #FDE68A; border-radius:8px; padding:16px 20px; margin-bottom:20px; font-size:12px; color:#92400E; }
+.config-banner strong { color:#78350F; }
+.config-banner code { background:rgba(0,0,0,.06); padding:2px 6px; border-radius:4px; font-family:'DM Mono',monospace; font-size:11px; }
+
+/* ═══ RESPONSIVE ═══ */
+@media (max-width:768px) {
+  .app { grid-template-columns:1fr; }
+  .sidebar { position:fixed; left:-260px; z-index:100; width:260px; transition:left .3s; }
+  .sidebar.open { left:0; }
+  .mobile-toggle { display:block; position:fixed; top:12px; left:12px; z-index:101; background:var(--mp-navy); color:#fff; border:none; border-radius:8px; padding:8px 12px; font-size:18px; cursor:pointer; }
+  .screen { padding:16px; padding-top:56px; }
+  .stats { grid-template-columns:1fr 1fr; }
+  .hist-grid { grid-template-columns:1fr; }
+  .login-card { padding:32px 24px; }
+}
+@media (min-width:769px) { .mobile-toggle { display:none; } }
+@media print {
+  * { -webkit-print-color-adjust:exact !imMortant; print-color-adjust:exact !imMortant; }
+  .sidebar,.sb-logout,.btn,.mobile-toggle { display:none !imMortant; }
+  .screen { display:block !imMortant; padding:0; }
+  .app { grid-template-columns:1fr !imMortant; display:block !imMortant; }
+  .det-header { background:#2D3F5E !imMortant; }
+  .card { break-inside:avoid; box-shadow:none !imMortant; }
+}
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border2); border-radius:10px; }
+.sidebar-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:99; }
+@media (max-width:768px) { .sidebar.open ~ .sidebar-backdrop { display:block; } }
+</style>
+</head>
+<body>
+
+<!-- ═══ LOADING ═══ -->
+<div id="loading-screen">
+  <div class="spinner"></div>
+  <div style="font-size:13px;color:var(--text2)">Conectando...</div>
+</div>
+
+<!-- ═══ LOGIN ═══ -->
+<div id="login-screen" style="display:none">
+  <div class="login-card">
+    <div class="login-logo">
+      <svg viemBox="0 0 220 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="0" y="4" width="32" height="32" rx="6" fill="#2D3F5E"/>
+        <text x="6" y="27" font-family="Inter" font-weight="800" font-size="18" fill="#C8C84A">M</text>
+        <text x="42" y="18" font-family="Inter" font-weight="800" font-size="15" fill="#2D3F5E" letter-spacing=".5">MASTER</text>
+        <text x="42" y="33" font-family="Inter" font-weight="600" font-size="13" fill="#4DBCC8" letter-spacing="1">PRIME</text>
+      </svg>
+      <div class="login-logo-sub">Portal do Consultor</div>
+    </div>
+    <div id="config-warn" class="config-banner hidden">
+      <strong>Modo Demo:</strong> Supabase nao configurado. Usando dados de exemplo locais. Para configurar, edite as variaveis <code>SUPABASE_URL</code> e <code>SUPABASE_KEY</code> no inicio do arquivo.
+    </div>
+    <div id="login-error" class="login-error"></div>
+    <div class="login-field">
+      <label class="login-label">CPF</label>
+      <input type="text" class="login-input" id="login-cpf" placeholder="000.000.000-00" maxlength="14" oninput="maskCPF(this)" autocomplete="username">
+    </div>
+    <div class="login-field">
+      <label class="login-label">Senha</label>
+      <div class="pw-field">
+        <input type="password" class="login-input" id="login-senha" placeholder="Digite sua senha" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+        <button class="pw-toggle" onclick="togglePw('login-senha',this)" type="button" tabindex="-1">&#128065;</button>
+      </div>
+    </div>
+    <button class="login-btn" id="login-btn" onclick="doLogin()">Entrar</button>
+    <div class="login-footer">Primeiro acesso? Sua senha inicial e o seu CPF (so numeros).</div>
+  </div>
+</div>
+
+<!-- ═══ PORTAL ═══ -->
+<div id="Mortal-screen" style="display:none">
+  <button class="mobile-toggle" onclick="toggleSidebar()">&#9776;</button>
+  <div class="sidebar-backdrop" onclick="toggleSidebar()"></div>
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="sb-logo">
+        <svg viemBox="0 0 200 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="0" y="4" width="32" height="32" rx="6" fill="rgba(255,255,255,.12)"/>
+          <text x="6" y="27" font-family="Inter" font-weight="800" font-size="18" fill="#C8C84A">M</text>
+          <text x="42" y="18" font-family="Inter" font-weight="700" font-size="14" fill="#fff" letter-spacing=".5">MASTER</text>
+          <text x="42" y="33" font-family="Inter" font-weight="500" font-size="12" fill="rgba(255,255,255,.5)" letter-spacing="1">PRIME</text>
+        </svg>
+        <div class="sb-ver">PORTAL DO CONSULTOR v1.0</div>
+      </div>
+      <div class="sb-section">Menu</div>
+      <div class="sb-item active" onclick="nav('dashboard')" id="ni-dashboard"><span class="ic">&#128202;</span> Demonstrativo</div>
+      <div class="sb-item" onclick="nav('historico')" id="ni-historico"><span class="ic">&#128197;</span> Historico</div>
+      <div class="sb-item" onclick="nav('perfil')" id="ni-perfil"><span class="ic">&#128100;</span> Meu Perfil</div>
+      <div id="admin-nav" class="hidden">
+        <div class="sb-section">Administracao</div>
+        <div class="sb-item" onclick="nav('admin-upload')" id="ni-admin-upload"><span class="ic">&#128228;</span> Upload Demonstrativos</div>
+        <div class="sb-item" onclick="nav('admin-users')" id="ni-admin-users"><span class="ic">&#128101;</span> Gerenciar Usuarios</div>
+        <div class="sb-item" onclick="window.open('painel.html','_blank')" id="ni-painel"><span class="ic">&#9881;</span> Abrir Painel Split</div>
+      </div>
+      <div class="sb-user-card">
+        <div class="sb-user-info">
+          <div class="sb-avatar" id="sb-avatar">--</div>
+          <div><div class="sb-user-name" id="sb-user-name">--</div><div class="sb-user-role" id="sb-user-role">Consultor</div></div>
+        </div>
+        <button class="sb-logout" onclick="doLogout()">Sair</button>
+      </div>
+    </aside>
+    <main class="main">
+
+      <!-- DASHBOARD -->
+      <div class="screen active" id="s-dashboard">
+        <div class="page-title">Demonstrativo</div>
+        <div class="page-sub" id="dash-sub">Seu demonstrativo de comissoes do mes atual</div>
+        <div id="dash-content"><div class="empty-state"><div class="empty-state-icon">&#128196;</div><div class="empty-state-title">Nenhum demonstrativo disponivel</div><div class="empty-state-desc">Seu demonstrativo do mes ainda nao foi publicado.</div></div></div>
+      </div>
+
+      <!-- HISTORICO -->
+      <div class="screen" id="s-historico">
+        <div class="page-title">Historico</div>
+        <div class="page-sub">Todos os seus demonstrativos anteriores</div>
+        <div id="hist-content"><div class="empty-state"><div class="empty-state-icon">&#128197;</div><div class="empty-state-title">Nenhum historico</div><div class="empty-state-desc">Seus demonstrativos anteriores aparecerao aqui.</div></div></div>
+      </div>
+
+      <!-- PERFIL -->
+      <div class="screen" id="s-perfil">
+        <div class="page-title">Meu Perfil</div>
+        <div class="page-sub">Seus dados e configuracoes</div>
+        <div class="card"><div class="card-head"><div class="card-title">Dados pessoais</div></div>
+          <div class="card-body"><div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+            <div><div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px">Nome</div><div style="font-size:14px;font-weight:600" id="perfil-nome">--</div></div>
+            <div><div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px">CPF</div><div style="font-size:14px;font-family:'DM Mono',monospace" id="perfil-cpf">--</div></div>
+            <div><div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px">Tipo</div><div id="perfil-tipo">--</div></div>
+          </div></div>
+        </div>
+        <div class="card"><div class="card-head"><div class="card-title">Alterar senha</div></div>
+          <div class="card-body"><div id="pw-msg"></div>
+            <div style="display:grid;gap:16px;max-width:400px">
+              <div><label class="login-label">Senha atual</label><input type="password" class="login-input" id="pw-cur" style="font-size:13px;padding:10px 14px"></div>
+              <div><label class="login-label">Nova senha</label><input type="password" class="login-input" id="pw-new" style="font-size:13px;padding:10px 14px"></div>
+              <div><label class="login-label">Confirmar</label><input type="password" class="login-input" id="pw-conf" style="font-size:13px;padding:10px 14px"></div>
+              <button class="btn btn-primary" onclick="changePw()" style="width:fit-content">Alterar senha</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ADMIN: UPLOAD -->
+      <div class="screen" id="s-admin-upload">
+        <div class="page-title">Upload de Demonstrativos</div>
+        <div class="page-sub">Envie os demonstrativos processados para os consultores</div>
+        <div class="alert alert-info"><span>&#8505;</span><span>No <strong>Painel Split</strong>, clique <strong>"Publicar no Portal"</strong> para gerar o JSON. Depois faca o upload aqui. Ou clique em <strong>"Abrir Painel Split"</strong> na sidebar para fazer tudo online.</span></div>
+        <div class="card"><div class="card-head"><div><div class="card-title">Enviar demonstrativos do mes</div><div class="card-sub">Arquivo JSON gerado pelo Painel Split</div></div></div>
+          <div class="card-body">
+            <div class="upload-zone" id="upload-zone"><input type="file" accept=".json" onchange="adminUpload(event)">
+              <div style="font-size:36px;margin-bottom:8px">&#128228;</div>
+              <div style="font-size:13px;font-weight:600">Arraste o JSON aqui ou clique para selecionar</div>
+              <div style="font-size:11px;color:var(--text2)">demonstrativos_YYYY-MM.json</div>
+            </div>
+            <div id="upload-result" style="margin-top:16px"></div>
+          </div>
+        </div>
+        <div class="card"><div class="card-head"><div><div class="card-title">Meses publicados</div></div></div>
+          <div class="card-body" id="admin-meses-list"><div style="color:var(--text2);font-size:12px">Nenhum demonstrativo publicado.</div></div>
+        </div>
+      </div>
+
+      <!-- ADMIN: USERS -->
+      <div class="screen" id="s-admin-users">
+        <div class="page-title">Gerenciar Usuarios</div>
+        <div class="page-sub">Cadastre e gerencie o acesso dos consultores</div>
+        <div class="card"><div class="card-head"><div class="card-title">Novo consultor</div><button class="btn btn-primary btn-sm" onclick="document.getElementById('add-form').classList.toggle('hidden')">+ Adicionar</button></div>
+          <div class="card-body hidden" id="add-form">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px">
+              <div><label class="login-label">Nome completo</label><input type="text" class="login-input" id="nu-nome" placeholder="NOME SOBRENOME" style="font-size:12px;padding:9px 12px;text-transform:uppercase"></div>
+              <div><label class="login-label">CPF</label><input type="text" class="login-input" id="nu-cpf" placeholder="000.000.000-00" maxlength="14" oninput="maskCPF(this)" style="font-size:12px;padding:9px 12px"></div>
+              <div><label class="login-label">Tipo</label><select class="login-input" id="nu-tipo" style="font-size:12px;padding:9px 12px"><option value="consultor">Consultor</option><option value="socio">Socio</option><option value="admin">Administrador</option></select></div>
+            </div>
+            <div style="display:flex;gap:8px"><button class="btn btn-primary btn-sm" onclick="addUser()">Salvar</button><button class="btn btn-outline btn-sm" onclick="document.getElementById('add-form').classList.add('hidden')">Cancelar</button></div>
+            <div id="add-msg" style="margin-top:12px"></div>
+          </div>
+        </div>
+        <div class="card"><div class="card-head"><div class="card-title">Usuarios cadastrados</div><div class="card-sub" id="user-count">0</div></div>
+          <div class="card-body" style="padding:0" id="users-list"></div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════════════
+//  CONFIGURACAO SUPABASE — Preencha com seus dados
+//  (Instrucoes no arquivo SETUP.md)
+// ══════════════════════════════════════════════════════════════════════════
+const SUPABASE_URL = '';  // Ex: 'https://xyzabc.supabase.co'
+const SUPABASE_KEY = '';  // Sua anon/public key
+
+// ══════════════════════════════════════════════════════════════════════════
+//  MODO: SUPABASE ou DEMO (localStorage)
+// ══════════════════════════════════════════════════════════════════════════
+const USE_SUPABASE = !!(SUPABASE_URL && SUPABASE_KEY);
+let sb = null;
+
+// ═══ DATA LAYER (abstrai Supabase vs localStorage) ═══
+const DB = {
+  async init() {
+    if (USE_SUPABASE) {
+      sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      console.log('Conectado ao Supabase');
+    } else {
+      console.log('Modo demo (localStorage)');
+      if (!localStorage.getItem('mp_Mortal')) {
+        localStorage.setItem('mp_Mortal', JSON.stringify(this._defaultData()));
+      }
+    }
+  },
+  _defaultData() {
+    return {
+      users: [
+        { nome:'ALLAN ALMEIDA', cpf:'00000000000', tipo:'admin', senha:'123456', criado:'2025-01-01' },
+        { nome:'ERIK GONCALVES', cpf:'11111111111', tipo:'consultor', senha:'11111111111', criado:'2025-01-01' },
+        { nome:'LARISSA SANT ANNA', cpf:'22222222222', tipo:'consultor', senha:'22222222222', criado:'2025-01-01' },
+        { nome:'CARLOS EDUARDO', cpf:'33333333333', tipo:'socio', senha:'33333333333', criado:'2025-01-01' },
+      ],
+      demonstrativos: {
+        '2025-03': {
+          'ALLAN ALMEIDA': { nome:'ALLAN ALMEIDA', totalFinal:18542.67,
+            linhas:[
+              {adm:'PORTO',tipo:'Auto',ref:'123456',cliente:'JOAO SILVA',dataVenda:'15/03/2025',parcela:'1/12',bruto:4200,nf:294,adm:420,liquido:3486},
+              {adm:'PORTO',tipo:'Vida',ref:'234567',cliente:'MARIA SANTOS',dataVenda:'18/03/2025',parcela:'1/1',bruto:1800,nf:126,adm:180,liquido:1494},
+              {adm:'PORTO',tipo:'RE',ref:'345678',cliente:'CARLOS OLIVEIRA',dataVenda:'20/03/2025',parcela:'3/12',bruto:6500,nf:455,adm:650,liquido:5395},
+              {adm:'ITAU',tipo:'Vida',ref:'456789',cliente:'ANA PEREIRA',dataVenda:'22/03/2025',parcela:'1/1',bruto:3200,nf:224,adm:320,liquido:2656},
+              {adm:'BRADESCO',tipo:'Auto',ref:'567890',cliente:'PEDRO COSTA',dataVenda:'25/03/2025',parcela:'2/12',bruto:2800,nf:196,adm:280,liquido:2324},
+              {adm:'PORTO',tipo:'Empresa',ref:'678901',cliente:'TECH SOLUTIONS',dataVenda:'10/03/2025',parcela:'1/12',bruto:5100,nf:357,adm:510,liquido:4233},
+            ],
+            avulsos:[{descricao:'Ajuda de custo estacionamento',valor:450},{descricao:'Bonus trimestral Elite Gold',valor:1200},{descricao:'Desconto adiantamento',valor:-2695.33}],
+            despesas:[]
+          },
+          'ERIK GONCALVES': { nome:'ERIK GONCALVES', totalFinal:7823.45,
+            linhas:[
+              {adm:'PORTO',tipo:'Auto',ref:'111222',cliente:'ROBERTO ALVES',dataVenda:'12/03/2025',parcela:'1/12',bruto:3100,nf:217,adm:310,liquido:2573},
+              {adm:'PORTO',tipo:'Vida',ref:'222333',cliente:'FERNANDA LIMA',dataVenda:'14/03/2025',parcela:'1/1',bruto:2400,nf:168,adm:240,liquido:1992},
+              {adm:'BRADESCO',tipo:'RE',ref:'333444',cliente:'MARCOS SOUZA',dataVenda:'19/03/2025',parcela:'2/12',bruto:4500,nf:315,adm:450,liquido:3735},
+            ],
+            avulsos:[{descricao:'Ajuda de custo',valor:350},{descricao:'Desconto VR',valor:-826.55}],
+            despesas:[]
+          },
+          'LARISSA SANT ANNA': { nome:'LARISSA SANT ANNA', totalFinal:5214.88,
+            linhas:[
+              {adm:'PORTO',tipo:'Auto',ref:'444555',cliente:'LUCIA FERREIRA',dataVenda:'10/03/2025',parcela:'1/12',bruto:2900,nf:203,adm:290,liquido:2407},
+              {adm:'ITAU',tipo:'Vida',ref:'555666',cliente:'RAFAEL MENDES',dataVenda:'21/03/2025',parcela:'1/1',bruto:1500,nf:105,adm:150,liquido:1245},
+              {adm:'PORTO',tipo:'RE',ref:'666777',cliente:'PATRICIA ROCHA',dataVenda:'28/03/2025',parcela:'1/12',bruto:2200,nf:154,adm:220,liquido:1826},
+            ],
+            avulsos:[{descricao:'Ajuda de custo',valor:300},{descricao:'Desconto adiantamento',valor:-563.12}],
+            despesas:[]
+          },
+        },
+        '2025-02': {
+          'ALLAN ALMEIDA': { nome:'ALLAN ALMEIDA', totalFinal:15243.20,
+            linhas:[
+              {adm:'PORTO',tipo:'Auto',ref:'901234',cliente:'JOSE MARTINS',dataVenda:'10/02/2025',parcela:'2/12',bruto:3800,nf:266,adm:380,liquido:3154},
+              {adm:'BRADESCO',tipo:'RE',ref:'012345',cliente:'CAMILA REIS',dataVenda:'15/02/2025',parcela:'1/12',bruto:5200,nf:364,adm:520,liquido:4316},
+              {adm:'ITAU',tipo:'Vida',ref:'123450',cliente:'ROBERTO NUNES',dataVenda:'20/02/2025',parcela:'1/1',bruto:2100,nf:147,adm:210,liquido:1743},
+              {adm:'PORTO',tipo:'Auto',ref:'234501',cliente:'MARIANA LOPES',dataVenda:'22/02/2025',parcela:'5/12',bruto:4600,nf:322,adm:460,liquido:3818},
+            ],
+            avulsos:[{descricao:'Ajuda de custo estacionamento',valor:450},{descricao:'Desconto adiantamento',valor:-2238}],
+            despesas:[]
+          },
+          'ERIK GONCALVES': { nome:'ERIK GONCALVES', totalFinal:6205.30,
+            linhas:[
+              {adm:'PORTO',tipo:'Auto',ref:'345012',cliente:'CLAUDIA MENDES',dataVenda:'08/02/2025',parcela:'1/12',bruto:2800,nf:196,adm:280,liquido:2324},
+              {adm:'BRADESCO',tipo:'Vida',ref:'450123',cliente:'MARCOS OLIVEIRA',dataVenda:'18/02/2025',parcela:'1/1',bruto:3600,nf:252,adm:360,liquido:2988},
+            ],
+            avulsos:[{descricao:'Ajuda de custo',valor:350},{descricao:'Desconto VR',valor:-826.55},{descricao:'Bonus indicacao',valor:1369.85}],
+            despesas:[]
+          },
+          'LARISSA SANT ANNA': { nome:'LARISSA SANT ANNA', totalFinal:4102.50,
+            linhas:[
+              {adm:'PORTO',tipo:'RE',ref:'501234',cliente:'ANDERSON SILVA',dataVenda:'12/02/2025',parcela:'2/12',bruto:3400,nf:238,adm:340,liquido:2822},
+              {adm:'ITAU',tipo:'Auto',ref:'612345',cliente:'BEATRIZ COSTA',dataVenda:'25/02/2025',parcela:'1/12',bruto:1900,nf:133,adm:190,liquido:1577},
+            ],
+            avulsos:[{descricao:'Ajuda de custo',valor:300},{descricao:'Desconto adiantamento',valor:-596.50}],
+            despesas:[]
+          },
+        },
+      },
+      meses: ['2025-02','2025-03'],
+    };
+  },
+  _local() { return JSON.parse(localStorage.getItem('mp_Mortal')); },
+  _saveLocal(d) { localStorage.setItem('mp_Mortal', JSON.stringify(d)); },
+
+  // ── Users ──
+  async getUser(cpf) {
+    if (USE_SUPABASE) {
+      const {data} = await sb.from('Mortal_users').select('*').eq('cpf', cpf).single();
+      return data;
+    }
+    return this._local().users.find(u => u.cpf === cpf) || null;
+  },
+  async getAllUsers() {
+    if (USE_SUPABASE) {
+      const {data} = await sb.from('Mortal_users').select('*').order('nome');
+      return data || [];
+    }
+    return this._local().users;
+  },
+  async createUser(user) {
+    if (USE_SUPABASE) {
+      const {data,error} = await sb.from('Mortal_users').insert(user).select().single();
+      if (error) throw error;
+      return data;
+    }
+    const d = this._local();
+    d.users.push(user);
+    this._saveLocal(d);
+    return user;
+  },
+  async updateUser(cpf, updates) {
+    if (USE_SUPABASE) {
+      const {data,error} = await sb.from('Mortal_users').update(updates).eq('cpf', cpf).select().single();
+      if (error) throw error;
+      return data;
+    }
+    const d = this._local();
+    const idx = d.users.findIndex(u => u.cpf === cpf);
+    if (idx >= 0) Object.assign(d.users[idx], updates);
+    this._saveLocal(d);
+    return d.users[idx];
+  },
+  async deleteUser(cpf) {
+    if (USE_SUPABASE) {
+      await sb.from('Mortal_users').delete().eq('cpf', cpf);
+    } else {
+      const d = this._local();
+      d.users = d.users.filter(u => u.cpf !== cpf);
+      this._saveLocal(d);
+    }
+  },
+
+  // ── Demonstrativos ──
+  async getMeses() {
+    if (USE_SUPABASE) {
+      const {data} = await sb.from('Mortal_demonstrativos').select('mes').order('mes', {ascending:false});
+      return [...new Set((data||[]).map(d => d.mes))];
+    }
+    return [...(this._local().meses||[])].sort().reverse();
+  },
+  async getDemo(mes, nome) {
+    if (USE_SUPABASE) {
+      const {data} = await sb.from('Mortal_demonstrativos').select('dados').eq('mes', mes).eq('nome', nome).single();
+      return data ? data.dados : null;
+    }
+    return this._local().demonstrativos?.[mes]?.[nome] || null;
+  },
+  async getDemosMes(mes) {
+    if (USE_SUPABASE) {
+      const {data} = await sb.from('Mortal_demonstrativos').select('nome,dados').eq('mes', mes);
+      const result = {};
+      (data||[]).forEach(d => result[d.nome] = d.dados);
+      return result;
+    }
+    return this._local().demonstrativos?.[mes] || {};
+  },
+  async publishDemos(mes, consultores) {
+    if (USE_SUPABASE) {
+      const rows = Object.entries(consultores).map(([nome, dados]) => ({mes, nome, dados}));
+      // Upsert (replace existing month data)
+      const {error} = await sb.from('Mortal_demonstrativos').upsert(rows, {onConflict:'mes,nome'});
+      if (error) throw error;
+    } else {
+      const d = this._local();
+      d.demonstrativos[mes] = consultores;
+      if (!d.meses.includes(mes)) d.meses.push(mes);
+      d.meses.sort();
+      this._saveLocal(d);
+    }
+  },
+  async deleteMes(mes) {
+    if (USE_SUPABASE) {
+      await sb.from('Mortal_demonstrativos').delete().eq('mes', mes);
+    } else {
+      const d = this._local();
+      delete d.demonstrativos[mes];
+      d.meses = d.meses.filter(m => m !== mes);
+      this._saveLocal(d);
+    }
+  },
+};
+
+// ═══ UTILIDADES ═══
+let currentUser = null;
+const MESES_NOME = {'01':'Janeiro','02':'Fevereiro','03':'Marco','04':'Abril','05':'Maio','06':'Junho','07':'Julho','08':'Agosto','09':'Setembro','10':'Outubro','11':'Novembro','12':'Dezembro'};
+function fmtBRL(v) { if (!v && v!==0) return 'R$ 0,00'; return 'R$ '+v.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.'); }
+function fmtCPF(c) { c=c.replace(/\D/g,''); if(c.length!==11)return c; return c.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,'$1.$2.$3-$4'); }
+function maskCPF(el) { let v=el.value.replace(/\D/g,''); if(v.length>11)v=v.slice(0,11); if(v.length>9)v=v.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/,'$1.$2.$3-$4'); else if(v.length>6)v=v.replace(/(\d{3})(\d{3})(\d{1,3})/,'$1.$2.$3'); else if(v.length>3)v=v.replace(/(\d{3})(\d{1,3})/,'$1.$2'); el.value=v; }
+function cleanCPF(v) { return (v||'').replace(/\D/g,''); }
+function togglePw(id,btn) { const i=document.getElementById(id); i.type=i.type==='password'?'text':'password'; }
+function getInitials(n) { const p=(n||'').split(' ').filter(Boolean); return p.length>=2?(p[0][0]+p[p.length-1][0]).toUpperCase():(p[0]||'--').slice(0,2).toUpperCase(); }
+function fmtMes(k) { const [y,m]=k.split('-'); return `${MESES_NOME[m]||m} ${y}`; }
+
+// ═══ AUTH ═══
+async function doLogin() {
+  const cpf = cleanCPF(document.getElementById('login-cpf').value);
+  const senha = document.getElementById('login-senha').value;
+  const err = document.getElementById('login-error');
+  const btn = document.getElementById('login-btn');
+  if (!cpf||cpf.length<11) { err.style.display='block'; err.textContent='Digite um CPF valido.'; return; }
+  if (!senha) { err.style.display='block'; err.textContent='Digite sua senha.'; return; }
+  btn.disabled = true; btn.textContent = 'Entrando...';
+  try {
+    const user = await DB.getUser(cpf);
+    if (!user || user.senha !== senha) { err.style.display='block'; err.textContent='CPF ou senha incorretos.'; btn.disabled=false; btn.textContent='Entrar'; return; }
+    err.style.display='none';
+    currentUser = user;
+    sessionStorage.setItem('mp_session', cpf);
+    await enterPortal();
+  } catch(e) { err.style.display='block'; err.textContent='Erro de conexao: '+e.message; }
+  btn.disabled = false; btn.textContent = 'Entrar';
+}
+function doLogout() {
+  currentUser=null; sessionStorage.removeItem('mp_session');
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('Mortal-screen').style.display='none';
+  document.getElementById('login-cpf').value='';
+  document.getElementById('login-senha').value='';
+}
+async function checkSession() {
+  const cpf = sessionStorage.getItem('mp_session');
+  if (cpf) { const u = await DB.getUser(cpf); if(u){currentUser=u; await enterPortal(); return;} }
+  document.getElementById('loading-screen').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  if (!USE_SUPABASE) document.getElementById('config-warn').classList.remove('hidden');
+}
+async function enterPortal() {
+  document.getElementById('loading-screen').style.display='none';
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('Mortal-screen').style.display='block';
+  document.getElementById('sb-avatar').textContent=getInitials(currentUser.nome);
+  document.getElementById('sb-user-name').textContent=currentUser.nome;
+  const role = currentUser.tipo==='admin'?'Administrador':currentUser.tipo==='socio'?'Socio':'Consultor';
+  document.getElementById('sb-user-role').textContent=role;
+  document.getElementById('admin-nav').classList.toggle('hidden', currentUser.tipo!=='admin');
+  document.getElementById('perfil-nome').textContent=currentUser.nome;
+  document.getElementById('perfil-cpf').textContent=fmtCPF(currentUser.cpf);
+  document.getElementById('perfil-tipo').innerHTML=`<span class="tag tag-${currentUser.tipo==='admin'?'navy':currentUser.tipo==='socio'?'teal':'blue'}">${role}</span>`;
+  nav('dashboard');
+  await renderDashboard();
+  await renderHistorico();
+  if (currentUser.tipo==='admin') { await renderAdminMeses(); await renderUsers(); }
+}
+
+// ═══ NAV ═══
+function nav(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
+  const s=document.getElementById('s-'+id), n=document.getElementById('ni-'+id);
+  if(s)s.classList.add('active'); if(n)n.classList.add('active');
+  document.getElementById('sidebar').classList.remove('open');
+}
+function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+
+// ═══ DASHBOARD ═══
+async function renderDashboard() {
+  if(!currentUser)return;
+  const el=document.getElementById('dash-content'), sub=document.getElementById('dash-sub');
+  const meses = await DB.getMeses();
+  let demo=null, mesAtual=null;
+  for (const m of meses) { demo=await DB.getDemo(m, currentUser.nome); if(demo){mesAtual=m; break;} }
+  if (!demo) { sub.textContent='Seu demonstrativo de comissoes'; el.innerHTML='<div class="empty-state"><div class="empty-state-icon">&#128196;</div><div class="empty-state-title">Nenhum demonstrativo disponivel</div><div class="empty-state-desc">Seu demonstrativo do mes ainda nao foi publicado.</div></div>'; return; }
+  sub.textContent='Demonstrativo de '+fmtMes(mesAtual);
+  el.innerHTML=renderDemo(demo, mesAtual);
+}
+function renderDemo(data, mes) {
+  const nome=data.nome||currentUser.nome, linhas=data.linhas||[], avulsos=data.avulsos||[], despesas=data.despesas||[];
+  const tB=linhas.reduce((s,l)=>s+(l.bruto||0),0), tN=linhas.reduce((s,l)=>s+(l.nf||0),0);
+  const tA=linhas.reduce((s,l)=>s+(l.adm||0),0), tL=linhas.reduce((s,l)=>s+(l.liquido||0),0);
+  const tAv=avulsos.reduce((s,a)=>s+(a.valor||0),0), tD=despesas.reduce((s,d)=>s+(d.valor||0),0);
+  const totalFinal=data.totalFinal||(tL+tAv+tD);
+  const recP=tB+avulsos.filter(a=>a.valor>0).reduce((s,a)=>s+a.valor,0);
+  const ded=tN+tA+Math.abs(avulsos.filter(a=>a.valor<0).reduce((s,a)=>s+a.valor,0))+Math.abs(despesas.filter(d=>d.valor<0).reduce((s,d)=>s+d.valor,0));
+
+  let rows=linhas.map(l=>{
+    const neg=(l.liquido||0)<0;
+    return `<tr ${neg?'style="background:#FEF2F2;border-left:3px solid #EF4444"':''}>
+      <td>${l.adm||'-'}${neg?' <span class="tag tag-red" style="font-size:8px">estorno</span>':''}</td>
+      <td><span class="tag tag-gray" style="font-size:9px">${l.tipo||'-'}</span></td>
+      <td class="mono">${l.ref||'-'}</td>
+      <td style="font-size:10px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${l.cliente||''}">${l.cliente||'-'}</td>
+      <td class="mono" style="color:var(--text2)">${l.dataVenda||'-'}</td>
+      <td class="mono" style="color:var(--text2)">${l.parcela||'-'}</td>
+      <td class="mono num">${fmtBRL(l.bruto)}</td>
+      <td class="mono num neg">(${fmtBRL(l.nf)})</td>
+      <td class="mono num" style="color:var(--text2)">(${fmtBRL(l.adm)})</td>
+      <td class="mono num ${(l.liquido||0)>=0?'Mos':'neg'} fw6">${fmtBRL(l.liquido)}</td>
+    </tr>`;
+  }).join('');
+
+  if(avulsos.length){
+    rows+=`<tr><td colspan="10" style="padding:4px 12px;background:#F0FDF4;border-top:2px solid #22C55E;font-size:9px;color:#166534;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Lancamentos Avulsos</td></tr>`;
+    avulsos.forEach(a=>{const c=a.valor>=0?'Mos':'neg';const bg=a.valor>=0?'rgba(34,197,94,.05)':'#FEF2F2';const bd=a.valor>=0?'#22C55E':'#EF4444';
+      rows+=`<tr style="background:${bg};border-left:3px solid ${bd}"><td colspan="6" style="font-size:11px;font-weight:500;padding:8px 12px"><span class="tag" style="font-size:9px;background:${bg};color:${bd};border:1px solid ${bd}">AVULSO</span> <span style="margin-left:8px">${a.descricao||'-'}</span></td><td class="mono num" style="color:var(--text3)">-</td><td class="mono num" style="color:var(--text3)">-</td><td class="mono num" style="color:var(--text3)">-</td><td class="mono num ${c} fw6">${fmtBRL(a.valor)}</td></tr>`;
+    });
+  }
+  if(despesas.length){
+    rows+=`<tr><td colspan="10" style="padding:4px 12px;background:#FEF2F2;border-top:2px solid #DC2626;font-size:9px;color:#991B1B;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Despesas da Sala</td></tr>`;
+    despesas.forEach(d=>{const c=d.valor>=0?'Mos':'neg';const bg=d.valor>=0?'rgba(34,197,94,.05)':'#FEF2F2';const bd=d.valor>=0?'#22C55E':'#DC2626';
+      rows+=`<tr style="background:${bg};border-left:3px solid ${bd}"><td colspan="6" style="font-size:11px;font-weight:500;padding:8px 12px"><span class="tag" style="font-size:9px;background:${bg};color:${bd};border:1px solid ${bd}">DESP</span> <span style="margin-left:8px">${d.descricao||'-'}</span></td><td class="mono num" style="color:var(--text3)">-</td><td class="mono num" style="color:var(--text3)">-</td><td class="mono num" style="color:var(--text3)">-</td><td class="mono num ${c} fw6">${fmtBRL(d.valor)}</td></tr>`;
+    });
+  }
+
+  return `
+  <div class="det-header"><div class="det-name">${nome}</div><div class="det-meta">${linhas.length} lancamentos &middot; ${fmtMes(mes)}</div>
+    <div class="det-stats">
+      <div><div class="det-stat-label">Receita bruta</div><div class="det-stat-value">${fmtBRL(recP)}</div></div>
+      <div><div class="det-stat-label">(-) NF + ADM + Descontos</div><div class="det-stat-value" style="color:rgba(255,255,255,.6)">(${fmtBRL(ded)})</div></div>
+      <div><div class="det-stat-label">Liquido total</div><div class="det-stat-value" style="color:#C8C84A">${fmtBRL(totalFinal)}</div></div>
+    </div>
+  </div>
+  <div class="stats">
+    <div class="stat stat-accent"><div class="stat-label">Lancamentos</div><div class="stat-value">${linhas.length}</div><div class="stat-sub">${avulsos.length?`+ ${avulsos.length} avulsos`:'vendas/repasses'}</div></div>
+    <div class="stat stat-teal"><div class="stat-label">Bruto total</div><div class="stat-value">${fmtBRL(tB)}</div><div class="stat-sub">antes de deducoes</div></div>
+    <div class="stat stat-green"><div class="stat-label">Liquido a receber</div><div class="stat-value" style="color:var(--green)">${fmtBRL(totalFinal)}</div><div class="stat-sub">valor final</div></div>
+  </div>
+  <div class="card"><div class="card-head"><div><div class="card-title">Demonstrativo - ${nome}</div><div class="card-sub">${fmtMes(mes)}</div></div><button class="btn btn-outline btn-sm" onclick="window.print()">&#128424; Imprimir</button></div>
+    <div class="tbl-wrap" style="padding:0"><table class="tbl">
+      <thead><tr><th>Admin</th><th>Tipo</th><th>Ref</th><th>Cliente</th><th>Data</th><th>Parc</th><th class="num">Bruto</th><th class="num">NF</th><th class="num">ADM</th><th class="num">Liquido</th></tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot><tr><td colspan="6" class="fw7">TOTAL</td><td class="mono num fw7">${fmtBRL(tB)}</td><td class="mono num neg fw7">(${fmtBRL(tN)})</td><td class="mono num fw7" style="color:var(--text2)">(${fmtBRL(tA)})</td><td class="mono num Mos fw7">${fmtBRL(totalFinal)}</td></tr></tfoot>
+    </table></div>
+  </div>`;
+}
+
+// ═══ HISTORICO ═══
+async function renderHistorico() {
+  if(!currentUser)return;
+  const el=document.getElementById('hist-content');
+  const meses=await DB.getMeses();
+  const meus=[];
+  for(const m of meses){const d=await DB.getDemo(m,currentUser.nome);if(d)meus.push({mes:m,data:d});}
+  if(!meus.length){el.innerHTML='<div class="empty-state"><div class="empty-state-icon">&#128197;</div><div class="empty-state-title">Nenhum historico</div><div class="empty-state-desc">Seus demonstrativos aparecerao aqui.</div></div>';return;}
+  el.innerHTML='<div class="hist-grid">'+meus.map((item,i)=>{
+    const tf=item.data.totalFinal||0, nl=(item.data.linhas||[]).length;
+    return `<div class="hist-card ${i===0?'current':''}" onclick="viemHist('${item.mes}')"><div class="hist-mes">${fmtMes(item.mes)}</div><div class="hist-lanctos">${nl} lancamentos</div><div class="hist-valor">${fmtBRL(tf)}</div><div style="margin-top:8px"><span class="tag ${i===0?'tag-green':'tag-gray'}">${i===0?'Mais recente':'Historico'}</span></div></div>`;
+  }).join('')+'</div><div id="hist-detail" style="margin-top:24px"></div>';
+}
+async function viemHist(mes) {
+  const d=await DB.getDemo(mes,currentUser.nome);if(!d)return;
+  const el=document.getElementById('hist-detail');
+  if(el){el.innerHTML=renderDemo(d,mes);el.scrollIntoViem({behavior:'smooth',block:'start'});}
+}
+
+// ═══ CHANGE PW ═══
+async function changePw() {
+  const cur=document.getElementById('pw-cur').value, nw=document.getElementById('pw-new').value, cf=document.getElementById('pw-conf').value, msg=document.getElementById('pw-msg');
+  if(cur!==currentUser.senha){msg.innerHTML='<div class="alert alert-err">Senha atual incorreta.</div>';return;}
+  if(nw.length<6){msg.innerHTML='<div class="alert alert-warn">Minimo 6 caracteres.</div>';return;}
+  if(nw!==cf){msg.innerHTML='<div class="alert alert-err">Senhas nao conferem.</div>';return;}
+  await DB.updateUser(currentUser.cpf, {senha:nw});
+  currentUser.senha=nw;
+  msg.innerHTML='<div class="alert alert-ok">Senha alterada!</div>';
+  document.getElementById('pw-cur').value='';document.getElementById('pw-new').value='';document.getElementById('pw-conf').value='';
+}
+
+// ═══ ADMIN: UPLOAD ═══
+async function adminUpload(evt) {
+  const file=evt.target.files[0]; if(!file)return;
+  const res=document.getElementById('upload-result');
+  try {
+    const text=await file.text();
+    const data=JSON.parse(text);
+    if(!data.mes||!data.consultores){res.innerHTML='<div class="alert alert-err">Formato invalido. Precisa ter "mes" e "consultores".</div>';return;}
+    await DB.publishDemos(data.mes, data.consultores);
+    // Auto-create users
+    let novos=0;
+    const users=await DB.getAllUsers();
+    for(const nome of Object.keys(data.consultores)){
+      if(!users.find(u=>u.nome===nome)){
+        const cpf=String(Math.floor(10000000000+Math.random()*89999999999));
+        await DB.createUser({nome,cpf,tipo:'consultor',senha:cpf,criado:new Date().toISOString().slice(0,10)});
+        novos++;
+      }
+    }
+    const nc=Object.keys(data.consultores).length;
+    res.innerHTML=`<div class="alert alert-ok">Demonstrativos de <strong>${fmtMes(data.mes)}</strong> publicados! ${nc} consultores${novos?` (${novos} novos usuarios criados)`:''}</div>`;
+    await renderAdminMeses(); await renderUsers(); await renderDashboard(); await renderHistorico();
+  } catch(e){res.innerHTML=`<div class="alert alert-err">Erro: ${e.message}</div>`;}
+}
+async function renderAdminMeses() {
+  const el=document.getElementById('admin-meses-list');
+  const meses=await DB.getMeses();
+  if(!meses.length){el.innerHTML='<div style="color:var(--text2);font-size:12px">Nenhum demonstrativo publicado.</div>';return;}
+  let html='';
+  for(const m of meses){
+    const demos=await DB.getDemosMes(m);
+    const nc=Object.keys(demos).length;
+    html+=`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #F1F5F9"><div><span style="font-weight:600;font-size:13px;color:var(--mp-navy)">${fmtMes(m)}</span><span style="font-size:11px;color:var(--text2);margin-left:8px">${nc} consultores</span></div><div style="display:flex;gap:8px"><span class="tag tag-green">Publicado</span><button class="btn btn-danger btn-sm" onclick="delMes('${m}')">Remover</button></div></div>`;
+  }
+  el.innerHTML=html;
+}
+async function delMes(m) { if(!confirm('Remover '+fmtMes(m)+'?'))return; await DB.deleteMes(m); await renderAdminMeses(); await renderDashboard(); await renderHistorico(); }
+
+// ═══ ADMIN: USERS ═══
+async function addUser() {
+  const nome=document.getElementById('nu-nome').value.trim().toUpperCase(), cpf=cleanCPF(document.getElementById('nu-cpf').value), tipo=document.getElementById('nu-tipo').value, msg=document.getElementById('add-msg');
+  if(!nome||nome.length<3){msg.innerHTML='<div class="alert alert-warn">Nome invalido.</div>';return;}
+  if(cpf.length!==11){msg.innerHTML='<div class="alert alert-warn">CPF invalido.</div>';return;}
+  const users=await DB.getAllUsers();
+  if(users.find(u=>u.cpf===cpf)){msg.innerHTML='<div class="alert alert-err">CPF ja cadastrado.</div>';return;}
+  await DB.createUser({nome,cpf,tipo,senha:cpf,criado:new Date().toISOString().slice(0,10)});
+  msg.innerHTML=`<div class="alert alert-ok">${nome} cadastrado! Senha: ${fmtCPF(cpf)}</div>`;
+  document.getElementById('nu-nome').value='';document.getElementById('nu-cpf').value='';
+  await renderUsers();
+}
+async function renderUsers() {
+  const users=await DB.getAllUsers(); const el=document.getElementById('users-list');
+  document.getElementById('user-count').textContent=users.length+' usuarios';
+  el.innerHTML=users.map(u=>{
+    const tc=u.tipo==='admin'?'tag-navy':u.tipo==='socio'?'tag-teal':'tag-blue';
+    const tl=u.tipo==='admin'?'Admin':u.tipo==='socio'?'Socio':'Consultor';
+    const bg=u.tipo==='admin'?'var(--mp-navy)':u.tipo==='socio'?'var(--mp-teal)':'var(--mp-blue)';
+    return `<div class="user-mgmt-row"><div style="width:32px;height:32px;border-radius:50%;background:${bg};color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">${getInitials(u.nome)}</div><div style="flex:1"><div style="font-weight:600;font-size:12px">${u.nome}</div><div style="font-size:10px;color:var(--text2);font-family:'DM Mono',monospace">${fmtCPF(u.cpf)}</div></div><span class="tag ${tc}">${tl}</span><button class="btn btn-outline btn-sm" onclick="resetPw('${u.cpf}')">Reset senha</button>${u.cpf!==currentUser.cpf?`<button class="btn btn-danger btn-sm" onclick="delUser('${u.cpf}')">Remover</button>`:''}</div>`;
+  }).join('');
+}
+async function resetPw(cpf) { await DB.updateUser(cpf,{senha:cpf}); const u=await DB.getUser(cpf); alert(`Senha de ${u.nome} resetada para o CPF.`); }
+async function delUser(cpf) { const u=await DB.getUser(cpf); if(!u||!confirm('Remover '+u.nome+'?'))return; await DB.deleteUser(cpf); await renderUsers(); }
+
+// ═══ INIT ═══
+(async()=>{ await DB.init(); await checkSession(); })();
+</script>
+</body>
+</html>
