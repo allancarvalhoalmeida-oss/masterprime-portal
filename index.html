@@ -683,6 +683,16 @@ async function renderDashboard() {
   el.innerHTML=renderDemo(demo, mesAtual);
 }
 function renderDemo(data, mes) {
+  // Formato novo (v2): o painel entrega o HTML já renderizado, com todas
+  // as seções (ADM 10%, Excedente, Avulsos Corretora/Consultoria, Despesas
+  // separadas, Cartas de Parceria etc.). Renderizamos direto.
+  if (data && data.html) {
+    const nome = data.nome || currentUser.nome;
+    return `
+    <div class="card"><div class="card-head"><div><div class="card-title">Demonstrativo - ${nome}</div><div class="card-sub">${fmtMes(mes)}</div></div><button class="btn btn-outline btn-sm" onclick="window.print()">&#128424; Imprimir</button></div>
+      <div class="card-body" style="padding:20px">${data.html}</div>
+    </div>`;
+  }
   const nome=data.nome||currentUser.nome, linhas=data.linhas||[], avulsos=data.avulsos||[], despesas=data.despesas||[];
   const tB=linhas.reduce((s,l)=>s+(l.bruto||0),0), tN=linhas.reduce((s,l)=>s+(l.nf||0),0);
   const tA=linhas.reduce((s,l)=>s+(l.admValor||0),0), tL=linhas.reduce((s,l)=>s+(l.liquido||0),0);

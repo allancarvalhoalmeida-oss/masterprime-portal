@@ -3870,98 +3870,63 @@ function exportarExcel() {
 }
 
 // ── PUBLICAR NO PORTAL ─────────────────────────────────────────────────────
-// Gera um arquivo JSON com os demonstrativos de cada consultor, no formato
-// esperado pelo Portal do Consultor. Inclui:
-//   - linhas (vendas/repasses) com campos adm, tipo, ref, cliente, dataVenda, parcela, bruto, nf, adm, liquido
-//   - avulsos (lançamentos avulsos do S.avulsos filtrados por nome)
-//   - despesas (despesas da sala para sócios, se aplicável)
-//   - totalFinal (líquido total recebido)
-// Baixa o arquivo como "demonstrativos_YYYY-MM.json" pronto para upload no admin do portal.
+// Gera um arquivo JSON com os demonstrativos de cada consultor.
+// Para manter a formatação idêntica ao Painel Split, capturamos o HTML
+// completo que o próprio painel gera para cada consultor (via mostrarDetalhe).
+// Dessa forma o Portal do Consultor renderiza o mesmo demonstrativo do
+// painel, com todas as seções: vendas, ADM 10%, Excedente, Avulsos
+// (Corretora e Consultoria), Despesas da Sala (Corretora/Sócios/Consultoria),
+// Cartas de Parceria, etc.
 function publicarNoPortal() {
   if (!S.resultado || Object.keys(S.resultado).length === 0) {
     alert('Calcule os demonstrativos primeiro! Vá em "Calcular" e clique no botão.');
     return;
   }
+  // Precisamos renderizar o demo de cada consultor — mostrarDetalhe usa o
+  // container #det-panel que fica na aba "Por consultor". Vamos salvar o
+  // container original e restaurá-lo depois.
+  const panel = document.getElementById('det-panel');
+  if (!panel) { alert('Erro: painel de detalhes não encontrado.'); return; }
+  const htmlOriginal = panel.innerHTML;
+  const consultorOriginal = S.curConsultor;
+
   const consultores = {};
-  // Mapa de despesas por sócio (totPorSocio.corretora + consultoria + socios)
-  const despesasSocios = {};
-  if (S.despesasSala && S.despesasSala.totPorSocio) {
-    const tps = S.despesasSala.totPorSocio;
-    Object.keys(tps.corretora||{}).forEach(n => { despesasSocios[n] = (despesasSocios[n]||0) - (tps.corretora[n]||0); });
-    Object.keys(tps.consultoria||{}).forEach(n => { despesasSocios[n] = (despesasSocios[n]||0) - (tps.consultoria[n]||0); });
-    Object.keys(tps.socios||{}).forEach(n => { despesasSocios[n] = (despesasSocios[n]||0) - (tps.socios[n]||0); });
+  try {
+    Object.entries(S.resultado).forEach(([nome, r]) => {
+      // Pula entradas auxiliares que não fazem sentido no Portal
+      if (nome === 'CAIXA') return;
+      if (nome.startsWith('LE - ')) return; // Repasses Leidiane/Edson
+      try {
+        mostrarDetalhe(nome);
+        // Captura o HTML renderizado
+        const html = panel.innerHTML;
+        // Total final para sumário (se disponível)
+        const totalFinal = (r.totLiqSocio !== undefined && r.totLiqSocio !== null)
+          ? r.totLiqSocio
+          : (r.totLiq || 0);
+        consultores[nome] = {
+          nome,
+          tipo: r.tipo || 'consultor',
+          html,
+          totalFinal: +(+totalFinal).toFixed(2)
+        };
+      } catch (e) {
+        console.warn('Erro ao gerar demo de', nome, e);
+      }
+    });
+  } finally {
+    // Restaura o painel
+    panel.innerHTML = htmlOriginal;
+    S.curConsultor = consultorOriginal;
   }
-  Object.entries(S.resultado).forEach(([nome, r]) => {
-    // Pula entradas especiais que não são consultores (caixa, LE - xxxx são repasses)
-    if (nome === 'CAIXA') return;
-    // Converte linhas internas para formato do portal
-    const linhas = (r.linhas||[]).map(l => ({
-      adm:      l.adm || '',
-      tipo:     l.tipo || r.tipo || '',
-      ref:      l.grupoCota || l.contrato || l.ref || '',
-      cliente:  l.nomeCliente || l.cliente || '',
-      dataVenda: l.dataVenda || '',
-      parcela:  l.parcela || '',
-      bruto:    +(l.brutoCons || 0),
-      nf:       +(l.nfCons || 0),
-      adm_val:  +(l.admCons || 0),
-      liquido:  +(l.liqCons || 0)
-    }));
-    // Renomeia adm_val para adm no output final (evitando conflito de chave durante construção)
-    const linhasOut = linhas.map(l => ({
-      adm: l.adm, tipo: l.tipo, ref: l.ref, cliente: l.cliente,
-      dataVenda: l.dataVenda, parcela: l.parcela,
-      bruto: l.bruto, nf: l.nf, adm_val: undefined,
-      liquido: l.liquido
-    }));
-    // Na verdade, o portal espera "adm" como descontrato administrativo e adm como chave do campo.
-    // Como já temos "adm" (administradora) e "adm" (valor), vamos usar a convenção do portal:
-    // o portal usa l.adm para administradora E l.adm para valor ADM. Vou mapear corretamente.
-    const linhasPortal = (r.linhas||[]).map(l => ({
-      adm:      l.adm || '',            // nome da administradora (Porto, Itaú, etc.)
-      tipo:     l.tipo || r.tipo || '',
-      ref:      l.grupoCota || l.contrato || l.ref || '',
-      cliente:  l.nomeCliente || l.cliente || '',
-      dataVenda: l.dataVenda || '',
-      parcela:  l.parcela || '',
-      bruto:    +(l.brutoCons || 0),
-      nf:       +(l.nfCons || 0),
-      // Ambiguidade resolvida: o portal usa "adm" tanto para nome da administradora quanto
-      // para valor do desconto administrativo. Aqui prioriza-se o nome da administradora
-      // (primeira coluna) e o valor do desconto vai em "admValor" para evitar conflito.
-      admValor: +(l.admCons || 0),
-      liquido:  +(l.liqCons || 0)
-    }));
-    // Avulsos desta pessoa
-    const avulsos = (S.avulsos||[])
-      .filter(a => normNome(a.nome) === nome)
-      .map(a => ({
-        descricao: (a.descricao||'') + (a.parcela?' ('+a.parcela+')':'') + (a.obs?' — '+a.obs:''),
-        valor: +(a.valor||0)
-      }));
-    // Despesas de sala (só para sócios/funcionários distribuídos)
-    const despesas = [];
-    if (despesasSocios[nome]) {
-      despesas.push({ descricao: 'Rateio despesas da sala', valor: despesasSocios[nome] });
-    }
-    const totalFinal = (r.totLiqSocio !== undefined ? r.totLiqSocio : (r.totLiq||0))
-                     + avulsos.reduce((s,a)=>s+a.valor,0)
-                     + despesas.reduce((s,d)=>s+d.valor,0);
-    consultores[nome] = {
-      nome,
-      tipo: r.tipo || 'consultor',
-      linhas: linhasPortal,
-      avulsos,
-      despesas,
-      totalFinal: +totalFinal.toFixed(2)
-    };
-  });
+
   const payload = {
     mes: S.mes,
     geradoEm: new Date().toISOString(),
+    versao: 2,
     consultores
   };
-  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const blob = new Blob([JSON.stringify(payload)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
