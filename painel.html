@@ -3892,41 +3892,63 @@ function publicarNoPortal() {
 
   const consultores = {};
 
-  // Helper: gera HTML com as cartas de parceria que este RESPONSÁVEL paga.
-  // S.cartas é { RESPONSAVEL: { PARCEIRO: [linhas] } } — cada consultor
-  // (responsável pela venda) vê suas cartas a pagar por parceiro.
+  // Usa a mesma lógica do painel (aba "Cartas parceria") para montar as cartas
+  // que cada vendedor responsável PAGA aos seus parceiros externos.
+  // Isso inclui Alessandro, Paulo, Rodrigues etc. — todos que aparecem no
+  // dropdown de "Cartas de Parceria" do painel.
+  let _cartasByVendedor = {};
+  try {
+    const cvp = (typeof buildCartasVcPaga === 'function') ? buildCartasVcPaga() : { byVendedor: {} };
+    _cartasByVendedor = cvp.byVendedor || {};
+  } catch(e) { console.warn('buildCartasVcPaga error:', e); }
+
+  // Helper: gera HTML com as cartas que um responsável paga, agrupadas por parceiro
   function renderCartasHtmlPagador(responsavel) {
-    const byPartner = S.cartas?.[responsavel];
-    if (!byPartner || !Object.keys(byPartner).length) return '';
+    // No painel, Bruno e Renato consolida em Renato Benedetti
+    const vendedorFiltro = (responsavel === 'BRUNO E RENATO') ? 'RENATO BENEDETTI' : responsavel;
+    const entries = _cartasByVendedor[vendedorFiltro];
+    if (!entries || !entries.length) return '';
+
+    // Agrupa por parceiro
+    const porParceiro = {};
+    entries.forEach(e => {
+      const p = e.partner || 'DESCONHECIDO';
+      if (!porParceiro[p]) porParceiro[p] = [];
+      porParceiro[p].push(e);
+    });
+
     let blocos = '';
     let totalGeral = 0;
-    Object.entries(byPartner).forEach(([partner, items]) => {
-      if (!items || !items.length) return;
+    Object.entries(porParceiro).forEach(([partner, items]) => {
       const total = items.reduce((s,e)=>s+(e.valor||0),0);
       totalGeral += total;
       blocos += `
       <div class="card" style="margin-top:16px">
         <div class="card-head" style="background:var(--mp-navy);border-radius:var(--r) var(--r) 0 0">
           <div>
-            <div style="color:#fff;font-weight:700;font-size:13px">Carta de Parceria — ${responsavel} &rarr; ${partner}</div>
-            <div style="color:rgba(255,255,255,.55);font-size:11px">M&ecirc;s ${S.mes} &middot; Total a repassar: ${fmtBRL(total)}</div>
+            <div style="color:#fff;font-weight:700;font-size:13px">Carta de Parceria &mdash; ${responsavel} &rarr; ${partner}</div>
+            <div style="color:rgba(255,255,255,.55);font-size:11px">M&ecirc;s ${S.mes} &middot; Total: ${fmtBRL(total)}</div>
           </div>
-          <div style="color:rgba(255,255,255,.4);font-size:10px">Informativo &mdash; valor que voc&ecirc; repassa ao parceiro</div>
+          <div style="color:rgba(255,255,255,.4);font-size:10px">Informativo &mdash; valor repassado ao parceiro</div>
         </div>
         <div class="tbl-wrap" style="padding:0"><table class="tbl">
           <thead><tr><th>Admin</th><th>Ref</th><th>Cliente</th><th class="num">Parcela</th><th class="num">Bruto</th><th class="num">NF</th><th class="num">ADM</th><th class="num">L&iacute;quido</th><th>%</th></tr></thead>
           <tbody>
-            ${items.map(e => `<tr>
-              <td style="font-size:10px">${e.linha?.adm || '&mdash;'}</td>
-              <td class="mono" style="font-size:10px">${(typeof fmtRef==='function'?fmtRef(e.linha):(e.linha?.grupoCota||e.linha?.contrato||'&mdash;'))}</td>
-              <td style="font-size:10px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.linha?.nomeCliente || '&mdash;'}</td>
-              <td class="mono dim">${e.linha?.parcela || '&mdash;'}</td>
-              <td class="mono num">${fmtBRL(e.linha?.brutoCons||0)}</td>
-              <td class="mono num neg">(${fmtBRL(e.linha?.nfCons||0)})</td>
-              <td class="mono num" style="color:var(--text2)">(${fmtBRL(e.linha?.admCons||0)})</td>
-              <td class="mono num pos fw6">${fmtBRL(e.valor||0)}</td>
-              <td class="mono dim" style="font-size:10px">${e.pct||''}</td>
-            </tr>`).join('')}
+            ${items.map(e => {
+              const neg = (e.valor||0) < 0;
+              const absVal = Math.abs(e.valor||0);
+              return `<tr>
+                <td style="font-size:10px">${e.linha?.adm || '&mdash;'}</td>
+                <td class="mono" style="font-size:10px">${(typeof fmtRef==='function'?fmtRef(e.linha):(e.linha?.grupoCota||e.linha?.contrato||'&mdash;'))}</td>
+                <td style="font-size:10px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.linha?.nomeCliente || '&mdash;'}</td>
+                <td class="mono dim">${e.linha?.parcela || '&mdash;'}</td>
+                <td class="mono num">${fmtBRL(e.linha?.brutoCons||0)}</td>
+                <td class="mono num neg">(${fmtBRL(e.linha?.nfCons||0)})</td>
+                <td class="mono num" style="color:var(--text2)">(${fmtBRL(e.linha?.admCons||0)})</td>
+                <td class="mono num ${neg?'neg':'pos'} fw6">${neg?'(':''}${fmtBRL(absVal)}${neg?')':''}</td>
+                <td class="mono dim" style="font-size:10px">${e.pct||''}</td>
+              </tr>`;
+            }).join('')}
           </tbody>
           <tfoot><tr><td colspan="7" class="fw7">TOTAL</td><td class="mono num pos fw7">${fmtBRL(total)}</td><td></td></tr></tfoot>
         </table></div>
@@ -3969,7 +3991,8 @@ function publicarNoPortal() {
     (S.avulsos || []).forEach(a => { if (a && a.nome) nomesSet.add(a.nome); });
     (typeof DESP_SOCIOS_ATIVOS !== 'undefined' ? DESP_SOCIOS_ATIVOS : []).forEach(n => nomesSet.add(n));
     (typeof PARCEIROS_DEMO !== 'undefined' ? PARCEIROS_DEMO : []).forEach(n => nomesSet.add(n));
-    Object.keys(S.cartas || {}).forEach(n => nomesSet.add(n)); // pagadores de cartas
+    Object.keys(S.cartas || {}).forEach(n => nomesSet.add(n)); // pagadores via S.cartas
+    Object.keys(_cartasByVendedor || {}).forEach(n => nomesSet.add(n)); // pagadores via obsParc
 
     // Aplica lista de ocultos (parceiros externos sem demo próprio no portal)
     const ocultos = (typeof OCULTOS_LISTA !== 'undefined' ? OCULTOS_LISTA : []);

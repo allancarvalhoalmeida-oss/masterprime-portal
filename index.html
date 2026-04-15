@@ -1034,13 +1034,22 @@ async function renderAdminOverview() {
 // Percorre as tabelas do demo e gera xlsx com valores NUMÉRICOS (não texto).
 // Detecta células de valor BRL ("R$ 1.234,56" ou "(R$ 123,45)") e converte pra number
 // aplicando formatação contábil, preservando sinal negativo de valores entre parênteses.
+// Reconhece APENAS valores em formato BRL:
+//   "R$ 1.234,56"   → 1234.56
+//   "(R$ 123,45)"   → -123.45
+//   "R$ -50,00"     → -50.00
+// Retorna null para qualquer outro formato (grupo/cota como "0485/269",
+// números sem vírgula decimal, texto comum etc.). Isso evita que células de
+// grupo/cota, parcela, ciclo etc. sejam convertidas em número errado.
 function parseBRLtoNumber(txt) {
   if (!txt) return null;
   const s = String(txt).trim();
-  if (!s || s === '—' || s === '-') return null;
-  // Detecta negativo (parênteses ou sinal)
-  const neg = /^\(.*\)$/.test(s) || /^-/.test(s);
-  const limpo = s.replace(/[R$()\s\-]/g,'').replace(/\./g,'').replace(',','.');
+  if (!s) return null;
+  // Precisa ter "R$" em algum lugar (formato oficial do painel)
+  if (!/R\$/.test(s)) return null;
+  const neg = /^\(.*\)$/.test(s) || /R\$\s*-/.test(s);
+  const limpo = s.replace(/[R$()\s\-—]/g,'').replace(/\./g,'').replace(',','.');
+  if (!limpo) return null;
   const v = parseFloat(limpo);
   if (isNaN(v)) return null;
   return neg ? -v : v;
@@ -1060,22 +1069,16 @@ function baixarDemoExcel(nomeSafe, nome, mes) {
         const row = [];
         tr.querySelectorAll('th, td').forEach(cell => {
           const txt = cell.textContent.trim();
+          // Só converte se for claramente BRL (tem "R$"). Grupo/cota, parcela,
+          // ciclo, refs etc. não têm "R$" e são mantidos como texto.
           const asNum = parseBRLtoNumber(txt);
-          // Heurística: só converte pra número se a célula parecer monetária
-          // (tem R$, parênteses, ou pertence a coluna de classe num/mono)
-          const pareceMonetario = /R\$|[()]/.test(txt) ||
-            cell.classList.contains('num') ||
-            (cell.classList.contains('mono') && asNum !== null && /^-?\d/.test(txt.replace(/[.,\s]/g,'').charAt(0)));
-          if (pareceMonetario && asNum !== null) {
-            row.push(asNum);
-          } else {
-            row.push(txt);
-          }
+          if (asNum !== null) row.push(asNum);
+          else row.push(txt);
         });
         if (row.length) rows.push(row);
       });
       const ws = XLSX.utils.aoa_to_sheet(rows);
-      // Aplica formato BRL às células numéricas
+      // Aplica formato BRL às células que viraram números
       const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
       for (let R = range.s.r; R <= range.e.r; R++) {
         for (let C = range.s.c; C <= range.e.c; C++) {
