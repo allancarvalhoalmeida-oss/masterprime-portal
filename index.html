@@ -268,8 +268,8 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-ser
     </div>
     <div id="login-error" class="login-error"></div>
     <div class="login-field">
-      <label class="login-label">CPF</label>
-      <input type="text" class="login-input" id="login-cpf" placeholder="000.000.000-00" maxlength="14" oninput="maskCPF(this)" autocomplete="username">
+      <label class="login-label">Usuário</label>
+      <input type="text" class="login-input" id="login-cpf" placeholder="nome.sobrenome" autocomplete="username" style="text-transform:lowercase">
     </div>
     <div class="login-field">
       <label class="login-label">Senha</label>
@@ -340,7 +340,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-ser
         <div class="card"><div class="card-head"><div class="card-title">Dados pessoais</div></div>
           <div class="card-body"><div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
             <div><div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px">Nome</div><div style="font-size:14px;font-weight:600" id="perfil-nome">--</div></div>
-            <div><div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px">CPF</div><div style="font-size:14px;font-family:'DM Mono',monospace" id="perfil-cpf">--</div></div>
+            <div><div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px">Usu&aacute;rio</div><div style="font-size:14px;font-family:'DM Mono',monospace" id="perfil-cpf">--</div></div>
             <div><div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px">Tipo</div><div id="perfil-tipo">--</div></div>
           </div></div>
         </div>
@@ -632,64 +632,73 @@ function fmtMes(k) { const [y,m]=k.split('-'); return `${MESES_NOME[m]||m} ${y}`
 
 // ═══ AUTH (Supabase Auth + migração automática) ═══
 // Login usa "email fantasma" {cpf}@masterprime.internal.
-// Se o usuário ainda não foi migrado (auth_id IS NULL em portal_users),
-// valida a senha antiga via RPC, faz signUp e vincula.
+// Aceita login por USERNAME (formato nome.sobrenome) ou CPF (admin legado).
+// Se usuário ainda não foi migrado ao Supabase Auth (auth_id IS NULL em
+// portal_users), valida senha via RPC, faz signUp e vincula.
 function cpfToFakeEmail(cpf) { return cpf + '@masterprime.internal'; }
+function usernameToFakeEmail(username) { return username + '@masterprime.internal'; }
+
+// Valida senha forte: >=8 chars, maiúscula, minúscula, número, símbolo
+function senhaForte(s) {
+  if (!s || s.length < 8) return false;
+  if (!/[A-Z]/.test(s)) return false;
+  if (!/[a-z]/.test(s)) return false;
+  if (!/\d/.test(s)) return false;
+  if (!/[^A-Za-z0-9]/.test(s)) return false;
+  return true;
+}
 
 async function doLogin() {
-  const cpf = cleanCPF(document.getElementById('login-cpf').value);
+  const loginInput = (document.getElementById('login-cpf').value||'').trim();
   const senha = document.getElementById('login-senha').value;
   const err = document.getElementById('login-error');
   const btn = document.getElementById('login-btn');
-  if (!cpf||cpf.length<11) { err.style.display='block'; err.textContent='Digite um CPF valido.'; return; }
+  if (!loginInput) { err.style.display='block'; err.textContent='Digite seu usuario.'; return; }
   if (!senha) { err.style.display='block'; err.textContent='Digite sua senha.'; return; }
   btn.disabled = true; btn.textContent = 'Entrando...';
   try {
+    // Detecta se é CPF (só dígitos, 11 chars) ou username
+    const soDigitos = loginInput.replace(/\D/g,'');
+    const ehCpf = soDigitos.length === 11 && /^\d+$/.test(loginInput.replace(/[.\-]/g,''));
+    const identificador = ehCpf ? soDigitos : loginInput.toLowerCase();
     if (!USE_SUPABASE) {
-      // Fallback localStorage (apenas para dev sem Supabase)
-      const user = await DB.getUser(cpf);
-      if (!user || user.senha !== senha) throw new Error('CPF ou senha incorretos.');
-      currentUser = user; sessionStorage.setItem('mp_session', cpf);
+      const user = await DB.getUser(identificador);
+      if (!user || user.senha !== senha) throw new Error('Usuario ou senha incorretos.');
+      currentUser = user; sessionStorage.setItem('mp_session', identificador);
       err.style.display='none'; await enterPortal();
       btn.disabled=false; btn.textContent='Entrar'; return;
     }
-    const email = cpfToFakeEmail(cpf);
-    // 1) Tenta signIn direto (usuário já migrado)
+    const email = ehCpf ? cpfToFakeEmail(identificador) : usernameToFakeEmail(identificador);
+    // 1) Tenta signIn direto
     let { data, error } = await sb.auth.signInWithPassword({ email, password: senha });
     if (error) {
-      // 2) Pode ser que o user ainda não tenha sido migrado. Validar senha antiga.
-      const { data: ok, error: rpcErr } = await sb.rpc('validar_senha_portal', { cpf_param: cpf, senha_param: senha });
+      // 2) User ainda não migrado: validar senha antiga
+      const { data: ok, error: rpcErr } = await sb.rpc('validar_senha_portal', { cpf_param: identificador, senha_param: senha });
       if (rpcErr) throw rpcErr;
       if (!ok) {
-        err.style.display='block'; err.textContent='CPF ou senha incorretos.';
+        err.style.display='block'; err.textContent='Usuario ou senha incorretos.';
         btn.disabled=false; btn.textContent='Entrar'; return;
       }
-      // 3) Senha bate: cria conta no Supabase Auth
+      // 3) Cria conta no Supabase Auth
       const su = await sb.auth.signUp({ email, password: senha });
       if (su.error) throw su.error;
-      // 4) Garante que está autenticado e vincula auth_id
       if (!su.data.session) {
         const si = await sb.auth.signInWithPassword({ email, password: senha });
         if (si.error) throw si.error;
       }
-      const linkRes = await sb.rpc('link_auth_to_portal', { cpf_param: cpf });
-      if (linkRes.error) throw linkRes.error;
+      // 4) Vincula auth_id (por username ou por CPF)
+      if (ehCpf) {
+        const linkRes = await sb.rpc('link_auth_to_portal', { cpf_param: identificador });
+        if (linkRes.error) throw linkRes.error;
+      } else {
+        const linkRes = await sb.rpc('link_auth_by_username', { username_param: identificador });
+        if (linkRes.error) throw linkRes.error;
+      }
     }
-    // Busca dados do user (RLS garante que só vê o próprio ou tudo se admin)
     const authUser = (await sb.auth.getUser()).data.user;
-    let userRow = null;
-    {
-      const r = await sb.from('portal_users').select('*').eq('auth_id', authUser.id).maybeSingle();
-      userRow = r.data;
-    }
-    if (!userRow) {
-      // Tenta vincular pelo CPF (caso o link ainda não tenha sido feito)
-      await sb.rpc('link_auth_to_portal', { cpf_param: cpf });
-      const r2 = await sb.from('portal_users').select('*').eq('auth_id', authUser.id).maybeSingle();
-      userRow = r2.data;
-    }
-    if (!userRow) throw new Error('Conta criada mas perfil não encontrado. Contate o administrador.');
-    currentUser = userRow;
+    const r = await sb.from('portal_users').select('*').eq('auth_id', authUser.id).maybeSingle();
+    if (!r.data) throw new Error('Conta criada mas perfil nao encontrado. Contate o administrador.');
+    currentUser = r.data;
     err.style.display='none';
     await enterPortal();
   } catch(e) {
@@ -737,7 +746,7 @@ async function enterPortal() {
   document.getElementById('sb-user-role').textContent=role;
   document.getElementById('admin-nav').classList.toggle('hidden', currentUser.tipo!=='admin');
   document.getElementById('perfil-nome').textContent=currentUser.nome;
-  document.getElementById('perfil-cpf').textContent=fmtCPF(currentUser.cpf);
+  document.getElementById('perfil-cpf').textContent=currentUser.username || fmtCPF(currentUser.cpf);
   document.getElementById('perfil-tipo').innerHTML=`<span class="tag tag-${currentUser.tipo==='admin'?'navy':currentUser.tipo==='socio'?'teal':'blue'}">${role}</span>`;
   nav('dashboard');
   await renderDashboard();
@@ -860,7 +869,7 @@ async function viewHist(mes) {
 async function changePw() {
   const cur=document.getElementById('pw-cur').value, nw=document.getElementById('pw-new').value, cf=document.getElementById('pw-conf').value, msg=document.getElementById('pw-msg');
   if(cur!==currentUser.senha){msg.innerHTML='<div class="alert alert-err">Senha atual incorreta.</div>';return;}
-  if(nw.length<6){msg.innerHTML='<div class="alert alert-warn">Minimo 6 caracteres.</div>';return;}
+  if(!senhaForte(nw)){msg.innerHTML='<div class="alert alert-warn">Senha fraca. M&iacute;nimo 8 caracteres, com mai&uacute;scula, min&uacute;scula, n&uacute;mero e s&iacute;mbolo. Ex: Master26@</div>';return;}
   if(nw!==cf){msg.innerHTML='<div class="alert alert-err">Senhas nao conferem.</div>';return;}
   try {
     if (USE_SUPABASE) {
@@ -881,9 +890,11 @@ async function changePw() {
 // ═══ ADMIN: UPLOAD ═══
 // Cria conta no Supabase Auth + portal_users quando o consultor ainda não existe.
 // Usa cliente secundário (sbSignup) para não deslogar o admin.
-async function criarUsuarioCompleto({ nome, cpf, senha, tipo }) {
-  // 1) Signup no Supabase Auth (usuário autentica pelo email fantasma)
-  const email = cpfToFakeEmail(cpf);
+// Aceita username (preferido) ou faz fallback para cpf como identificador.
+async function criarUsuarioCompleto({ nome, cpf, username, senha, tipo }) {
+  // Email fantasma: se tem username, usa ele; senão, usa CPF (legado)
+  const id = username || cpf;
+  const email = id + '@masterprime.internal';
   let authId = null;
   if (USE_SUPABASE && sbSignup) {
     const su = await sbSignup.auth.signUp({ email, password: senha });
@@ -891,19 +902,20 @@ async function criarUsuarioCompleto({ nome, cpf, senha, tipo }) {
       throw new Error('Supabase signUp: ' + su.error.message);
     }
     authId = su.data?.user?.id || null;
-    // Se o user já existia, tenta signIn pra pegar o id
     if (!authId) {
       const si = await sbSignup.auth.signInWithPassword({ email, password: senha });
       if (!si.error) authId = si.data.user.id;
     }
     await sbSignup.auth.signOut().catch(()=>{});
   }
-  // 2) Insere/atualiza em portal_users
+  // Insere/atualiza portal_users (com username)
   await DB.createUser({ nome, cpf, tipo: tipo||'consultor', senha, criado:new Date().toISOString().slice(0,10) });
-  // 3) Vincula auth_id (admin tem permissão total pela policy admin_all)
-  if (USE_SUPABASE && authId) {
-    await sb.from('portal_users').update({ auth_id: authId }).eq('cpf', cpf);
+  if (USE_SUPABASE) {
+    const updates = { auth_id: authId };
+    if (username) updates.username = username;
+    await sb.from('portal_users').update(updates).eq('cpf', cpf);
   }
+  return { username: id, senha, nome };
 }
 
 async function adminUpload(evt) {
@@ -914,20 +926,73 @@ async function adminUpload(evt) {
     const data=JSON.parse(text);
     if(!data.mes||!data.consultores){res.innerHTML='<div class="alert alert-err">Formato invalido. Precisa ter "mes" e "consultores".</div>';return;}
     await DB.publishDemos(data.mes, data.consultores);
-    // Auto-create users (+ signUp Supabase Auth)
-    let novos=0;
-    const users=await DB.getAllUsers();
-    for(const nome of Object.keys(data.consultores)){
-      if(!users.find(u=>u.nome===nome)){
-        const cpf=String(Math.floor(10000000000+Math.random()*89999999999));
-        await criarUsuarioCompleto({ nome, cpf, senha: cpf, tipo:'consultor' });
+    // Cria/atualiza contas usando username+senhaInicial do JSON
+    let novos=0, atualizados=0;
+    const credenciaisGeradas = [];
+    const users = await DB.getAllUsers();
+    for (const [nome, dados] of Object.entries(data.consultores)) {
+      const existente = users.find(u => u.nome === nome);
+      const username = dados.username || null;
+      const senhaInicial = dados.senhaInicial || null;
+      if (!existente) {
+        // Usuário novo: cria com username+senha do JSON
+        if (!username || !senhaInicial) {
+          // Fallback: gera CPF aleatório (fluxo antigo)
+          const cpf = String(Math.floor(10000000000+Math.random()*89999999999));
+          await criarUsuarioCompleto({ nome, cpf, senha: cpf, tipo: 'consultor' });
+          credenciaisGeradas.push({ nome, usuario: cpf, senha: cpf });
+        } else {
+          const cpf = String(Math.floor(10000000000+Math.random()*89999999999));
+          await criarUsuarioCompleto({ nome, cpf, username, senha: senhaInicial, tipo: 'consultor' });
+          credenciaisGeradas.push({ nome, usuario: username, senha: senhaInicial });
+        }
         novos++;
+      } else if (username && senhaInicial && !existente.username) {
+        // Usuário legado sem username: atualiza para novo esquema
+        try {
+          await sb.rpc('admin_set_username_senha', { cpf_param: existente.cpf, username_param: username, senha_param: senhaInicial });
+          // Cria conta Auth se não existir
+          if (!existente.auth_id) {
+            const result = await criarUsuarioCompleto({ nome, cpf: existente.cpf, username, senha: senhaInicial, tipo: existente.tipo });
+            credenciaisGeradas.push({ nome, usuario: username, senha: senhaInicial });
+          }
+          atualizados++;
+        } catch(e) { console.warn('Erro atualizando', nome, e); }
       }
     }
-    const nc=Object.keys(data.consultores).length;
-    res.innerHTML=`<div class="alert alert-ok">Demonstrativos de <strong>${fmtMes(data.mes)}</strong> publicados! ${nc} consultores${novos?` (${novos} novos usuarios criados)`:''}</div>`;
+    const nc = Object.keys(data.consultores).length;
+    let msg = `<div class="alert alert-ok">Demonstrativos de <strong>${fmtMes(data.mes)}</strong> publicados! ${nc} pessoas`;
+    if (novos) msg += ` &middot; ${novos} usu&aacute;rios criados`;
+    if (atualizados) msg += ` &middot; ${atualizados} atualizados`;
+    msg += '</div>';
+    if (credenciaisGeradas.length) {
+      msg += `<div class="card mt16" style="margin-top:16px">
+        <div class="card-head"><div><div class="card-title">Credenciais geradas (${credenciaisGeradas.length})</div><div class="card-sub">Envie para cada pessoa. No primeiro login \u00e9 obrigat\u00f3rio trocar a senha.</div></div>
+          <button class="btn btn-outline btn-sm" onclick="baixarCredenciaisExcel()">&#128202; Baixar Excel</button>
+        </div>
+        <div class="tbl-wrap" style="padding:0"><table class="tbl">
+          <thead><tr><th>Nome</th><th>Usu\u00e1rio</th><th>Senha inicial</th></tr></thead>
+          <tbody>${credenciaisGeradas.map(c=>`<tr><td>${c.nome}</td><td class="mono">${c.usuario}</td><td class="mono">${c.senha}</td></tr>`).join('')}</tbody>
+        </table></div>
+      </div>`;
+      window._ultimasCredenciais = credenciaisGeradas;
+    }
+    res.innerHTML = msg;
     await renderAdminMeses(); await renderUsers(); await renderDashboard(); await renderHistorico(); await renderAdminOverview();
   } catch(e){res.innerHTML=`<div class="alert alert-err">Erro: ${e.message}</div>`;}
+}
+
+// Baixa lista de credenciais em Excel para o admin distribuir
+function baixarCredenciaisExcel() {
+  const lista = window._ultimasCredenciais || [];
+  if (!lista.length) { alert('Nenhuma credencial gerada.'); return; }
+  const rows = [['Nome','Usuario','Senha inicial']];
+  lista.forEach(c => rows.push([c.nome, c.usuario, c.senha]));
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = [{wch:30},{wch:25},{wch:14}];
+  XLSX.utils.book_append_sheet(wb, ws, 'Credenciais');
+  XLSX.writeFile(wb, 'credenciais_portal.xlsx');
 }
 async function renderAdminMeses() {
   const el=document.getElementById('admin-meses-list');

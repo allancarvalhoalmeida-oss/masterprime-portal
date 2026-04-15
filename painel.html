@@ -3877,6 +3877,32 @@ function exportarExcel() {
 // painel, com todas as seções: vendas, ADM 10%, Excedente, Avulsos
 // (Corretora e Consultoria), Despesas da Sala (Corretora/Sócios/Consultoria),
 // Cartas de Parceria, etc.
+// Gera username automático a partir do nome:
+//   ALLAN ALMEIDA        → allan.almeida
+//   SANTOS               → santos.parceiro
+//   ANAISA E ALEX        → anaisa.alex   ("E" é stopword)
+function _removerAcentosUsr(s) { return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+const _STOPWORDS_USR = new Set(['E','DA','DE','DO','DOS','DAS','DI']);
+function _palavrasSigUsr(nome) {
+  return _removerAcentosUsr(nome).toUpperCase().split(/\s+/).filter(p => p && !_STOPWORDS_USR.has(p));
+}
+function gerarUsername(nome) {
+  const p = _palavrasSigUsr(nome);
+  if (!p.length) return '';
+  if (p.length === 1) return p[0].toLowerCase() + '.parceiro';
+  return (p[0] + '.' + p[1]).toLowerCase();
+}
+// Gera senha inicial segura: 3 letras do 1º nome + 3 do sobrenome + 26 + @
+//   ALLAN ALMEIDA → Allalm26@
+//   SANTOS        → Sanpar26@
+function gerarSenhaInicial(nome) {
+  const p = _palavrasSigUsr(nome);
+  if (!p.length) return 'Master26@';
+  const first = (p[0] + 'xxx').substring(0,3).toLowerCase();
+  const second = p.length >= 2 ? (p[1] + 'xxx').substring(0,3).toLowerCase() : 'par';
+  return first.charAt(0).toUpperCase() + first.slice(1) + second + '26@';
+}
+
 function publicarNoPortal() {
   if (!S.resultado || Object.keys(S.resultado).length === 0) {
     alert('Calcule os demonstrativos primeiro! Vá em "Calcular" e clique no botão.');
@@ -3937,15 +3963,23 @@ function publicarNoPortal() {
             ${items.map(e => {
               const neg = (e.valor||0) < 0;
               const absVal = Math.abs(e.valor||0);
+              // Stub ou sem valor calculado: só mostra info do contrato, colunas de valor em branco
+              const ehStub = e.ehStub || (e.valor||0) === 0;
+              const cellsValor = ehStub
+                ? `<td class="mono num dim">&mdash;</td>
+                   <td class="mono num dim">&mdash;</td>
+                   <td class="mono num dim">&mdash;</td>
+                   <td class="mono num dim">&mdash;</td>`
+                : `<td class="mono num">${fmtBRL(e.linha?.brutoCons||0)}</td>
+                   <td class="mono num neg">(${fmtBRL(e.linha?.nfCons||0)})</td>
+                   <td class="mono num" style="color:var(--text2)">(${fmtBRL(e.linha?.admCons||0)})</td>
+                   <td class="mono num ${neg?'neg':'pos'} fw6">${neg?'(':''}${fmtBRL(absVal)}${neg?')':''}</td>`;
               return `<tr>
                 <td style="font-size:10px">${e.linha?.adm || '&mdash;'}</td>
                 <td class="mono" style="font-size:10px">${(typeof fmtRef==='function'?fmtRef(e.linha):(e.linha?.grupoCota||e.linha?.contrato||'&mdash;'))}</td>
                 <td style="font-size:10px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.linha?.nomeCliente || '&mdash;'}</td>
                 <td class="mono dim">${e.linha?.parcela || '&mdash;'}</td>
-                <td class="mono num">${fmtBRL(e.linha?.brutoCons||0)}</td>
-                <td class="mono num neg">(${fmtBRL(e.linha?.nfCons||0)})</td>
-                <td class="mono num" style="color:var(--text2)">(${fmtBRL(e.linha?.admCons||0)})</td>
-                <td class="mono num ${neg?'neg':'pos'} fw6">${neg?'(':''}${fmtBRL(absVal)}${neg?')':''}</td>
+                ${cellsValor}
                 <td class="mono dim" style="font-size:10px">${e.pct||''}</td>
               </tr>`;
             }).join('')}
@@ -4024,7 +4058,9 @@ function publicarNoPortal() {
           nome,
           tipo,
           html,
-          totalFinal: +totalFinal.toFixed(2)
+          totalFinal: +totalFinal.toFixed(2),
+          username: gerarUsername(nome),
+          senhaInicial: gerarSenhaInicial(nome)
         };
       } catch (e) {
         console.warn('Erro ao gerar demo de', nome, e);
