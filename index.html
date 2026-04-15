@@ -987,7 +987,7 @@ async function renderAdminOverview() {
     return `<tr style="cursor:pointer" onclick="toggleOverviewDemo('${nome.replace(/'/g,"\\'")}')">
       <td class="fw6" style="font-size:12px">${nome}</td>
       <td><span class="tag ${tipoClass}" style="font-size:9px">${tipoLabel}</span></td>
-      <td class="mono num ${liqClass} fw6">${fmtBRL(liq)}</td>
+      <td class="mono num ${liqClass} fw6" style="white-space:nowrap;min-width:120px">${fmtBRL(liq)}</td>
       <td style="text-align:right;font-size:10px;color:var(--text2)">clique para ver &#8594;</td>
     </tr>
     <tr id="ov-demo-${nome.replace(/[^a-zA-Z0-9]/g,'_')}" class="hidden"><td colspan="4" style="padding:0;background:#F8FAFC">
@@ -1024,14 +1024,28 @@ async function renderAdminOverview() {
         <table class="tbl">
           <thead><tr><th>Nome</th><th>Tipo</th><th class="num">Liquido total</th><th></th></tr></thead>
           <tbody>${rows}</tbody>
-          <tfoot><tr><td colspan="2" class="fw7">TOTAL GERAL</td><td class="mono num fw7 ${totalLiq>=0?'pos':'neg'}">${fmtBRL(totalLiq)}</td><td></td></tr></tfoot>
+          <tfoot><tr><td colspan="2" class="fw7">TOTAL GERAL</td><td class="mono num fw7 ${totalLiq>=0?'pos':'neg'}" style="white-space:nowrap;min-width:120px">${fmtBRL(totalLiq)}</td><td></td></tr></tfoot>
         </table>
       </div>
     </div>`;
 }
 
 // ═══ EXPORTAR DEMO (Excel / PDF) ═══
-// Percorre as tabelas dentro do container do demo e gera um xlsx
+// Percorre as tabelas do demo e gera xlsx com valores NUMÉRICOS (não texto).
+// Detecta células de valor BRL ("R$ 1.234,56" ou "(R$ 123,45)") e converte pra number
+// aplicando formatação contábil, preservando sinal negativo de valores entre parênteses.
+function parseBRLtoNumber(txt) {
+  if (!txt) return null;
+  const s = String(txt).trim();
+  if (!s || s === '—' || s === '-') return null;
+  // Detecta negativo (parênteses ou sinal)
+  const neg = /^\(.*\)$/.test(s) || /^-/.test(s);
+  const limpo = s.replace(/[R$()\s\-]/g,'').replace(/\./g,'').replace(',','.');
+  const v = parseFloat(limpo);
+  if (isNaN(v)) return null;
+  return neg ? -v : v;
+}
+
 function baixarDemoExcel(nomeSafe, nome, mes) {
   try {
     const container = document.getElementById('demo-body-' + nomeSafe);
@@ -1039,9 +1053,41 @@ function baixarDemoExcel(nomeSafe, nome, mes) {
     const tabelas = container.querySelectorAll('table');
     if (!tabelas.length) { alert('Sem dados para exportar'); return; }
     const wb = XLSX.utils.book_new();
-    tabelas.forEach((tbl, i) => {
-      const ws = XLSX.utils.table_to_sheet(tbl);
-      const nomeAba = (i === 0 ? 'Demonstrativo' : 'Tabela ' + (i+1)).slice(0,31);
+    tabelas.forEach((tbl, idx) => {
+      // Converte tabela HTML em array 2D, detectando valores numéricos
+      const rows = [];
+      tbl.querySelectorAll('tr').forEach(tr => {
+        const row = [];
+        tr.querySelectorAll('th, td').forEach(cell => {
+          const txt = cell.textContent.trim();
+          const asNum = parseBRLtoNumber(txt);
+          // Heurística: só converte pra número se a célula parecer monetária
+          // (tem R$, parênteses, ou pertence a coluna de classe num/mono)
+          const pareceMonetario = /R\$|[()]/.test(txt) ||
+            cell.classList.contains('num') ||
+            (cell.classList.contains('mono') && asNum !== null && /^-?\d/.test(txt.replace(/[.,\s]/g,'').charAt(0)));
+          if (pareceMonetario && asNum !== null) {
+            row.push(asNum);
+          } else {
+            row.push(txt);
+          }
+        });
+        if (row.length) rows.push(row);
+      });
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      // Aplica formato BRL às células numéricas
+      const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+      for (let R = range.s.r; R <= range.e.r; R++) {
+        for (let C = range.s.c; C <= range.e.c; C++) {
+          const addr = XLSX.utils.encode_cell({ r:R, c:C });
+          const cell = ws[addr];
+          if (cell && typeof cell.v === 'number') {
+            cell.t = 'n';
+            cell.z = '"R$ "#,##0.00;[Red]"(R$ "#,##0.00")"';
+          }
+        }
+      }
+      const nomeAba = (idx === 0 ? 'Demonstrativo' : 'Tabela ' + (idx+1)).slice(0,31);
       XLSX.utils.book_append_sheet(wb, ws, nomeAba);
     });
     const filename = 'Demo_' + nome.replace(/\s+/g,'_') + '_' + mes + '.xlsx';

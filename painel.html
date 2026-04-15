@@ -3891,43 +3891,36 @@ function publicarNoPortal() {
   const consultorOriginal = S.curConsultor;
 
   const consultores = {};
-  // Pré-calcula, para cada parceiro que RECEBE cartas, o conjunto de cartas dele.
-  // S.cartas é { RESPONSAVEL: { PARCEIRO: [linhas] } } — invertemos para
-  // { PARCEIRO: { RESPONSAVEL: [linhas] } } para consulta rápida por parceiro.
-  const cartasPorParceiro = {};
-  Object.entries(S.cartas || {}).forEach(([resp, byPart]) => {
-    Object.entries(byPart || {}).forEach(([part, items]) => {
-      if (!items || !items.length) return;
-      if (!cartasPorParceiro[part]) cartasPorParceiro[part] = {};
-      cartasPorParceiro[part][resp] = items;
-    });
-  });
-  // Helper: gera uma tabela HTML com as cartas que um parceiro recebe
-  function renderCartasHtmlParceiro(partner) {
-    const byResp = cartasPorParceiro[partner];
-    if (!byResp) return '';
+
+  // Helper: gera HTML com as cartas de parceria que este RESPONSÁVEL paga.
+  // S.cartas é { RESPONSAVEL: { PARCEIRO: [linhas] } } — cada consultor
+  // (responsável pela venda) vê suas cartas a pagar por parceiro.
+  function renderCartasHtmlPagador(responsavel) {
+    const byPartner = S.cartas?.[responsavel];
+    if (!byPartner || !Object.keys(byPartner).length) return '';
     let blocos = '';
     let totalGeral = 0;
-    Object.entries(byResp).forEach(([resp, items]) => {
+    Object.entries(byPartner).forEach(([partner, items]) => {
+      if (!items || !items.length) return;
       const total = items.reduce((s,e)=>s+(e.valor||0),0);
       totalGeral += total;
       blocos += `
       <div class="card" style="margin-top:16px">
         <div class="card-head" style="background:var(--mp-navy);border-radius:var(--r) var(--r) 0 0">
           <div>
-            <div style="color:#fff;font-weight:700;font-size:13px">Carta de Parceria — ${resp} → ${partner}</div>
-            <div style="color:rgba(255,255,255,.55);font-size:11px">Mês ${S.mes} · Total: ${fmtBRL(total)}</div>
+            <div style="color:#fff;font-weight:700;font-size:13px">Carta de Parceria — ${responsavel} &rarr; ${partner}</div>
+            <div style="color:rgba(255,255,255,.55);font-size:11px">M&ecirc;s ${S.mes} &middot; Total a repassar: ${fmtBRL(total)}</div>
           </div>
-          <div style="color:rgba(255,255,255,.4);font-size:10px">Informativo — valor a receber</div>
+          <div style="color:rgba(255,255,255,.4);font-size:10px">Informativo &mdash; valor que voc&ecirc; repassa ao parceiro</div>
         </div>
         <div class="tbl-wrap" style="padding:0"><table class="tbl">
-          <thead><tr><th>Admin</th><th>Ref</th><th>Cliente</th><th class="num">Parcela</th><th class="num">Bruto</th><th class="num">NF</th><th class="num">ADM</th><th class="num">Líquido</th><th>%</th></tr></thead>
+          <thead><tr><th>Admin</th><th>Ref</th><th>Cliente</th><th class="num">Parcela</th><th class="num">Bruto</th><th class="num">NF</th><th class="num">ADM</th><th class="num">L&iacute;quido</th><th>%</th></tr></thead>
           <tbody>
             ${items.map(e => `<tr>
-              <td style="font-size:10px">${e.linha?.adm || '—'}</td>
-              <td class="mono" style="font-size:10px">${(typeof fmtRef==='function'?fmtRef(e.linha):(e.linha?.grupoCota||e.linha?.contrato||'—'))}</td>
-              <td style="font-size:10px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.linha?.nomeCliente || '—'}</td>
-              <td class="mono dim">${e.linha?.parcela || '—'}</td>
+              <td style="font-size:10px">${e.linha?.adm || '&mdash;'}</td>
+              <td class="mono" style="font-size:10px">${(typeof fmtRef==='function'?fmtRef(e.linha):(e.linha?.grupoCota||e.linha?.contrato||'&mdash;'))}</td>
+              <td style="font-size:10px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.linha?.nomeCliente || '&mdash;'}</td>
+              <td class="mono dim">${e.linha?.parcela || '&mdash;'}</td>
               <td class="mono num">${fmtBRL(e.linha?.brutoCons||0)}</td>
               <td class="mono num neg">(${fmtBRL(e.linha?.nfCons||0)})</td>
               <td class="mono num" style="color:var(--text2)">(${fmtBRL(e.linha?.admCons||0)})</td>
@@ -3939,58 +3932,76 @@ function publicarNoPortal() {
         </table></div>
       </div>`;
     });
-    return blocos ? `
+    if (!blocos) return '';
+    return `
       <div style="margin-top:24px">
         <div style="font-size:14px;font-weight:700;color:var(--mp-navy);margin-bottom:6px">Cartas de Parceria</div>
-        <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Valores a receber de parceiros internos · Total: ${fmtBRL(totalGeral)}</div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Valores que voc&ecirc; repassa aos parceiros &middot; Total: ${fmtBRL(totalGeral)}</div>
         ${blocos}
-      </div>` : '';
+      </div>`;
+  }
+
+  // Helper: extrai o totalFinal real do cabeçalho renderizado (last det-stat-value)
+  function extrairTotalFinal() {
+    const stats = panel.querySelectorAll('.det-stat-value');
+    if (!stats.length) return 0;
+    // O último stat-value é o "Líquido total"
+    const txt = stats[stats.length - 1].textContent || '';
+    // parse BRL: "R$ 112.946,41" → 112946.41
+    const clean = txt.replace(/[^\d,.-]/g,'').replace(/\./g,'').replace(',','.');
+    const v = parseFloat(clean);
+    return isNaN(v) ? 0 : v;
   }
 
   try {
-    // Garante que os nomes que recebem cartas também entrem no portal, mesmo
-    // que não estejam em S.resultado (parceiros externos sem demonstrativo).
-    const nomesDemo = new Set(Object.keys(S.resultado));
-    Object.keys(cartasPorParceiro).forEach(n => nomesDemo.add(n));
+    // Monta a lista de consultores IGUAL ao painel (renderResultados):
+    //  - quem tem vendas (S.resultado)
+    //  - quem tem avulsos (Erik, Priscila, Douglas, Leonardo...)
+    //  - sócios com despesas ativas (mesmo sem vendas)
+    //  - parceiros que sempre aparecem (Advanced, Strada, Camino, Spolaor)
+    //  - entradas LE - XXXX (Edson/Leidiane)
+    //  - responsáveis por cartas de parceria (pagadores)
+    // Exclui: OCULTOS_LISTA, CAIXA
+    const nomesSet = new Set();
+    Object.keys(S.resultado).forEach(n => {
+      if (n !== 'CAIXA') nomesSet.add(n);
+    });
+    (S.avulsos || []).forEach(a => { if (a && a.nome) nomesSet.add(a.nome); });
+    (typeof DESP_SOCIOS_ATIVOS !== 'undefined' ? DESP_SOCIOS_ATIVOS : []).forEach(n => nomesSet.add(n));
+    (typeof PARCEIROS_DEMO !== 'undefined' ? PARCEIROS_DEMO : []).forEach(n => nomesSet.add(n));
+    Object.keys(S.cartas || {}).forEach(n => nomesSet.add(n)); // pagadores de cartas
+
+    // Aplica lista de ocultos (parceiros externos sem demo próprio no portal)
+    const ocultos = (typeof OCULTOS_LISTA !== 'undefined' ? OCULTOS_LISTA : []);
+    const nomesDemo = [...nomesSet]
+      .filter(n => n !== 'CAIXA')
+      .filter(n => !ocultos.some(o => n.toUpperCase().includes(o)));
 
     nomesDemo.forEach(nome => {
-      if (nome === 'CAIXA') return;
-      if (nome.startsWith('LE - ')) return;
       try {
-        let html;
-        let totalFinal = 0;
+        mostrarDetalhe(nome);
+        let html = panel.innerHTML;
+        // Pega o totalFinal real (já inclui ADM, Excedente, Avulsos, Despesas)
+        const totalFinal = extrairTotalFinal();
+        // Remove botões do painel que não funcionam no portal
+        html = html.replace(/<button[^>]*onclick="[^"]*exportar(?:Demo|Excel|Resumo)[^"]*"[^>]*>[\s\S]*?<\/button>/g, '');
+        html = html.replace(/<button[^>]*onclick="[^"]*(?:S\.|atualizar|nav\(|mostrar|calcular)[^"]*"[^>]*>[\s\S]*?<\/button>/g, '');
+        // Anexa cartas de parceria que este consultor PAGA (cada um vê só as suas)
+        const cartasHtml = renderCartasHtmlPagador(nome);
+        if (cartasHtml) html += cartasHtml;
+        // Resolve tipo (consultor / socio / parceiro / funcionario)
         const r = S.resultado[nome];
-        if (r) {
-          mostrarDetalhe(nome);
-          html = panel.innerHTML;
-          // Remove botões que chamam funções específicas do painel (exportarDemoExcel,
-          // exportarDemo, etc.) — no portal do consultor essas funções não existem.
-          html = html.replace(/<button[^>]*onclick="[^"]*exportar(?:Demo|Excel|Resumo)[^"]*"[^>]*>[\s\S]*?<\/button>/g, '');
-          // Também remove qualquer outro botão com onclick quebrado (referencias a funções internas)
-          html = html.replace(/<button[^>]*onclick="[^"]*(?:S\.|atualizar|nav\(|mostrar|calcular)[^"]*"[^>]*>[\s\S]*?<\/button>/g, '');
-          totalFinal = (r.totLiqSocio !== undefined && r.totLiqSocio !== null) ? r.totLiqSocio : (r.totLiq || 0);
-        } else {
-          // Parceiro externo sem demo — monta um cabeçalho simples
-          html = `
-            <div class="det-header">
-              <div class="det-name">${nome}</div>
-              <div class="det-meta">Parceiro externo · ${S.mes}</div>
-            </div>`;
-        }
-        // Anexa cartas de parceria que este parceiro recebe
-        const cartasHtml = renderCartasHtmlParceiro(nome);
-        if (cartasHtml) {
-          html += cartasHtml;
-          // Soma total das cartas no total final
-          Object.values(cartasPorParceiro[nome]||{}).forEach(items => {
-            totalFinal += items.reduce((s,e)=>s+(e.valor||0),0);
-          });
-        }
+        const PARC = (typeof PARCEIROS_DEMO !== 'undefined' ? PARCEIROS_DEMO : []);
+        const SOC = (typeof TODOS_SOCIOS !== 'undefined' ? TODOS_SOCIOS : []);
+        let tipo = 'consultor';
+        if (r && r.tipo) tipo = r.tipo;
+        else if (PARC.includes(nome) || nome.startsWith('LE -')) tipo = 'parceiro';
+        else if (SOC.includes(nome)) tipo = 'socio';
         consultores[nome] = {
           nome,
-          tipo: r ? (r.tipo || 'consultor') : 'parceiro',
+          tipo,
           html,
-          totalFinal: +(+totalFinal).toFixed(2)
+          totalFinal: +totalFinal.toFixed(2)
         };
       } catch (e) {
         console.warn('Erro ao gerar demo de', nome, e);
