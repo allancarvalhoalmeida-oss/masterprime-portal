@@ -337,14 +337,14 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-ser
         <div id="hist-content"><div class="empty-state"><div class="empty-state-icon">&#128197;</div><div class="empty-state-title">Nenhum historico</div><div class="empty-state-desc">Seus demonstrativos anteriores aparecerao aqui.</div></div></div>
       </div>
 
-      <!-- ASSEMBLEIA (iframe) -->
+      <!-- ASSEMBLEIA (iframe carregado sob demanda) -->
       <div class="screen" id="s-assembleia" style="padding:0;height:calc(100vh - 0px);overflow:hidden">
-        <iframe id="iframe-assembleia" src="" style="width:100%;height:100%;border:0;display:block" loading="lazy" title="Resultado de Assembleia"></iframe>
+        <iframe id="iframe-assembleia" src="about:blank" data-target="assembleia.html" style="width:100%;height:100%;border:0;display:block" title="Resultado de Assembleia"></iframe>
       </div>
 
-      <!-- LANCES (iframe) -->
+      <!-- LANCES (iframe carregado sob demanda) -->
       <div class="screen" id="s-lances" style="padding:0;height:calc(100vh - 0px);overflow:hidden">
-        <iframe id="iframe-lances" src="" style="width:100%;height:100%;border:0;display:block" loading="lazy" title="Consulta de Lances"></iframe>
+        <iframe id="iframe-lances" src="about:blank" data-target="lances.html" style="width:100%;height:100%;border:0;display:block" title="Consulta de Lances"></iframe>
       </div>
 
       <!-- PERFIL -->
@@ -776,12 +776,11 @@ function nav(id) {
   if(s)s.classList.add('active'); if(n)n.classList.add('active');
   document.getElementById('sidebar').classList.remove('open');
   // Lazy-load dos iframes: só carrega na primeira visita (evita 2.5 MB no login)
-  if (id === 'assembleia') {
-    const ifr = document.getElementById('iframe-assembleia');
-    if (ifr && !ifr.src) ifr.src = 'assembleia.html';
-  } else if (id === 'lances') {
-    const ifr = document.getElementById('iframe-lances');
-    if (ifr && !ifr.src) ifr.src = 'lances.html';
+  if (id === 'assembleia' || id === 'lances') {
+    const ifr = document.getElementById('iframe-' + id);
+    if (ifr && ifr.dataset.target && ifr.getAttribute('src') === 'about:blank') {
+      ifr.src = ifr.dataset.target;
+    }
   }
 }
 function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
