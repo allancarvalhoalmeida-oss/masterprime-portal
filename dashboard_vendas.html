@@ -181,7 +181,7 @@ tbody td:nth-child(4){font-weight:700;color:#16A34A}
     <div class="tbl-card">
       <div class="chart-title"><span>Ranking de Consultores</span><div style="font-size:10px;color:#94A3B8;font-weight:500;letter-spacing:.3px;text-transform:none;margin-top:2px">Performance por volume de crédito no período</div></div>
       <table>
-        <thead><tr><th>#</th><th>Consultor</th><th>Cotas</th><th>Crédito Total</th><th>Ticket Médio</th><th>Progresso vs. Líder</th><th>Var.</th></tr></thead>
+        <thead><tr><th>#</th><th onclick="sortRanking('nome')" style="cursor:pointer">Consultor</th><th onclick="sortRanking('cotas')" style="cursor:pointer">Cotas ▾</th><th onclick="sortRanking('credito')" style="cursor:pointer">Crédito Total ▾</th><th onclick="sortRanking('ticket')" style="cursor:pointer">Ticket Médio ▾</th><th>Participação</th><th>Var.</th></tr></thead>
         <tbody id="rankingBody"></tbody>
       </table>
     </div>
@@ -663,7 +663,7 @@ const ADMIN_COLORS = {
 };
 function colorForAdm(name) {
   const k = (name||'').toString().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
-  return ADMIN_COLORS[k] || '#64748b';
+  return ADMIN_BRAND_COLORS[k] || ADMIN_COLORS[k] || '#64748b';
 }
 
 function destroyChart(key) { if (charts[key]) { charts[key].destroy(); delete charts[key]; } }
@@ -680,9 +680,22 @@ function renderChartMes(data) {
   const meses = ['JANEIRO','FEVEREIRO','MARCO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
   const mesLabels = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
   const norm = s => (s||'').toString().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
-  const counts = meses.map(m => data.filter(d => norm(d.mes) === m).length);
+  const fc = getMSValues('wrapConsultor');
+  const fa = getMSValues('wrapAno');
+  const fAdm = getMSValues('wrapAdm');
+  const fSit = getMSValues('wrapSit');
+  const fMes = getMSValues('wrapMes');
+  let base = rawData;
+  if (fc.length) base = base.filter(d => fc.includes(d.consultor));
+  if (fa.length) base = base.filter(d => fa.includes(d.ano));
+  if (fAdm.length) base = base.filter(d => fAdm.includes(d.adm));
+  if (fSit.length) base = base.filter(d => { const s = norm(d.status); if (fSit.includes('CONTEMPLADO') && s.startsWith('CONTEMPL')) return true; if (fSit.includes('NORMAL') && s === 'NORMAL') return true; return false; });
+  const counts = meses.map(m => base.filter(d => norm(d.mes) === m).length);
+  let cutoffIdx = -1;
+  if (fMes.length > 0) { const selIdxs = fMes.map(m => meses.indexOf(norm(m))).filter(i => i >= 0); if (selIdxs.length) cutoffIdx = Math.max(...selIdxs); }
+  else { counts.forEach((c,i) => { if (c > 0) cutoffIdx = Math.max(cutoffIdx, i); }); }
   const labels = [], values = [];
-  counts.forEach((c, i) => { if (c > 0) { labels.push(mesLabels[i]); values.push(c); } });
+  for (let i = 0; i <= cutoffIdx; i++) { labels.push(mesLabels[i]); values.push(counts[i]); }
   charts.mes = new Chart(document.getElementById('chartMes'), { type: 'bar', data: { labels, datasets: [{ data: values, backgroundColor: '#7A9BC8', borderRadius: 4, barPercentage: 0.7 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'top', color: '#64748B', font: { size: 10, weight: 'bold' } } }, scales: { x: { ticks: { color: '#64748B', font: { size: 10 } }, grid: { display: false } }, y: { ticks: { color: '#64748B', font: { size: 10 } }, grid: { color: '#E2E8F0' } } } } });
 }
 
@@ -775,6 +788,7 @@ function renderChartEvolucao(data) {
 // ══════════════════════════════════════════════════════════════
 // RANKING TABLE
 // ══════════════════════════════════════════════════════════════
+let rankingState = { sortCol: 'credito', sortDir: 'desc' };
 function renderRanking(data) {
   const groups = {};
   data.forEach(d => { if (!d.consultor) return; if (!groups[d.consultor]) groups[d.consultor] = { cotas: 0, credito: 0 }; groups[d.consultor].cotas++; groups[d.consultor].credito += d.credito; });
@@ -788,22 +802,38 @@ function renderRanking(data) {
   let prevData = rawData;
   if (fAdm.length) prevData = prevData.filter(d => fAdm.includes(d.adm));
   if (fSit.length) prevData = prevData.filter(d => { const s = normS(d.status); if (fSit.includes('CONTEMPLADO') && s.startsWith('CONTEMPL')) return true; if (fSit.includes('NORMAL') && s === 'NORMAL') return true; return false; });
-  if (fMes.length === 1 && fa.length === 1) { const curMes = normMes(fMes[0]); const idx = mesesOrd.indexOf(curMes); const curYear = parseInt(fa[0]); if (idx === 0) prevData = prevData.filter(d => normMes(d.mes) === 'DEZEMBRO' && d.ano === String(curYear-1)); else prevData = prevData.filter(d => normMes(d.mes) === mesesOrd[idx-1] && d.ano === String(curYear)); } else if (fa.length === 1) { const curYear = parseInt(fa[0]); prevData = prevData.filter(d => d.ano === String(curYear-1)); if (fMes.length) { const targets = fMes.map(normMes); prevData = prevData.filter(d => targets.includes(normMes(d.mes))); } } else { prevData = []; }
+  if (fMes.length === 1 && fa.length === 1) { const curMes = normMes(fMes[0]); const idx = mesesOrd.indexOf(curMes); const curYear = parseInt(fa[0]); if (idx === 0) prevData = prevData.filter(d => normMes(d.mes) === 'DEZEMBRO' && d.ano === String(curYear-1)); else prevData = prevData.filter(d => normMes(d.mes) === mesesOrd[idx-1] && d.ano === String(curYear)); }
+  else if (fa.length === 1) { const curYear = parseInt(fa[0]); prevData = prevData.filter(d => d.ano === String(curYear-1)); if (fMes.length) { const targets = fMes.map(normMes); prevData = prevData.filter(d => targets.includes(normMes(d.mes))); } }
+  else { prevData = []; }
   const prevGroups = {};
   prevData.forEach(d => { if (!d.consultor) return; if (!prevGroups[d.consultor]) prevGroups[d.consultor] = 0; prevGroups[d.consultor] += d.credito; });
-  const sorted = Object.entries(groups).sort((a,b) => b[1].credito - a[1].credito);
-  const maxCredito = sorted.length > 0 ? sorted[0][1].credito : 1;
-  const totalCredito = sorted.reduce((s, [, v]) => s + v.credito, 0);
+  window.__rankingRaw = { groups, prevGroups };
+  drawRanking();
+}
+function drawRanking() {
+  const { groups, prevGroups } = window.__rankingRaw || { groups: {}, prevGroups: {} };
+  const col = rankingState.sortCol;
+  const dir = rankingState.sortDir === 'asc' ? 1 : -1;
+  const sorted = Object.entries(groups).sort((a,b) => {
+    if (col === 'cotas') return (a[1].cotas - b[1].cotas) * dir;
+    if (col === 'credito') return (a[1].credito - b[1].credito) * dir;
+    if (col === 'ticket') return ((a[1].credito/a[1].cotas) - (b[1].credito/b[1].cotas)) * dir;
+    if (col === 'nome') return a[0].localeCompare(b[0]) * dir;
+    return (a[1].credito - b[1].credito) * dir;
+  });
+  const totalCredito = sorted.reduce((s,[,v]) => s + v.credito, 0) || 1;
   const tbody = document.getElementById('rankingBody');
   tbody.innerHTML = sorted.map(([nome, v], i) => {
-    const barW = ((v.credito/maxCredito)*100).toFixed(0);
+    const pct = ((v.credito/totalCredito)*100).toFixed(1);
     const rankCls = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : 'rank-n';
     const prevVal = prevGroups[nome] || 0;
     let varHtml = '';
-    if (prevVal > 0) { const varPct = ((v.credito - prevVal) / prevVal) * 100; const up = varPct >= 0; const color = up ? '#16A34A' : '#DC2626'; const bg = up ? '#F0FDF4' : '#FEF2F2'; const arrow = up ? '↗' : '↘'; varHtml = '<span style="padding:2px 6px;border-radius:4px;background:'+bg+';color:'+color+';font-size:10px;font-weight:700">'+arrow+' '+(up?'+':'')+varPct.toFixed(1)+'%</span>'; } else { varHtml = '<span style="color:#CBD5E1">—</span>'; }
-    return '<tr><td><span class="rank-num '+rankCls+'">'+(i+1)+'</span></td><td style="font-weight:600;color:#1E293B">'+nome+'</td><td>'+v.cotas+'</td><td style="font-weight:600;color:#2D3F5E">'+fmtFull(v.credito)+'</td><td>'+fmt(v.credito/v.cotas)+'</td><td><div class="bar-cell"><div class="bar-bg"><div class="bar-fill" style="width:'+barW+'%"></div></div></div></td><td>'+varHtml+'</td></tr>';
+    if (prevVal > 0) { const varPct = ((v.credito - prevVal) / prevVal) * 100; const up = varPct >= 0; const color = up ? '#16A34A' : '#DC2626'; const bg = up ? '#F0FDF4' : '#FEF2F2'; const arrow = up ? '↗' : '↘'; varHtml = '<span style="padding:2px 6px;border-radius:4px;background:'+bg+';color:'+color+';font-size:10px;font-weight:700">'+arrow+' '+(up?'+':'')+varPct.toFixed(1)+'%</span>'; }
+    else { varHtml = '<span style="color:#CBD5E1">—</span>'; }
+    return '<tr><td><span class="rank-num '+rankCls+'">'+(i+1)+'</span></td><td style="font-weight:600;color:#1E293B">'+nome+'</td><td>'+v.cotas+'</td><td style="font-weight:600;color:#2D3F5E">'+fmtFull(v.credito)+'</td><td>'+fmt(v.credito/v.cotas)+'</td><td><div class="bar-cell"><div class="bar-bg"><div class="bar-fill" style="width:'+pct+'%"></div></div><span style="font-size:11px;color:#64748B;margin-left:6px">'+pct+'%</span></div></td><td>'+varHtml+'</td></tr>';
   }).join('');
 }
+function sortRanking(col) { if (rankingState.sortCol === col) rankingState.sortDir = rankingState.sortDir === 'asc' ? 'desc' : 'asc'; else { rankingState.sortCol = col; rankingState.sortDir = col === 'nome' ? 'asc' : 'desc'; } drawRanking(); }
 
 // ════════════════════════════════════════════════════════════════════
 // ════════════════════════════════════════════════════════════════════
@@ -836,11 +866,26 @@ function toSortDate(dateVal) {
   if (!m) return 0;
   return parseInt(m[3])*10000 + parseInt(m[1])*100 + parseInt(m[2]);
 }
+const ADMIN_BRAND_COLORS = {
+  'ITAU':'#EC7000','ITAÚ':'#EC7000',
+  'PORTO SEGURO':'#002D72','PORTO':'#002D72',
+  'BRADESCO':'#CC092F',
+  'SANTANDER':'#EC0000',
+  'CAIXA':'#0070AE',
+  'HS CONSORCIOS':'#7B2E7F','HS CONSÓRCIOS':'#7B2E7F',
+  'YAMAHA':'#E60012',
+  'ADEMICON':'#00A88E',
+  'EMBRACON':'#F29100',
+  'MAGALU':'#0086FF',
+  'MAGAZINE LUIZA':'#0086FF'
+};
 function admBadgeColor(name) {
   const k = (name||'').toString().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
-  const map = { 'PORTO SEGURO':{bg:'#DBEAFE',fg:'#1E40AF'}, 'PORTO':{bg:'#DBEAFE',fg:'#1E40AF'}, 'ITAU':{bg:'#FED7AA',fg:'#9A3412'}, 'BRADESCO':{bg:'#FECACA',fg:'#991B1B'}, 'YAMAHA':{bg:'#FEE2E2',fg:'#7F1D1D'}, 'ADEMICON':{bg:'#CCFBF1',fg:'#115E59'}, 'EMBRACON':{bg:'#FEF3C7',fg:'#92400E'} };
-  return map[k] || { bg:'#F1F5F9', fg:'#64748B' };
+  const brand = ADMIN_BRAND_COLORS[k];
+  if (brand) return { bg: hexToTint(brand, 0.88), fg: brand };
+  return { bg: '#F1F5F9', fg: '#64748B' };
 }
+function hexToTint(hex, amount) { const h = hex.replace('#',''); const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16); const mix = c => Math.round(c + (255 - c) * amount); return '#' + [mix(r),mix(g),mix(b)].map(n => n.toString(16).padStart(2,'0')).join(''); }
 function statusColor(s) {
   const x = (s||'').toUpperCase();
   if (x.startsWith('CONTEMPL')) return { bg:'#F0FDF4', fg:'#16A34A' };
