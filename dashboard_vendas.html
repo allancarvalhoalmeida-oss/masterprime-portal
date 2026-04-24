@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Master Prime · Dashboard de Vendas</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+<script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:#0f172a;color:#e2e8f0;font-family:'Segoe UI',system-ui,Arial,sans-serif;min-height:100vh}
+
+/* HEADER */
+.hdr{background:#1e293b;padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #334155}
+.hdr-left{display:flex;align-items:center;gap:12px}
+.hdr-logo{width:36px;height:36px}
+.hdr h1{font-size:15px;font-weight:800;color:#fff}
+.hdr p{font-size:9px;color:#64748b;letter-spacing:2px;text-transform:uppercase}
+.hdr-right{display:flex;align-items:center;gap:12px}
+.hdr-status{font-size:11px;color:#64748b}
+.btn{padding:8px 16px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:600;transition:.15s}
+.btn-login{background:#3b82f6;color:#fff}.btn-login:hover{background:#2563eb}
+.btn-logout{background:#334155;color:#94a3b8}.btn-logout:hover{background:#475569}
+.btn-refresh{background:#059669;color:#fff}.btn-refresh:hover{background:#047857}
+
+/* MAIN */
+.main{max-width:1200px;margin:0 auto;padding:20px}
+
+/* LOGIN SCREEN */
+.login-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:70vh;text-align:center}
+.login-screen h2{font-size:24px;margin-bottom:8px;color:#fff}
+.login-screen p{color:#64748b;margin-bottom:24px;max-width:400px;line-height:1.5}
+.login-screen .btn{font-size:16px;padding:14px 32px;border-radius:10px}
+
+/* FILTERS */
+.filters{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.filter-select{background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:8px 12px;border-radius:8px;font-size:13px;font-family:inherit;min-width:180px}
+.filter-select:focus{outline:none;border-color:#3b82f6}
+.filter-label{font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:1px}
+.filter-group{display:flex;flex-direction:column;gap:4px}
+
+/* KPI CARDS */
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px}
+.kpi{background:#1e293b;border-radius:10px;padding:16px;border-left:4px solid #334155;position:relative;overflow:hidden}
+.kpi::after{content:'';position:absolute;top:0;right:0;width:60px;height:60px;border-radius:50%;opacity:.05;transform:translate(20px,-20px)}
+.kpi.blue{border-left-color:#3b82f6}.kpi.blue::after{background:#3b82f6}
+.kpi.green{border-left-color:#10b981}.kpi.green::after{background:#10b981}
+.kpi.amber{border-left-color:#f59e0b}.kpi.amber::after{background:#f59e0b}
+.kpi.purple{border-left-color:#8b5cf6}.kpi.purple::after{background:#8b5cf6}
+.kpi.rose{border-left-color:#f43f5e}.kpi.rose::after{background:#f43f5e}
+.kpi-label{font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.kpi-val{font-size:26px;font-weight:800;color:#fff}
+.kpi-sub{font-size:11px;color:#64748b;margin-top:4px}
+
+/* CHARTS GRID */
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.chart-card{background:#1e293b;border-radius:10px;padding:16px}
+.chart-title{font-size:12px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
+.chart-wrap{position:relative;height:280px}
+
+/* TABLE */
+.tbl-card{background:#1e293b;border-radius:10px;padding:16px;margin-bottom:12px}
+.tbl-card table{width:100%;border-collapse:collapse;font-size:13px}
+.tbl-card th{text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:1px;padding:8px 10px;border-bottom:1px solid #334155}
+.tbl-card td{padding:8px 10px;border-bottom:1px solid #1e293b;color:#cbd5e1}
+.tbl-card tr:hover td{background:#334155;border-radius:4px}
+.rank-num{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;font-size:11px;font-weight:800}
+.rank-1{background:#fbbf24;color:#1e293b}
+.rank-2{background:#94a3b8;color:#1e293b}
+.rank-3{background:#cd7f32;color:#fff}
+.rank-n{background:#334155;color:#94a3b8}
+.bar-cell{display:flex;align-items:center;gap:8px}
+.bar-bg{height:8px;background:#334155;border-radius:4px;flex:1;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,#3b82f6,#8b5cf6)}
+
+/* LOADING */
+.loading{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:50vh}
+.spinner{width:40px;height:40px;border:3px solid #334155;border-top-color:#3b82f6;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading p{margin-top:12px;color:#64748b;font-size:13px}
+
+/* RESPONSIVE */
+@media(max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}.charts-row{grid-template-columns:1fr}}
+@media(max-width:600px){.kpis{grid-template-columns:1fr}.filters{flex-direction:column}}
+
+/* FOOTER */
+.footer{text-align:center;padding:20px;color:#334155;font-size:11px}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-left">
+    <svg class="hdr-logo" viewBox="0 0 36 36"><rect width="36" height="36" rx="8" fill="#3b82f6"/><text x="18" y="24" text-anchor="middle" fill="#fff" font-size="18" font-weight="900">M</text></svg>
+    <div><h1>Master Prime</h1><p>Dashboard de Vendas</p></div>
+  </div>
+  <div class="hdr-right">
+    <span class="hdr-status" id="statusText"></span>
+    <button class="btn btn-refresh" id="btnRefresh" style="display:none" onclick="loadData()">Atualizar</button>
+    <button class="btn btn-login" id="btnLogin" onclick="doLogin()">Entrar com Microsoft</button>
+    <button class="btn btn-logout" id="btnLogout" style="display:none" onclick="doLogout()">Sair</button>
+  </div>
+</div>
+
+<div class="main">
+  <!-- LOGIN SCREEN -->
+  <div id="loginScreen" class="login-screen">
+    <h2>Dashboard de Vendas</h2>
+    <p>Este painel puxa dados automaticamente da planilha <strong>Master Prime Porto Elite.xlsx</strong> do seu OneDrive.</p>
+    <button class="btn btn-login" onclick="doLogin()" style="font-size:16px;padding:14px 32px;border-radius:10px">Entrar com Microsoft</button>
+    <p style="margin-top:16px;font-size:11px;color:#475569">Requer autenticacao com sua conta Microsoft corporativa</p>
+  </div>
+
+  <!-- LOADING -->
+  <div id="loadingScreen" style="display:none" class="loading">
+    <div class="spinner"></div>
+    <p>Carregando dados da planilha...</p>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashboard" style="display:none">
+    <!-- FILTERS -->
+    <div class="filters">
+      <div class="filter-group">
+        <span class="filter-label">Consultor</span>
+        <select class="filter-select" id="filterConsultor" onchange="applyFilters()">
+          <option value="">Todos os consultores</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Ano</span>
+        <select class="filter-select" id="filterAno" onchange="applyFilters()">
+          <option value="">Todos os anos</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Administradora</span>
+        <select class="filter-select" id="filterAdm" onchange="applyFilters()">
+          <option value="">Todas</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Situacao</span>
+        <select class="filter-select" id="filterSit" onchange="applyFilters()">
+          <option value="">Todas</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpis">
+      <div class="kpi blue"><div class="kpi-label">Credito Total</div><div class="kpi-val" id="kCredito">-</div><div class="kpi-sub" id="kCreditoSub"></div></div>
+      <div class="kpi green"><div class="kpi-label">Cotas Vendidas</div><div class="kpi-val" id="kCotas">-</div><div class="kpi-sub" id="kCotasSub"></div></div>
+      <div class="kpi amber"><div class="kpi-label">Ticket Medio</div><div class="kpi-val" id="kTicket">-</div><div class="kpi-sub" id="kTicketSub"></div></div>
+      <div class="kpi purple"><div class="kpi-label">Consultores Ativos</div><div class="kpi-val" id="kConsultores">-</div><div class="kpi-sub" id="kConsultoresSub"></div></div>
+      <div class="kpi rose"><div class="kpi-label">Administradoras</div><div class="kpi-val" id="kAdms">-</div><div class="kpi-sub" id="kAdmsSub"></div></div>
+    </div>
+
+    <!-- CHARTS ROW 1 -->
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-title">Vendas por Mes</div>
+        <div class="chart-wrap"><canvas id="chartMes"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Credito por Administradora</div>
+        <div class="chart-wrap"><canvas id="chartAdm"></canvas></div>
+      </div>
+    </div>
+
+    <!-- CHARTS ROW 2 -->
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-title">Vendas por Tipo</div>
+        <div class="chart-wrap"><canvas id="chartTipo"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Credito Mensal (Evolucao)</div>
+        <div class="chart-wrap"><canvas id="chartEvolucao"></canvas></div>
+      </div>
+    </div>
+
+    <!-- RANKING TABLE -->
+    <div class="tbl-card">
+      <div class="chart-title">Ranking de Consultores</div>
+      <table>
+        <thead><tr><th>#</th><th>Consultor</th><th>Cotas</th><th>Credito Total</th><th>Ticket Medio</th><th>Participacao</th></tr></thead>
+        <tbody id="rankingBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="footer">Master Prime · Dados atualizados automaticamente do OneDrive</div>
+
+<script>
+Chart.register(ChartDataLabels);
+
+// ══════════════════════════════════════════════════════════════
+// CONFIG — PREENCHA COM SEUS DADOS DO AZURE
+// ══════════════════════════════════════════════════════════════
+const CONFIG = {
+  clientId: 'COLE_SEU_CLIENT_ID_AQUI',           // Application (client) ID do Azure
+  tenantId: 'COLE_SEU_TENANT_ID_AQUI',            // Directory (tenant) ID
+  redirectUri: window.location.href.split('?')[0], // URL desta pagina
+  // Caminho da planilha no OneDrive (ajuste se necessario)
+  filePath: '/Allan/Administração Master Prime/Master Prime Porto Elite.xlsx',
+  // Intervalo de auto-refresh em minutos
+  refreshInterval: 60
+};
+
+// ══════════════════════════════════════════════════════════════
+// MSAL AUTH
+// ══════════════════════════════════════════════════════════════
+const msalConfig = {
+  auth: {
+    clientId: CONFIG.clientId,
+    authority: `https://login.microsoftonline.com/${CONFIG.tenantId}`,
+    redirectUri: CONFIG.redirectUri
+  },
+  cache: { cacheLocation: 'sessionStorage' }
+};
+
+let msalInstance = null;
+let accessToken = null;
+let rawData = [];
+let charts = {};
+
+try {
+  msalInstance = new msal.PublicClientApplication(msalConfig);
+} catch(e) {
+  console.warn('MSAL init deferred');
+}
+
+async function doLogin() {
+  if (!msalInstance) msalInstance = new msal.PublicClientApplication(msalConfig);
+  try {
+    const resp = await msalInstance.loginPopup({ scopes: ['Files.Read'] });
+    accessToken = resp.accessToken;
+    document.getElementById('btnLogin').style.display = 'none';
+    document.getElementById('btnLogout').style.display = '';
+    document.getElementById('btnRefresh').style.display = '';
+    document.getElementById('statusText').textContent = resp.account.username;
+    loadData();
+  } catch(e) {
+    console.error('Login error:', e);
+    alert('Erro no login: ' + e.message);
+  }
+}
+
+function doLogout() {
+  if (msalInstance) msalInstance.logoutPopup();
+  accessToken = null;
+  document.getElementById('btnLogin').style.display = '';
+  document.getElementById('btnLogout').style.display = 'none';
+  document.getElementById('btnRefresh').style.display = 'none';
+  document.getElementById('loginScreen').style.display = '';
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('statusText').textContent = '';
+}
+
+async function getToken() {
+  if (!msalInstance) return null;
+  const accounts = msalInstance.getAllAccounts();
+  if (accounts.length === 0) return null;
+  try {
+    const resp = await msalInstance.acquireTokenSilent({ scopes: ['Files.Read'], account: accounts[0] });
+    return resp.accessToken;
+  } catch(e) {
+    const resp = await msalInstance.acquireTokenPopup({ scopes: ['Files.Read'] });
+    return resp.accessToken;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// GRAPH API — LER PLANILHA
+// ══════════════════════════════════════════════════════════════
+async function loadData() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('loadingScreen').style.display = '';
+
+  const token = accessToken || await getToken();
+  if (!token) { alert('Faca login primeiro'); return; }
+
+  try {
+    // 1. Descobrir worksheets
+    const encodedPath = encodeURIComponent(CONFIG.filePath).replace(/%2F/g, '/');
+    const base = `https://graph.microsoft.com/v1.0/me/drive/root:${encodedPath}:/workbook`;
+    
+    const wsResp = await fetch(`${base}/worksheets`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!wsResp.ok) throw new Error(`Erro ao acessar planilha: ${wsResp.status} ${wsResp.statusText}`);
+    const wsData = await wsResp.json();
+    const sheetName = wsData.value[0].name;
+
+    // 2. Ler dados (usedRange)
+    const rangeResp = await fetch(`${base}/worksheets('${encodeURIComponent(sheetName)}')/usedRange`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!rangeResp.ok) throw new Error(`Erro ao ler dados: ${rangeResp.status}`);
+    const rangeData = await rangeResp.json();
+
+    // 3. Parse
+    const rows = rangeData.values || rangeData.text || [];
+    if (rows.length < 2) throw new Error('Planilha vazia ou sem dados');
+
+    const headers = rows[0].map(h => (h||'').toString().trim().toUpperCase());
+    rawData = [];
+
+    const iAdm = headers.indexOf('ADMINISTRADORA');
+    const iAno = headers.indexOf('ANO');
+    const iSit = headers.indexOf('SITUACAO');
+    const iContrato = headers.indexOf('CONTRATO');
+    const iGrupo = headers.indexOf('GRUPO');
+    const iCota = headers.indexOf('COTA');
+    const iVenc = headers.indexOf('VENC.');
+    const iTipo = headers.indexOf('TIPO');
+    const iCredito = headers.indexOf('CREDITO');
+    const iConsultor = headers.indexOf('CONSULTOR RESPONSAVEL');
+    const iData = headers.indexOf('DATA DA VENDA');
+    const iMes = headers.indexOf('MES');
+    const iCliente = headers.indexOf('NOME DO CLIENTE');
+
+    for (let r = 1; r < rows.length; r++) {
+      const row = rows[r];
+      if (!row || !row[iCredito]) continue;
+      
+      let credito = row[iCredito];
+      if (typeof credito === 'string') {
+        credito = credito.replace(/[R$\s.]/g, '').replace(',', '.');
+      }
+      credito = parseFloat(credito);
+      if (isNaN(credito) || credito <= 0) continue;
+
+      let dataVenda = null;
+      if (iData >= 0 && row[iData]) {
+        const dv = row[iData];
+        if (typeof dv === 'number') {
+          // Excel serial date
+          const d = new Date((dv - 25569) * 86400000);
+          dataVenda = d;
+        } else {
+          const parts = dv.toString().split(/[\/\-]/);
+          if (parts.length === 3) {
+            if (parts[2].length === 4) dataVenda = new Date(parts[2], parts[0]-1, parts[1]);
+            else dataVenda = new Date(parts[2], parts[1]-1, parts[0]);
+          }
+        }
+      }
+
+      rawData.push({
+        adm: (row[iAdm]||'').toString().trim(),
+        ano: (row[iAno]||'').toString().trim(),
+        sit: (row[iSit]||'').toString().trim(),
+        contrato: (row[iContrato]||'').toString().trim(),
+        grupo: (row[iGrupo]||'').toString().trim(),
+        cota: (row[iCota]||'').toString().trim(),
+        tipo: (row[iTipo]||'').toString().trim(),
+        credito: credito,
+        consultor: (row[iConsultor]||'').toString().trim(),
+        data: dataVenda,
+        mes: (row[iMes]||'').toString().trim(),
+        cliente: iCliente >= 0 ? (row[iCliente]||'').toString().trim() : ''
+      });
+    }
+
+    // Populate filters
+    populateFilters();
+    applyFilters();
+
+    document.getElementById('loadingScreen').style.display = 'none';
+    document.getElementById('dashboard').style.display = '';
+    document.getElementById('statusText').textContent = `${rawData.length} registros · atualizado ${new Date().toLocaleTimeString('pt-BR')}`;
+
+  } catch(e) {
+    console.error('Erro:', e);
+    document.getElementById('loadingScreen').style.display = 'none';
+    document.getElementById('loginScreen').style.display = '';
+    alert('Erro ao carregar dados: ' + e.message);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// FILTERS
+// ══════════════════════════════════════════════════════════════
+function populateFilters() {
+  const consultores = [...new Set(rawData.map(d=>d.consultor).filter(Boolean))].sort();
+  const anos = [...new Set(rawData.map(d=>d.ano).filter(Boolean))].sort();
+  const adms = [...new Set(rawData.map(d=>d.adm).filter(Boolean))].sort();
+  const sits = [...new Set(rawData.map(d=>d.sit).filter(Boolean))].sort();
+
+  fillSelect('filterConsultor', consultores, 'Todos os consultores');
+  fillSelect('filterAno', anos, 'Todos os anos');
+  fillSelect('filterAdm', adms, 'Todas');
+  fillSelect('filterSit', sits, 'Todas');
+}
+
+function fillSelect(id, items, allLabel) {
+  const sel = document.getElementById(id);
+  sel.innerHTML = `<option value="">${allLabel}</option>` + items.map(i=>`<option value="${i}">${i}</option>`).join('');
+}
+
+function applyFilters() {
+  const fc = document.getElementById('filterConsultor').value;
+  const fa = document.getElementById('filterAno').value;
+  const fAdm = document.getElementById('filterAdm').value;
+  const fSit = document.getElementById('filterSit').value;
+
+  let data = rawData;
+  if (fc) data = data.filter(d => d.consultor === fc);
+  if (fa) data = data.filter(d => d.ano === fa);
+  if (fAdm) data = data.filter(d => d.adm === fAdm);
+  if (fSit) data = data.filter(d => d.sit === fSit);
+
+  renderKPIs(data);
+  renderCharts(data);
+  renderRanking(data);
+}
+
+// ══════════════════════════════════════════════════════════════
+// KPIs
+// ══════════════════════════════════════════════════════════════
+function fmt(n) {
+  if (n >= 1e6) return 'R$ ' + (n/1e6).toFixed(2).replace('.',',') + ' mi';
+  if (n >= 1e3) return 'R$ ' + (n/1e3).toFixed(1).replace('.',',') + ' mil';
+  return 'R$ ' + n.toFixed(2).replace('.',',');
+}
+
+function renderKPIs(data) {
+  const totalCredito = data.reduce((s,d) => s + d.credito, 0);
+  const totalCotas = data.length;
+  const ticket = totalCotas > 0 ? totalCredito / totalCotas : 0;
+  const consultores = new Set(data.map(d=>d.consultor).filter(Boolean));
+  const adms = new Set(data.map(d=>d.adm).filter(Boolean));
+
+  document.getElementById('kCredito').textContent = fmt(totalCredito);
+  document.getElementById('kCreditoSub').textContent = `em ${totalCotas} operacoes`;
+  document.getElementById('kCotas').textContent = totalCotas.toLocaleString('pt-BR');
+  document.getElementById('kTicket').textContent = fmt(ticket);
+  document.getElementById('kConsultores').textContent = consultores.size;
+  document.getElementById('kAdms').textContent = adms.size;
+
+  const admsArr = [...adms];
+  document.getElementById('kAdmsSub').textContent = admsArr.slice(0,3).join(', ');
+}
+
+// ══════════════════════════════════════════════════════════════
+// CHARTS
+// ══════════════════════════════════════════════════════════════
+const COLORS = ['#3b82f6','#10b981','#f59e0b','#8b5cf6','#f43f5e','#06b6d4','#ec4899','#84cc16','#f97316','#6366f1'];
+
+function destroyChart(key) { if (charts[key]) { charts[key].destroy(); delete charts[key]; } }
+
+function renderCharts(data) {
+  renderChartMes(data);
+  renderChartAdm(data);
+  renderChartTipo(data);
+  renderChartEvolucao(data);
+}
+
+function renderChartMes(data) {
+  destroyChart('mes');
+  const meses = ['JANEIRO','FEVEREIRO','MARCO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
+  const mesLabels = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const counts = meses.map(m => data.filter(d => d.mes.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'') === m).length);
+
+  charts.mes = new Chart(document.getElementById('chartMes'), {
+    type: 'bar',
+    data: {
+      labels: mesLabels,
+      datasets: [{ data: counts, backgroundColor: '#3b82f6', borderRadius: 4, barPercentage: 0.7 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        datalabels: { color: '#94a3b8', anchor: 'end', align: 'top', font: { size: 10, weight: 700 },
+          formatter: v => v > 0 ? v : '' }
+      },
+      scales: {
+        x: { ticks: { color: '#64748b', font: { size: 11 } }, grid: { display: false } },
+        y: { ticks: { color: '#475569', font: { size: 10 } }, grid: { color: '#1e293b' } }
+      }
+    }
+  });
+}
+
+function renderChartAdm(data) {
+  destroyChart('adm');
+  const groups = {};
+  data.forEach(d => { groups[d.adm] = (groups[d.adm]||0) + d.credito; });
+  const sorted = Object.entries(groups).sort((a,b) => b[1]-a[1]);
+
+  charts.adm = new Chart(document.getElementById('chartAdm'), {
+    type: 'doughnut',
+    data: {
+      labels: sorted.map(s=>s[0]),
+      datasets: [{ data: sorted.map(s=>s[1]), backgroundColor: COLORS, borderWidth: 0, hoverOffset: 8 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '55%',
+      plugins: {
+        legend: { position: 'right', labels: { color: '#94a3b8', font: { size: 11 }, padding: 8, usePointStyle: true, pointStyleWidth: 10 } },
+        datalabels: { color: '#fff', font: { size: 11, weight: 700 },
+          formatter: (v, ctx) => {
+            const total = ctx.dataset.data.reduce((a,b)=>a+b,0);
+            const pct = ((v/total)*100).toFixed(0);
+            return pct > 5 ? pct+'%' : '';
+          }
+        }
+      }
+    }
+  });
+}
+
+function renderChartTipo(data) {
+  destroyChart('tipo');
+  const tipoNames = { AUT:'Automovel', IMV:'Imovel', MOT:'Moto', PES:'Pesados', SER:'Servicos' };
+  const groups = {};
+  data.forEach(d => {
+    const label = tipoNames[d.tipo] || d.tipo || 'Outros';
+    groups[label] = (groups[label]||0) + 1;
+  });
+  const sorted = Object.entries(groups).sort((a,b) => b[1]-a[1]);
+
+  charts.tipo = new Chart(document.getElementById('chartTipo'), {
+    type: 'pie',
+    data: {
+      labels: sorted.map(s=>s[0]),
+      datasets: [{ data: sorted.map(s=>s[1]), backgroundColor: COLORS.slice(2), borderWidth: 0, hoverOffset: 8 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'right', labels: { color: '#94a3b8', font: { size: 11 }, padding: 8, usePointStyle: true, pointStyleWidth: 10 } },
+        datalabels: { color: '#fff', font: { size: 11, weight: 700 },
+          formatter: (v, ctx) => {
+            const total = ctx.dataset.data.reduce((a,b)=>a+b,0);
+            const pct = ((v/total)*100).toFixed(0);
+            return pct > 5 ? pct+'%' : '';
+          }
+        }
+      }
+    }
+  });
+}
+
+function renderChartEvolucao(data) {
+  destroyChart('evolucao');
+  const monthly = {};
+  data.forEach(d => {
+    if (!d.data) return;
+    const key = d.data.getFullYear() + '-' + String(d.data.getMonth()+1).padStart(2,'0');
+    monthly[key] = (monthly[key]||0) + d.credito;
+  });
+  const sorted = Object.entries(monthly).sort((a,b) => a[0].localeCompare(b[0]));
+  const mesAbrev = { '01':'Jan','02':'Fev','03':'Mar','04':'Abr','05':'Mai','06':'Jun','07':'Jul','08':'Ago','09':'Set','10':'Out','11':'Nov','12':'Dez' };
+
+  charts.evolucao = new Chart(document.getElementById('chartEvolucao'), {
+    type: 'line',
+    data: {
+      labels: sorted.map(s => { const [y,m]=s[0].split('-'); return (mesAbrev[m]||m)+'/'+y.slice(2); }),
+      datasets: [{
+        data: sorted.map(s=>s[1]),
+        borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)',
+        fill: true, tension: 0.3, pointRadius: 3, pointBackgroundColor: '#3b82f6'
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        datalabels: { display: false }
+      },
+      scales: {
+        x: { ticks: { color: '#64748b', font: { size: 10 }, maxRotation: 45 }, grid: { display: false } },
+        y: { ticks: { color: '#475569', font: { size: 10 }, callback: v => fmt(v) }, grid: { color: '#1e293b' } }
+      }
+    }
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// RANKING TABLE
+// ══════════════════════════════════════════════════════════════
+function renderRanking(data) {
+  const groups = {};
+  data.forEach(d => {
+    if (!d.consultor) return;
+    if (!groups[d.consultor]) groups[d.consultor] = { cotas: 0, credito: 0 };
+    groups[d.consultor].cotas++;
+    groups[d.consultor].credito += d.credito;
+  });
+
+  const totalCredito = data.reduce((s,d) => s + d.credito, 0);
+  const sorted = Object.entries(groups).sort((a,b) => b[1].credito - a[1].credito);
+  const maxCredito = sorted.length > 0 ? sorted[0][1].credito : 1;
+
+  const tbody = document.getElementById('rankingBody');
+  tbody.innerHTML = sorted.map(([nome, v], i) => {
+    const pct = totalCredito > 0 ? ((v.credito/totalCredito)*100).toFixed(1) : 0;
+    const barW = ((v.credito/maxCredito)*100).toFixed(0);
+    const rankCls = i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'rank-n';
+    return `<tr>
+      <td><span class="rank-num ${rankCls}">${i+1}</span></td>
+      <td style="font-weight:600;color:#fff">${nome}</td>
+      <td>${v.cotas}</td>
+      <td style="font-weight:600;color:#3b82f6">${fmt(v.credito)}</td>
+      <td>${fmt(v.credito/v.cotas)}</td>
+      <td><div class="bar-cell"><div class="bar-bg"><div class="bar-fill" style="width:${barW}%"></div></div><span style="font-size:11px;color:#64748b">${pct}%</span></div></td>
+    </tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+// AUTO-REFRESH
+// ══════════════════════════════════════════════════════════════
+setInterval(() => {
+  if (accessToken || (msalInstance && msalInstance.getAllAccounts().length > 0)) {
+    loadData();
+  }
+}, CONFIG.refreshInterval * 60 * 1000);
+
+// Check if already logged in on page load
+window.addEventListener('load', async () => {
+  if (!msalInstance) return;
+  try {
+    await msalInstance.initialize();
+    const accounts = msalInstance.getAllAccounts();
+    if (accounts.length > 0) {
+      document.getElementById('btnLogin').style.display = 'none';
+      document.getElementById('btnLogout').style.display = '';
+      document.getElementById('btnRefresh').style.display = '';
+      document.getElementById('statusText').textContent = accounts[0].username;
+      loadData();
+    }
+  } catch(e) { console.log('No cached session'); }
+});
+</script>
+</body>
+</html>
