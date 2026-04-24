@@ -681,14 +681,9 @@ function renderChartMes(data) {
   const mesLabels = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
   const norm = s => (s||'').toString().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
   const counts = meses.map(m => data.filter(d => norm(d.mes) === m).length);
-  let lastIdx = -1; counts.forEach((c,i) => { if (c > 0) lastIdx = i; });
-  const labels = lastIdx >= 0 ? mesLabels.slice(0, lastIdx+1) : mesLabels;
-  const values = lastIdx >= 0 ? counts.slice(0, lastIdx+1) : counts;
-  charts.mes = new Chart(document.getElementById('chartMes'), {
-    type: 'bar',
-    data: { labels, datasets: [{ data: values, backgroundColor: '#7A9BC8', borderRadius: 4, barPercentage: 0.7 }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'top', color: '#64748B', font: { size: 10, weight: 'bold' } } }, scales: { x: { ticks: { color: '#64748B', font: { size: 10 } }, grid: { display: false } }, y: { ticks: { color: '#64748B', font: { size: 10 } }, grid: { color: '#E2E8F0' } } } }
-  });
+  const labels = [], values = [];
+  counts.forEach((c, i) => { if (c > 0) { labels.push(mesLabels[i]); values.push(c); } });
+  charts.mes = new Chart(document.getElementById('chartMes'), { type: 'bar', data: { labels, datasets: [{ data: values, backgroundColor: '#7A9BC8', borderRadius: 4, barPercentage: 0.7 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'top', color: '#64748B', font: { size: 10, weight: 'bold' } } }, scales: { x: { ticks: { color: '#64748B', font: { size: 10 } }, grid: { display: false } }, y: { ticks: { color: '#64748B', font: { size: 10 } }, grid: { color: '#E2E8F0' } } } } });
 }
 
 function renderChartAdm(data) {
@@ -765,23 +760,16 @@ function renderChartEvolucao(data) {
     const y = selectedYears.length === 1 ? parseInt(selectedYears[0]) : new Date().getFullYear();
     const cur = monthlyForYear(y); const prev = monthlyForYear(y - 1);
     let lastIdx = -1; cur.forEach((v,i) => { if (v > 0) lastIdx = i; });
-    const end = lastIdx >= 0 ? lastIdx + 1 : 12;
+    const end = lastIdx >= 0 ? lastIdx + 1 : cur.length;
     labels = mesesOrd.slice(0, end);
-    datasets = [
-      { label: String(y-1), data: prev.slice(0, end), borderColor: '#7A9BC8', backgroundColor: 'rgba(122,155,200,.12)', fill: true, tension: .4, pointRadius: 3, borderWidth: 2 },
-      { label: String(y), data: cur.slice(0, end), borderColor: '#2D3F5E', backgroundColor: 'rgba(45,63,94,.08)', fill: true, tension: .4, pointRadius: 3, borderWidth: 2.5 }
-    ];
+    datasets = [ { label: String(y-1), data: prev.slice(0, end), borderColor: '#7A9BC8', backgroundColor: 'rgba(122,155,200,.12)', fill: true, tension: .4, pointRadius: 3, borderWidth: 2 }, { label: String(y), data: cur.slice(0, end), borderColor: '#2D3F5E', backgroundColor: 'rgba(45,63,94,.08)', fill: true, tension: .4, pointRadius: 3, borderWidth: 2.5 } ];
   } else {
     const summed = mesesFull.map((_, i) => selectedYears.reduce((s, y) => s + monthlyForYear(parseInt(y))[i], 0));
-    let lastIdx = -1; summed.forEach((v,i) => { if (v > 0) lastIdx = i; });
-    const end = lastIdx >= 0 ? lastIdx + 1 : 12;
-    labels = mesesOrd.slice(0, end);
-    datasets = [{ label: selectedYears.join(' + '), data: summed.slice(0, end), borderColor: '#2D3F5E', backgroundColor: 'rgba(45,63,94,.1)', fill: true, tension: .4, pointRadius: 3, borderWidth: 2.5 }];
+    const idxs = summed.map((v,i) => v > 0 ? i : -1).filter(i => i >= 0);
+    labels = idxs.map(i => mesesOrd[i]); const vals = idxs.map(i => summed[i]);
+    datasets = [{ label: selectedYears.join(' + '), data: vals, borderColor: '#2D3F5E', backgroundColor: 'rgba(45,63,94,.1)', fill: true, tension: .4, pointRadius: 3, borderWidth: 2.5 }];
   }
-  charts.evolucao = new Chart(document.getElementById('chartEvolucao'), {
-    type: 'line', data: { labels, datasets },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', align: 'end', labels: { color: '#64748B', font: { size: 11 }, padding: 12, usePointStyle: true, pointStyle: 'rect' } }, datalabels: { display: false } }, scales: { x: { ticks: { color: '#64748B', font: { size: 10 } }, grid: { display: false } }, y: { ticks: { color: '#64748B', font: { size: 10 }, callback: v => 'R$ ' + (v/1e6).toFixed(1) + 'M' }, grid: { color: '#E2E8F0' } } } }
-  });
+  charts.evolucao = new Chart(document.getElementById('chartEvolucao'), { type: 'line', data: { labels, datasets }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', align: 'end', labels: { color: '#64748B', font: { size: 11 }, padding: 12, usePointStyle: true, pointStyle: 'rect' } }, datalabels: { display: false } }, scales: { x: { ticks: { color: '#64748B', font: { size: 10 } }, grid: { display: false } }, y: { ticks: { color: '#64748B', font: { size: 10 }, callback: v => 'R$ ' + (v/1e6).toFixed(1) + 'M' }, grid: { color: '#E2E8F0' } } } } });
 }
 
 // ══════════════════════════════════════════════════════════════
