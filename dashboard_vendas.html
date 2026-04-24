@@ -181,7 +181,7 @@ tbody td:nth-child(4){font-weight:700;color:#16A34A}
     <div class="tbl-card">
       <div class="chart-title"><span>Ranking de Consultores</span><div style="font-size:10px;color:#94A3B8;font-weight:500;letter-spacing:.3px;text-transform:none;margin-top:2px">Performance por volume de crédito no período</div></div>
       <table>
-        <thead><tr><th>#</th><th>Consultor</th><th>Cotas</th><th>Credito Total</th><th>Ticket Medio</th><th>Participacao</th></tr></thead>
+        <thead><tr><th>#</th><th>Consultor</th><th>Cotas</th><th>Crédito Total</th><th>Ticket Médio</th><th>Progresso vs. Líder</th><th>Var.</th></tr></thead>
         <tbody id="rankingBody"></tbody>
       </table>
     </div>
@@ -777,30 +777,31 @@ function renderChartEvolucao(data) {
 // ══════════════════════════════════════════════════════════════
 function renderRanking(data) {
   const groups = {};
-  data.forEach(d => {
-    if (!d.consultor) return;
-    if (!groups[d.consultor]) groups[d.consultor] = { cotas: 0, credito: 0 };
-    groups[d.consultor].cotas++;
-    groups[d.consultor].credito += d.credito;
-  });
-
-  const totalCredito = data.reduce((s,d) => s + d.credito, 0);
+  data.forEach(d => { if (!d.consultor) return; if (!groups[d.consultor]) groups[d.consultor] = { cotas: 0, credito: 0 }; groups[d.consultor].cotas++; groups[d.consultor].credito += d.credito; });
+  const fa = getMSValues('wrapAno');
+  const fMes = getMSValues('wrapMes');
+  const fAdm = getMSValues('wrapAdm');
+  const fSit = getMSValues('wrapSit');
+  const normMes = s => (s||'').toString().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+  const normS = s => (s||'').toString().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+  const mesesOrd = ['JANEIRO','FEVEREIRO','MARCO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
+  let prevData = rawData;
+  if (fAdm.length) prevData = prevData.filter(d => fAdm.includes(d.adm));
+  if (fSit.length) prevData = prevData.filter(d => { const s = normS(d.status); if (fSit.includes('CONTEMPLADO') && s.startsWith('CONTEMPL')) return true; if (fSit.includes('NORMAL') && s === 'NORMAL') return true; return false; });
+  if (fMes.length === 1 && fa.length === 1) { const curMes = normMes(fMes[0]); const idx = mesesOrd.indexOf(curMes); const curYear = parseInt(fa[0]); if (idx === 0) prevData = prevData.filter(d => normMes(d.mes) === 'DEZEMBRO' && d.ano === String(curYear-1)); else prevData = prevData.filter(d => normMes(d.mes) === mesesOrd[idx-1] && d.ano === String(curYear)); } else if (fa.length === 1) { const curYear = parseInt(fa[0]); prevData = prevData.filter(d => d.ano === String(curYear-1)); if (fMes.length) { const targets = fMes.map(normMes); prevData = prevData.filter(d => targets.includes(normMes(d.mes))); } } else { prevData = []; }
+  const prevGroups = {};
+  prevData.forEach(d => { if (!d.consultor) return; if (!prevGroups[d.consultor]) prevGroups[d.consultor] = 0; prevGroups[d.consultor] += d.credito; });
   const sorted = Object.entries(groups).sort((a,b) => b[1].credito - a[1].credito);
   const maxCredito = sorted.length > 0 ? sorted[0][1].credito : 1;
-
+  const totalCredito = sorted.reduce((s, [, v]) => s + v.credito, 0);
   const tbody = document.getElementById('rankingBody');
   tbody.innerHTML = sorted.map(([nome, v], i) => {
-    const pct = totalCredito > 0 ? ((v.credito/totalCredito)*100).toFixed(1) : 0;
     const barW = ((v.credito/maxCredito)*100).toFixed(0);
-    const rankCls = i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'rank-n';
-    return `<tr>
-      <td><span class="rank-num ${rankCls}">${i+1}</span></td>
-      <td style="font-weight:600;color:#1E293B">${nome}</td>
-      <td>${v.cotas}</td>
-      <td style="font-weight:600;color:#2D3F5E">${fmt(v.credito)}</td>
-      <td>${fmt(v.credito/v.cotas)}</td>
-      <td><div class="bar-cell"><div class="bar-bg"><div class="bar-fill" style="width:${barW}%"></div></div><span style="font-size:11px;color:#64748b">${pct}%</span></div></td>
-    </tr>`;
+    const rankCls = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : 'rank-n';
+    const prevVal = prevGroups[nome] || 0;
+    let varHtml = '';
+    if (prevVal > 0) { const varPct = ((v.credito - prevVal) / prevVal) * 100; const up = varPct >= 0; const color = up ? '#16A34A' : '#DC2626'; const bg = up ? '#F0FDF4' : '#FEF2F2'; const arrow = up ? '↗' : '↘'; varHtml = '<span style="padding:2px 6px;border-radius:4px;background:'+bg+';color:'+color+';font-size:10px;font-weight:700">'+arrow+' '+(up?'+':'')+varPct.toFixed(1)+'%</span>'; } else { varHtml = '<span style="color:#CBD5E1">—</span>'; }
+    return '<tr><td><span class="rank-num '+rankCls+'">'+(i+1)+'</span></td><td style="font-weight:600;color:#1E293B">'+nome+'</td><td>'+v.cotas+'</td><td style="font-weight:600;color:#2D3F5E">'+fmtFull(v.credito)+'</td><td>'+fmt(v.credito/v.cotas)+'</td><td><div class="bar-cell"><div class="bar-bg"><div class="bar-fill" style="width:'+barW+'%"></div></div></div></td><td>'+varHtml+'</td></tr>';
   }).join('');
 }
 
