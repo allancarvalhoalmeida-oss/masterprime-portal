@@ -794,7 +794,7 @@ function nav(id) {
   document.getElementById('sidebar').classList.remove('open');
   // Lazy-load dos iframes: só carrega na primeira visita (evita 2.5 MB no login)
   // Iframes com lazy-load (assembleia/lances/painel) — carrega só na primeira visita
-  const iframeScreens = ['assembleia','lances','painel'];
+  const iframeScreens = ['assembleia','lances','painel','vendas-dash'];
   if (iframeScreens.includes(id)) {
     const ifr = document.getElementById('iframe-' + id);
     if (ifr && ifr.dataset.target && ifr.getAttribute('src') === 'about:blank') {
