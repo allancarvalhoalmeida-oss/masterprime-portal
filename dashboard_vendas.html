@@ -51,7 +51,7 @@ body{background:#F4F6FA;color:#1E293B;font-family:'Inter','Segoe UI',system-ui,A
 .charts-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
 .chart-card{background:#fff;border-radius:10px;padding:18px;border:1px solid #E2E8F0;box-shadow:0 1px 3px rgba(0,0,0,.04)}
 .chart-title{font-size:12px;color:#2D3F5E;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:14px}
-.chart-wrap{position:relative;height:280px;width:100%}
+.chart-wrap{position:relative;height:240px;width:100%}
 .tbl-card{background:#fff;border-radius:10px;padding:18px;border:1px solid #E2E8F0;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:14px}
 table{width:100%;border-collapse:collapse;font-size:12px}
 thead th{text-align:left;padding:10px 12px;background:#F4F6FA;color:#64748B;font-weight:700;letter-spacing:.5px;text-transform:uppercase;font-size:10px;border-bottom:1px solid #E2E8F0}
@@ -353,7 +353,7 @@ async function loadData() {
 
     const iAdm = headers.indexOf('ADMINISTRADORA');
     const iAno = headers.indexOf('ANO');
-    const iSit = headers.indexOf('SITUACAO');
+    const iSit = headers.findIndex(h => h && h.toString().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim() === 'SITUACAO');
     const iContrato = headers.indexOf('CONTRATO');
     const iGrupo = headers.indexOf('GRUPO');
     const iCota = headers.indexOf('COTA');
@@ -579,16 +579,70 @@ function renderKPIs(data) {
   const ticket = totalCotas > 0 ? totalCredito / totalCotas : 0;
   const consultores = new Set(data.map(d=>d.consultor).filter(Boolean));
   const adms = new Set(data.map(d=>d.adm).filter(Boolean));
-
+  
+  // Previous period for comparison
+  let prev = computePrevPeriod(data);
+  
   document.getElementById('kCredito').textContent = fmtFull(totalCredito);
-  document.getElementById('kCreditoSub').textContent = `em ${totalCotas} operacoes`;
-  document.getElementById('kCotas').textContent = totalCotas.toLocaleString('pt-BR');
-  document.getElementById('kTicket').textContent = fmt(ticket);
-  document.getElementById('kConsultores').textContent = consultores.size;
+  document.getElementById('kCreditoSub').innerHTML = 'em ' + totalCotas + ' operações ' + varChip(totalCredito, prev.credito);
+  document.getElementById('kCotas').innerHTML = totalCotas.toLocaleString('pt-BR') + ' ' + varChip(totalCotas, prev.cotas, true);
+  document.getElementById('kTicket').innerHTML = fmtFull(ticket) + ' <span style="font-size:10px">' + varChip(ticket, prev.ticket) + '</span>';
+  document.getElementById('kConsultores').innerHTML = consultores.size + ' ' + varChip(consultores.size, prev.consultores, true);
   document.getElementById('kAdms').textContent = adms.size;
+}
 
-  const admsArr = [...adms];
-  document.getElementById('kAdmsSub').textContent = admsArr.slice(0,3).join(', ');
+function varChip(cur, prev, small) {
+  if (!prev || prev === 0) return '';
+  const pct = ((cur - prev) / prev) * 100;
+  const up = pct >= 0;
+  const color = up ? '#16A34A' : '#DC2626';
+  const bg = up ? '#F0FDF4' : '#FEF2F2';
+  const arrow = up ? '↗' : '↘';
+  const fontSize = small ? '10px' : '11px';
+  return '<span style="display:inline-block;margin-left:6px;padding:2px 6px;border-radius:4px;background:' + bg + ';color:' + color + ';font-size:' + fontSize + ';font-weight:700;vertical-align:middle">' + arrow + ' ' + (up?'+':'') + pct.toFixed(1) + '%</span>';
+}
+
+function computePrevPeriod(currentData) {
+  // Compare against same filters but one period back (month if single month selected, else year back)
+  const fa = getMSValues('wrapAno');
+  const fMes = getMSValues('wrapMes');
+  const fc = getMSValues('wrapConsultor');
+  const fAdm = getMSValues('wrapAdm');
+  const normMes = s => (s||'').toString().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+  const mesesOrd = ['JANEIRO','FEVEREIRO','MARCO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
+  
+  let prev = rawData;
+  if (fc.length) prev = prev.filter(d => fc.includes(d.consultor));
+  if (fAdm.length) prev = prev.filter(d => fAdm.includes(d.adm));
+  
+  if (fMes.length === 1 && fa.length === 1) {
+    // Single month: compare previous month in same year (or Dec of prev year if Jan)
+    const curMes = normMes(fMes[0]);
+    const idx = mesesOrd.indexOf(curMes);
+    const curYear = parseInt(fa[0]);
+    if (idx === 0) {
+      // January → Dec of prev year
+      prev = prev.filter(d => normMes(d.mes) === 'DEZEMBRO' && d.ano === String(curYear-1));
+    } else {
+      prev = prev.filter(d => normMes(d.mes) === mesesOrd[idx-1] && d.ano === String(curYear));
+    }
+  } else if (fa.length === 1) {
+    // Year only: compare previous year
+    const curYear = parseInt(fa[0]);
+    prev = prev.filter(d => d.ano === String(curYear-1));
+    if (fMes.length) {
+      const targets = fMes.map(normMes);
+      prev = prev.filter(d => targets.includes(normMes(d.mes)));
+    }
+  } else {
+    return { credito: 0, cotas: 0, ticket: 0, consultores: 0 };
+  }
+  
+  const credito = prev.reduce((s,d) => s + d.credito, 0);
+  const cotas = prev.length;
+  const ticket = cotas > 0 ? credito / cotas : 0;
+  const consultores = new Set(prev.map(d=>d.consultor).filter(Boolean)).size;
+  return { credito, cotas, ticket, consultores };
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -630,7 +684,7 @@ function renderChartMes(data) {
     type: 'bar',
     data: {
       labels: mesLabels,
-      datasets: [{ data: counts, backgroundColor: '#C8C84A', borderRadius: 4, barPercentage: 0.7 }]
+      datasets: [{ data: counts, backgroundColor: '#7A9BC8', borderRadius: 4, barPercentage: 0.7 }]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
@@ -689,7 +743,7 @@ function renderChartTipo(data) {
     type: 'pie',
     data: {
       labels: sorted.map(s=>s[0]),
-      datasets: [{ data: sorted.map(s=>s[1]), backgroundColor: ['#2D3F5E','#C8C84A','#4DBCC8','#7A9BC8','#94A3B8','#1A7A84'], borderWidth: 0, hoverOffset: 8 }]
+      datasets: [{ data: sorted.map(s=>s[1]), backgroundColor: ['#2D3F5E','#4DBCC8','#7A9BC8','#1A7A84','#94A3B8','#CBD5E1'], borderWidth: 0, hoverOffset: 8 }]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
@@ -780,15 +834,28 @@ function renderRanking(data) {
 // ════════════════════════════════════════════════════════════════════
 let vendasState = { data: [], sortCol: 'dataSort', sortDir: 'desc', page: 1, search: '', colFilters: {} };
 
-function formatBR(dateStr) {
-  if (!dateStr) return '';
-  const m = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-  if (!m) return dateStr;
-  return m[1].padStart(2,'0') + '/' + m[2].padStart(2,'0') + '/' + m[3];
+function formatBR(dateVal) {
+  if (!dateVal && dateVal !== 0) return '';
+  const s = String(dateVal).trim();
+  if (!s) return '';
+  if (/^\d+(\.\d+)?$/.test(s)) {
+    const n = parseFloat(s);
+    if (n > 1000) {
+      const ms = (n - 25569) * 86400 * 1000;
+      const d = new Date(ms);
+      if (!isNaN(d.getTime())) return String(d.getUTCDate()).padStart(2,'0') + '/' + String(d.getUTCMonth()+1).padStart(2,'0') + '/' + d.getUTCFullYear();
+    }
+  }
+  const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (m) return m[2].padStart(2,'0') + '/' + m[1].padStart(2,'0') + '/' + m[3];
+  return s;
 }
-function toSortDate(dateStr) {
-  if (!dateStr) return 0;
-  const m = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+function toSortDate(dateVal) {
+  if (!dateVal && dateVal !== 0) return 0;
+  const s = String(dateVal).trim();
+  if (!s) return 0;
+  if (/^\d+(\.\d+)?$/.test(s)) { const n = parseFloat(s); if (n > 1000) return n; }
+  const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
   if (!m) return 0;
   return parseInt(m[3])*10000 + parseInt(m[1])*100 + parseInt(m[2]);
 }
@@ -803,6 +870,13 @@ function statusColor(s) {
   if (x === 'CANCELADO') return { bg:'#FEF2F2', fg:'#DC2626' };
   if (x === 'NORMAL') return { bg:'#EFF6FF', fg:'#2563EB' };
   return { bg:'#F1F5F9', fg:'#64748B' };
+}
+function sitRawColor(s) {
+  const x = (s||'').toString().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+  if (x.startsWith('APROPRIAD')) return { bg:'#F0FDF4', fg:'#16A34A' };
+  if (x.startsWith('TRANSMITID')) return { bg:'#FEF3C7', fg:'#92400E' };
+  if (!x) return { bg:'#F1F5F9', fg:'#64748B' };
+  return { bg:'#FEF2F2', fg:'#DC2626' };
 }
 function renderVendasTable(data) {
   vendasState.data = data.map(d => ({ ...d, dataSort: toSortDate(d.dataVenda) }));
@@ -860,7 +934,7 @@ function drawVendasTable() {
       '<td>' + (d.contrato||'-') + '</td>' +
       '<td>' + (d.grupoCota||'-') + '</td>' +
       '<td><span class="adm-badge" style="background:'+ac.bg+';color:'+ac.fg+'">'+(d.adm||'-')+'</span></td>' +
-      '<td>' + (d.sitRaw||'-') + '</td>' +
+      '<td>' + (d.sitRaw ? ('<span style="padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;background:'+sitRawColor(d.sitRaw).bg+';color:'+sitRawColor(d.sitRaw).fg+'">'+d.sitRaw+'</span>') : '-') + '</td>' +
       '<td>' + (d.consultor||'-') + '</td>' +
       '<td>' + (d.cliente||'-') + '</td>' +
       '<td>' + (d.cpf||'-') + '</td>' +
