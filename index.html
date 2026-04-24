@@ -311,6 +311,7 @@ body.embedded-mode .portal-menu-fab { display:flex; }
       <div class="sb-item" onclick="nav('historico')" id="ni-historico"><span class="ic">&#128197;</span> Historico</div>
       <div class="sb-item" onclick="nav('assembleia')" id="ni-assembleia"><span class="ic">&#127942;</span> Resultado Assembleia</div>
       <div class="sb-item" onclick="nav('lances')" id="ni-lances"><span class="ic">&#128269;</span> Consulta de Lances</div>
+      <div class="sb-item" onclick="nav('vendas-dash')" id="ni-vendas-dash"><span class="ic">&#128200;</span> Dashboard de Vendas</div>
       <div class="sb-item" onclick="nav('perfil')" id="ni-perfil"><span class="ic">&#128100;</span> Meu Perfil</div>
       <div id="admin-nav" class="hidden">
         <div class="sb-section">Administracao</div>
@@ -351,6 +352,11 @@ body.embedded-mode .portal-menu-fab { display:flex; }
       <!-- LANCES (iframe carregado sob demanda) -->
       <div class="screen" id="s-lances" style="padding:0;height:calc(100vh - 0px);overflow:hidden">
         <iframe id="iframe-lances" src="about:blank" data-target="lances.html" style="width:100%;height:100%;border:0;display:block" title="Consulta de Lances"></iframe>
+      </div>
+
+      <!-- DASHBOARD DE VENDAS (iframe carregado sob demanda) -->
+      <div class="screen" id="s-vendas-dash" style="padding:0;height:calc(100vh - 0px);overflow:hidden">
+        <iframe id="iframe-vendas-dash" src="about:blank" data-target="dashboard_vendas.html" style="width:100%;height:100%;border:0"></iframe>
       </div>
 
       <!-- PAINEL SPLIT (iframe carregado sob demanda) -->
