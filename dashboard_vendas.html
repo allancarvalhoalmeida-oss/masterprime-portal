@@ -910,6 +910,9 @@ function applyColFilters(rows) {
       if (k === 'credito') {
         const min = parseFloat(f[k].replace(/[^\d.-]/g,''));
         if (!isNaN(min) && (d.credito||0) < min) return false;
+      } else if (Array.isArray(f[k])) {
+        const v = (d[k]||'').toString().toLowerCase();
+        if (!f[k].some(s => s.toString().toLowerCase() === v)) return false;
       } else {
         const v = k === 'dataVenda' ? formatBR(d.dataVenda) : (d[k]||'');
         if (!v.toString().toLowerCase().includes(q)) return false;
@@ -988,7 +991,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (ps) ps.addEventListener('change', () => { vendasState.page = 1; drawVendasTable(); });
   document.querySelectorAll('[data-filter-col]').forEach(el => {
     const col = el.dataset.filterCol;
-    const handler = () => { vendasState.colFilters[col] = el.value; vendasState.page = 1; drawVendasTable(); };
+    const handler = () => { if (el.tagName === 'SELECT' && el.multiple) { const vals = Array.from(el.selectedOptions).map(o => o.value).filter(Boolean); vendasState.colFilters[col] = vals.length ? vals : ''; } else { vendasState.colFilters[col] = el.value; } vendasState.page = 1; drawVendasTable(); };
     el.addEventListener('input', handler);
     el.addEventListener('change', handler);
   });
