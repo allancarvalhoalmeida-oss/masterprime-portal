@@ -614,16 +614,22 @@ function computePrevPeriod(currentData) {
       const fMes = getMSValues('wrapMes');
       const fAdm = getMSValues('wrapAdm');
       const fSit = getMSValues('wrapSit');
-      if (!fa || fa.length === 0) return [];
+      const empty = { credito: 0, cotas: 0, ticket: 0, consultores: 0, adms: 0 };
+      if (!fa || fa.length === 0) return empty;
       const prevAnos = fa.map(a => String(parseInt(a) - 1));
       const normM = s => (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase();
       const fMesNorm = (fMes||[]).map(normM);
-      let prev = rawData.filter(d => prevAnos.includes(String(d.ano)));
-      if (fc && fc.length) prev = prev.filter(d => fc.includes(d.consultor));
-      if (fAdm && fAdm.length) prev = prev.filter(d => fAdm.includes(d.adm));
-      if (fSit && fSit.length) prev = prev.filter(d => fSit.includes(d.status));
-      if (fMesNorm.length) prev = prev.filter(d => fMesNorm.includes(normM(d.mes)));
-      return prev;
+      let p = rawData.filter(d => prevAnos.includes(String(d.ano)));
+      if (fc && fc.length) p = p.filter(d => fc.includes(d.consultor));
+      if (fAdm && fAdm.length) p = p.filter(d => fAdm.includes(d.adm));
+      if (fSit && fSit.length) p = p.filter(d => fSit.includes(d.status));
+      if (fMesNorm.length) p = p.filter(d => fMesNorm.includes(normM(d.mes)));
+      const credito = p.reduce((s,d) => s + (Number(d.credito)||0), 0);
+      const cotas = p.length;
+      const ticket = cotas > 0 ? credito / cotas : 0;
+      const consultores = new Set(p.map(d => d.consultor).filter(Boolean)).size;
+      const adms = new Set(p.map(d => d.adm).filter(Boolean)).size;
+      return { credito, cotas, ticket, consultores, adms };
     }
 
 // ══════════════════════════════════════════════════════════════
