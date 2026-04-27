@@ -590,7 +590,7 @@ function renderKPIs(data) {
   let prev = computePrevPeriod(data);
   
   document.getElementById('kCredito').textContent = fmtFull(totalCredito);
-  document.getElementById('kCreditoSub').innerHTML = 'em ' + totalCotas + ' operações ' + varChip(totalCredito, prev.credito);
+  document.getElementById('kCreditoSub').innerHTML = varChip(totalCredito, prev.credito);
   document.getElementById('kCotas').innerHTML = totalCotas.toLocaleString('pt-BR') + ' ' + varChip(totalCotas, prev.cotas, true);
   document.getElementById('kTicket').innerHTML = fmtFull(ticket) + ' <span style="font-size:10px">' + varChip(ticket, prev.ticket) + '</span>';
   document.getElementById('kConsultores').innerHTML = consultores.size + ' ' + varChip(consultores.size, prev.consultores, true);
