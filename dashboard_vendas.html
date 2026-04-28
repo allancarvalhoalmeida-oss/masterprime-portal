@@ -899,19 +899,19 @@ function populateColFilters() {
   const wrapAdm = document.getElementById('wrapColAdm');
   if (wrapAdm) {
     const uniq = [...new Set(vendasState.data.map(d => d.adm).filter(Boolean))].sort();
-    initMS('wrapColAdm', uniq, 'Todas', { onChange: () => { vendasState.colFilters.adm = getMSValues('wrapColAdm'); vendasState.page = 1; drawVendasTable(); } });
+    initMS('wrapColAdm', uniq, 'Todas', { onChange: () => { const v = getMSValues('wrapColAdm'); vendasState.colFilters.adm = v.length ? v : ''; vendasState.page = 1; drawVendasTable(); } });
   }
   const wrapSit = document.getElementById('wrapColSit');
   if (wrapSit) {
     const uniq = [...new Set(vendasState.data.map(d => d.sitRaw).filter(Boolean))].sort();
-    initMS('wrapColSit', uniq, 'Todas', { onChange: () => { vendasState.colFilters.sitRaw = getMSValues('wrapColSit'); vendasState.page = 1; drawVendasTable(); } });
+    initMS('wrapColSit', uniq, 'Todas', { onChange: () => { const v = getMSValues('wrapColSit'); vendasState.colFilters.sitRaw = v.length ? v : ''; vendasState.page = 1; drawVendasTable(); } });
   }
 }
 function applyColFilters(rows) {
   const f = vendasState.colFilters;
   return rows.filter(d => {
     for (const k in f) {
-      if (!f[k]) continue;
+      if (!f[k] || (Array.isArray(f[k]) && f[k].length === 0)) continue;
       const q = f[k].toString().toLowerCase();
       if (k === 'credito') {
         const min = parseFloat(f[k].replace(/[^\d.-]/g,''));
