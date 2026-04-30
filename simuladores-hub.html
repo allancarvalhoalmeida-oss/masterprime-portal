@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Master Prime — Simuladores</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --mp-navy:    #2D3F5E;
+  --mp-navy-d:  #1E2D45;
+  --mp-yellow:  #C8C84A;
+  --mp-teal:    #4DBCC8;
+  --mp-blue:    #7A9BC8;
+  --bg:         #F4F6FA;
+  --card:       #FFFFFF;
+  --border:     #E2E8F0;
+  --border2:    #CBD5E1;
+  --text:       #1E293B;
+  --text2:      #64748B;
+  --text3:      #94A3B8;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'Inter', -apple-system, system-ui, sans-serif; font-size: 13px; min-height: 100vh; }
+
+#hub-screen { padding: 32px 40px 40px; }
+#hub-screen.hidden { display: none; }
+.hub-header { margin-bottom: 28px; }
+.hub-title { font-size: 24px; font-weight: 700; color: var(--mp-navy); letter-spacing: -0.4px; }
+.hub-sub { font-size: 13px; color: var(--text2); margin-top: 6px; }
+
+.cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px; }
+
+.sim-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 22px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  display: flex; flex-direction: column; gap: 12px;
+  min-height: 168px;
+  position: relative;
+  overflow: hidden;
+}
+.sim-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 28px rgba(45,63,94,.12), 0 4px 8px rgba(45,63,94,.06);
+  border-color: var(--mp-teal);
+}
+.sim-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--mp-navy);
+  transition: background 0.15s ease;
+}
+.sim-card:hover::before { background: var(--mp-teal); }
+
+.sim-icon {
+  width: 44px; height: 44px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #F4F6FA, #E2E8F0);
+  font-size: 22px; color: var(--mp-navy);
+  font-weight: 700;
+}
+.sim-card .name {
+  font-size: 15px; font-weight: 700; color: var(--mp-navy); letter-spacing: -0.2px;
+}
+.sim-card .desc { font-size: 12px; color: var(--text2); line-height: 1.5; flex-grow: 1; }
+.sim-card .arrow {
+  font-size: 11px; color: var(--mp-teal); font-weight: 600; letter-spacing: 0.5px;
+  text-transform: uppercase; display: flex; align-items: center; gap: 4px;
+}
+
+/* Cores temáticas por categoria */
+.sim-card.cat-base::before { background: var(--mp-navy); }
+.sim-card.cat-investimento::before { background: var(--mp-teal); }
+.sim-card.cat-comparativo::before { background: var(--mp-yellow); }
+
+.sim-card.cat-base:hover::before,
+.sim-card.cat-investimento:hover::before,
+.sim-card.cat-comparativo:hover::before { background: var(--mp-blue); }
+
+/* === Iframe view === */
+#sim-view { display: none; flex-direction: column; height: 100vh; }
+#sim-view.active { display: flex; }
+.sim-toolbar {
+  background: var(--mp-navy); color: #fff;
+  padding: 12px 20px; display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+}
+.sim-toolbar .back-btn {
+  background: rgba(255,255,255,.1); color: #fff; border: 1px solid rgba(255,255,255,.2);
+  padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;
+  transition: background 0.15s ease;
+  display: flex; align-items: center; gap: 6px;
+  font-family: inherit;
+}
+.sim-toolbar .back-btn:hover { background: rgba(255,255,255,.2); }
+.sim-toolbar .sim-title-bar { font-size: 14px; font-weight: 600; letter-spacing: 0.3px; }
+.sim-toolbar .toolbar-right { font-size: 11px; color: rgba(255,255,255,.6); letter-spacing: 1.5px; text-transform: uppercase; }
+
+#sim-iframe { flex-grow: 1; border: 0; width: 100%; }
+
+@media (max-width: 768px) {
+  #hub-screen { padding: 20px 16px 24px; }
+  .hub-title { font-size: 20px; }
+  .cards-grid { gap: 12px; }
+  .sim-toolbar { padding: 10px 14px; }
+  .sim-toolbar .toolbar-right { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- Hub View -->
+<div id="hub-screen">
+  <div class="hub-header">
+    <div class="hub-title">Simuladores</div>
+    <div class="hub-sub">Escolha o tipo de simulação que deseja realizar</div>
+  </div>
+
+  <div class="cards-grid">
+    <div class="sim-card cat-base" onclick="openSim('op-simples', 'Operação Simples', 'simulador-master-prime-teste.html')">
+      <div class="sim-icon">OS</div>
+      <div class="name">Operação Simples</div>
+      <div class="desc">Cálculo de uma única operação de consórcio com CET, parcelas e custo da operação.</div>
+      <div class="arrow">Abrir &rarr;</div>
+    </div>
+
+    <div class="sim-card cat-base" onclick="openSim('op-estruturada', 'Operação Estruturada', 'simulador-estruturada-master-prime-teste.html')">
+      <div class="sim-icon">OE</div>
+      <div class="name">Operação Estruturada</div>
+      <div class="desc">Operação completa com múltiplos lances, FGTS, redutor e adesão. Cálculo detalhado.</div>
+      <div class="arrow">Abrir &rarr;</div>
+    </div>
+
+    <div class="sim-card cat-investimento" onclick="openSim('cons-investimento', 'Consórcio como Investimento', 'simulador-investimento.html')">
+      <div class="sim-icon">CI</div>
+      <div class="name">Consórcio como Investimento</div>
+      <div class="desc">Análise do consórcio como veículo de investimento, com aportes e rentabilidade.</div>
+      <div class="arrow">Abrir &rarr;</div>
+    </div>
+
+    <div class="sim-card cat-investimento" onclick="openSim('alavancagem', 'Alavancagem Patrimonial', 'simulador-alavancagem.html')">
+      <div class="sim-icon">AP</div>
+      <div class="name">Alavancagem Patrimonial</div>
+      <div class="desc">Estratégias de alavancagem com diferença de aluguel, imóveis alugados, previdência e renda fixa.</div>
+      <div class="arrow">Abrir &rarr;</div>
+    </div>
+
+    <div class="sim-card cat-comparativo" onclick="openSim('cons-x-financ', 'Consórcio x Financiamento', 'simulador-cons-x-financ.html')">
+      <div class="sim-icon">CF</div>
+      <div class="name">Consórcio x Financiamento</div>
+      <div class="desc">Comparação entre consórcio e financiamento (SAC, PRICE ou CDC) com cálculo de economia.</div>
+      <div class="arrow">Abrir &rarr;</div>
+    </div>
+
+    <div class="sim-card cat-comparativo" onclick="openSim('cons-x-vista', 'Consórcio x À Vista', 'simulador-cons-x-vista.html')">
+      <div class="sim-icon">CV</div>
+      <div class="name">Consórcio x À Vista</div>
+      <div class="desc">Compra à vista vs consórcio com investimento da diferença e valorização do bem.</div>
+      <div class="arrow">Abrir &rarr;</div>
+    </div>
+
+    <div class="sim-card cat-comparativo" onclick="openSim('cons-x-cons', 'Consórcio x Consórcio', 'simulador-cons-x-cons.html')">
+      <div class="sim-icon">CC</div>
+      <div class="name">Consórcio x Consórcio</div>
+      <div class="desc">Comparação entre duas propostas de consórcio lado a lado para escolher a melhor.</div>
+      <div class="arrow">Abrir &rarr;</div>
+    </div>
+  </div>
+</div>
+
+<!-- Iframe View -->
+<div id="sim-view">
+  <div class="sim-toolbar">
+    <button class="back-btn" onclick="closeSim()">&larr; Voltar aos Simuladores</button>
+    <div class="sim-title-bar" id="sim-title-bar">Simulador</div>
+    <div class="toolbar-right">Master Prime</div>
+  </div>
+  <iframe id="sim-iframe" src="about:blank" title="Simulador" allow="fullscreen"></iframe>
+</div>
+
+<script>
+function openSim(slug, title, file) {
+  document.getElementById('hub-screen').classList.add('hidden');
+  const view = document.getElementById('sim-view');
+  view.classList.add('active');
+  document.getElementById('sim-title-bar').textContent = title;
+  document.getElementById('sim-iframe').src = file + '?embed=1';
+  // atualiza URL pro deep-link
+  try { history.replaceState({slug}, '', '?sim=' + slug); } catch(e) {}
+}
+
+function closeSim() {
+  document.getElementById('sim-view').classList.remove('active');
+  document.getElementById('hub-screen').classList.remove('hidden');
+  document.getElementById('sim-iframe').src = 'about:blank';
+  try { history.replaceState({}, '', location.pathname); } catch(e) {}
+}
+
+// Deep-link: abre direto se ?sim=slug estiver na URL
+(function () {
+  const params = new URLSearchParams(location.search);
+  const slug = params.get('sim');
+  if (!slug) return;
+  const cards = document.querySelectorAll('.sim-card');
+  for (const c of cards) {
+    const onclick = c.getAttribute('onclick') || '';
+    if (onclick.includes(`'${slug}'`)) {
+      c.click();
+      break;
+    }
+  }
+})();
+</script>
+</body>
+</html>
