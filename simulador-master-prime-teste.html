@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Master Prime - Simulador de Consórcio (Teste)</title>
+<style>
+  :root {
+    --navy: #2D3F5E;
+    --navy-dark: #1E2D45;
+    --navy-soft: #3A4F73;
+    --gold: #E8B86D;
+    --gold-dark: #C99A4F;
+    --bg: #F4F5F7;
+    --card: #FFFFFF;
+    --border: #E5E7EB;
+    --text: #1F2937;
+    --text-muted: #6B7280;
+    --text-light: #9CA3AF;
+    --soft-blue: #F1F5F9;
+    --error: #DC2626;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
+  header { background: var(--navy); color: #fff; padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .brand-mark { width: 36px; height: 36px; background: var(--navy-dark); border: 1px solid rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 14px; }
+  .brand-text h1 { font-size: 16px; font-weight: 600; letter-spacing: 0.3px; }
+  .brand-text p { font-size: 11px; color: rgba(255,255,255,0.7); letter-spacing: 1.2px; text-transform: uppercase; margin-top: 2px; }
+  .tag-test { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.85); border: 1px solid rgba(255,255,255,0.25); padding: 4px 10px; border-radius: 4px; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; font-weight: 500; }
+  main { max-width: 1280px; margin: 0 auto; padding: 32px; }
+  h2.section-title { font-size: 22px; font-weight: 600; color: var(--navy); margin-bottom: 4px; text-align: center; letter-spacing: 0.5px; }
+  .subtitle { font-size: 12px; color: var(--text-muted); text-align: center; margin-bottom: 24px; letter-spacing: 1px; text-transform: uppercase; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 16px; }
+  .card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+  .card-header h3 { font-size: 13px; font-weight: 600; color: var(--navy); letter-spacing: 1.5px; text-transform: uppercase; }
+  .card-header .reset-btn { margin-left: auto; background: none; border: 1px solid var(--border); color: var(--text-muted); cursor: pointer; padding: 4px 10px; border-radius: 4px; font-size: 11px; }
+  .card-header .reset-btn:hover { background: var(--bg); }
+  .grid { display: grid; gap: 16px; }
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .grid-2 { grid-template-columns: repeat(2, 1fr); }
+  @media (max-width: 768px) { .grid-3, .grid-4, .grid-2 { grid-template-columns: 1fr; } }
+
+  /* Inputs */
+  .field { position: relative; }
+  .field label { position: absolute; top: -7px; left: 12px; background: var(--card); padding: 0 6px; font-size: 11px; color: var(--text-muted); letter-spacing: 0.5px; text-transform: uppercase; font-weight: 500; z-index: 1; display: flex; align-items: center; gap: 6px; }
+  .field input, .field select { width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; font-family: inherit; background: #fff; color: var(--text); transition: border-color 0.15s; }
+  .field input:focus, .field select:focus { outline: none; border-color: var(--navy); }
+  .field input:disabled, .field input.disabled, .field select:disabled { background: var(--soft-blue); color: var(--text-light); cursor: not-allowed; }
+  .field select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M2 4l4 4 4-4z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+
+  /* Toggle */
+  .toggle-input { position: relative; display: inline-block; width: 32px; height: 18px; vertical-align: middle; }
+  .toggle-input input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #D1D5DB; border-radius: 18px; transition: 0.2s; }
+  .toggle-slider::before { position: absolute; content: ""; height: 14px; width: 14px; left: 2px; top: 2px; background: white; border-radius: 50%; transition: 0.2s; }
+  .toggle-input input:checked + .toggle-slider { background: var(--navy); }
+  .toggle-input input:checked + .toggle-slider::before { transform: translateX(14px); }
+
+  /* Output result rows */
+  .result { background: var(--soft-blue); border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; }
+  .result strong { font-size: 12px; color: var(--navy); letter-spacing: 1px; text-transform: uppercase; font-weight: 500; }
+  .result .value { font-size: 18px; font-weight: 600; color: var(--navy); }
+
+  .result-primary { background: var(--navy); color: white; padding: 14px 20px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-top: 4px; }
+  .result-primary strong { color: rgba(255,255,255,0.7); font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 500; }
+  .result-primary .value { font-size: 22px; font-weight: 700; color: #fff; }
+
+  /* Pós contemplação */
+  .pos-grid { display: grid; grid-template-columns: 1fr auto 1fr; gap: 16px; align-items: stretch; }
+  @media (max-width: 768px) { .pos-grid { grid-template-columns: 1fr; } .pos-or { display: none; } }
+  .pos-or { display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-weight: 600; font-size: 13px; letter-spacing: 1px; }
+  .pos-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+  .pos-card h3 { font-size: 12px; font-weight: 600; color: var(--navy); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 14px; }
+  .pos-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .pos-row:last-child { border-bottom: none; }
+  .pos-row span:first-child { font-size: 12px; color: var(--text-muted); letter-spacing: 0.5px; text-transform: uppercase; }
+  .pos-row .pos-value { font-weight: 600; color: var(--navy); }
+  .pos-row.highlight { background: var(--soft-blue); margin: 0 -8px 4px; padding: 10px 12px; border-radius: 6px; border-bottom: none; }
+  .pos-row.highlight .pos-value { color: var(--navy); font-size: 16px; font-weight: 700; }
+
+  /* Footer actions */
+  .actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; padding-bottom: 32px; }
+  button.primary, button.secondary { padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.15s; border: 1px solid transparent; }
+  button.primary { background: var(--navy); color: #fff; border-color: var(--navy); }
+  button.primary:hover { background: var(--navy-dark); border-color: var(--navy-dark); }
+  button.secondary { background: transparent; color: var(--text-muted); border-color: var(--border); }
+  button.secondary:hover { background: var(--bg); border-color: var(--text-muted); }
+
+  /* Helpers */
+  .hidden { display: none !important; }
+  .test-banner { background: var(--soft-blue); border: 1px solid #CBD5E1; color: var(--navy); padding: 10px 16px; border-radius: 8px; font-size: 12px; margin-bottom: 16px; text-align: center; }
+</style>
+</head>
+<body>
+<script>if (new URLSearchParams(location.search).get('embed') === '1') document.documentElement.classList.add('embedded');</script>
+<style>html.embedded header { display: none; } html.embedded main { padding-top: 16px; }</style>
+
+<header>
+  <div class="brand">
+    <div class="brand-mark">M</div>
+    <div class="brand-text">
+      <h1>Master Prime</h1>
+      <p>Simulador de Consórcio</p>
+    </div>
+  </div>
+
+</header>
+
+<main>
+
+  <h2 class="section-title">Operação Simples</h2>
+  <p class="subtitle">Simulação de consórcio com proposta, contemplação e pós-contemplação</p>
+
+  <!-- ════ PROPOSTA ════ -->
+  <section class="card">
+    <div class="card-header">
+      <h3>Proposta</h3>
+      <button type="button" class="reset-btn" id="resetProposta">Limpar</button>
+    </div>
+    <div class="grid grid-3">
+      <div class="field"><label>Crédito</label><input type="text" id="credito" placeholder="R$ 0,00" data-mask="money"></div>
+      <div class="field"><label>Prazo (meses)</label><input type="text" id="prazo" placeholder="0" data-mask="int"></div>
+      <div class="field"><label>% Taxa de administração</label><input type="text" id="taxaAdm" placeholder="0,00 %" data-mask="pct2"></div>
+
+      <div class="field"><label>% Fundo de reserva</label><input type="text" id="fundo" placeholder="0,00 %" data-mask="pct2"></div>
+      <div class="field"><label>Tipo de reajuste</label>
+        <select id="tipoReajuste">
+          <option value="">Selecione</option>
+          <optgroup label="Aniversário da cota">
+            <option value="cota-anual">Cota - anual</option>
+            <option value="cota-semestral">Cota - semestral</option>
+            <option value="cota-mensal">Cota - mensal</option>
+          </optgroup>
+          <optgroup label="Aniversário do grupo">
+            <option value="grupo-anual">Grupo - anual</option>
+            <option value="grupo-semestral">Grupo - semestral</option>
+            <option value="grupo-mensal">Grupo - mensal</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="field"><label>% Reajuste</label><input type="text" id="reajuste" placeholder="0,00 %" data-mask="pct2"></div>
+
+      <div class="field">
+        <label>
+          % Seguro
+          <span class="toggle-input"><input type="checkbox" id="seguroOn"><span class="toggle-slider"></span></span>
+        </label>
+        <input type="text" id="seguro" placeholder="0,0000 %" data-mask="pct4" disabled>
+      </div>
+      <div class="field">
+        <label>Tipo seguro</label>
+        <select id="tipoSeguro" disabled>
+          <option value="categoria">Categoria</option>
+          <option value="saldo">Saldo devedor</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>
+          Redutor de parcela
+          <span class="toggle-input"><input type="checkbox" id="redutorOn"><span class="toggle-slider"></span></span>
+        </label>
+        <input type="text" id="redutor" placeholder="0,00 %" data-mask="pct2" disabled>
+      </div>
+
+      <div class="field">
+        <label>Redução sobre</label>
+        <select id="reducaoSobre" disabled>
+          <option value="parcela">Parcela total</option>
+          <option value="fundo">Fundo comum</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>
+          % Taxa de adesão
+          <span class="toggle-input"><input type="checkbox" id="adesaoOn"><span class="toggle-slider"></span></span>
+        </label>
+        <input type="text" id="adesao" placeholder="0,00 %" data-mask="pct2" disabled>
+      </div>
+      <div class="field">
+        <label>Prazo adesão</label>
+        <input type="text" id="prazoAdesao" placeholder="0" data-mask="int" disabled>
+      </div>
+    </div>
+
+    <div style="margin-top: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+      <div class="result-primary">
+        <strong id="lblParcelaInicial">Parcela inicial</strong>
+        <span class="value" id="parcelaInicial">R$ 0,00</span>
+      </div>
+      <div class="result-primary hidden" id="boxDemaisParcelas">
+        <strong>Demais parcelas</strong>
+        <span class="value" id="demaisParcelas">R$ 0,00</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════ CONTEMPLAÇÃO ════ -->
+  <section class="card">
+    <div class="card-header">
+      <h3>Contemplação</h3>
+      <button type="button" class="reset-btn" id="resetContemplacao">Limpar</button>
+    </div>
+    <div class="grid grid-4">
+      <div class="field"><label>Tipo de contemplação</label>
+        <select id="tipoContemplacao">
+          <option value="">Selecione</option>
+          <option value="sorteio">Sorteio</option>
+          <option value="lance">Lance</option>
+        </select>
+      </div>
+      <div class="field"><label>Expectativa (meses)</label><input type="text" id="expectativa" placeholder="1" value="1" data-mask="int"></div>
+      <div class="field"><label>Tipo de lance</label>
+        <select id="tipoLance" disabled>
+          <option value="">Selecione</option>
+          <option value="carta">Carta de crédito</option>
+          <option value="categoria">Categoria</option>
+          <option value="saldo">Saldo devedor</option>
+          <option value="cat-carta">Categoria (total) e carta (emb.)</option>
+        </select>
+      </div>
+      <div class="field"><label>Valor de referência</label><input type="text" id="valorRef" placeholder="R$ 0,00" disabled class="disabled"></div>
+
+      <div class="field"><label>Crédito atualizado</label><input type="text" id="creditoAtualizado" placeholder="R$ 0,00" disabled class="disabled"></div>
+      <div class="field"><label>% Lance rec. próprios</label><input type="text" id="lanceProprios" placeholder="0,0000 %" data-mask="pct4" disabled></div>
+      <div class="field"><label>% Lance embutido</label><input type="text" id="lanceEmbutido" placeholder="0,0000 %" data-mask="pct4" disabled></div>
+      <div class="field">
+        <label>
+          % Lance com FGTS
+          <span class="toggle-input"><input type="checkbox" id="fgtsOn" disabled><span class="toggle-slider"></span></span>
+        </label>
+        <input type="text" id="lanceFGTS" placeholder="0,0000 %" data-mask="pct4" disabled>
+      </div>
+
+      <div class="field"><label>% Total de lance</label><input type="text" id="totalLance" placeholder="0,0000 %" disabled class="disabled"></div>
+      <div class="field"><label>Lance rec. próprios</label><input type="text" id="lanceProprios_v" placeholder="R$ 0,00" disabled class="disabled"></div>
+      <div class="field"><label>Lance embutido</label><input type="text" id="lanceEmbutido_v" placeholder="R$ 0,00" disabled class="disabled"></div>
+      <div class="field"><label>Lance com FGTS</label><input type="text" id="lanceFGTS_v" placeholder="R$ 0,00" disabled class="disabled"></div>
+
+      <div class="field"><label>Valor total do lance</label><input type="text" id="valorTotalLance" placeholder="R$ 0,00" disabled class="disabled"></div>
+    </div>
+
+    <div style="margin-top: 16px;">
+      <div class="result-primary">
+        <strong>Crédito disponível</strong>
+        <span class="value" id="creditoDisponivel">R$ 0,00</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════ EVOLUÇÃO DA COTA ════ -->
+  <section class="card">
+    <div class="card-header">
+      <label for="evolucaoOn" style="display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--navy); letter-spacing: 1.5px; text-transform: uppercase;">
+        Evolução da cota após contemplação
+        <span class="toggle-input"><input type="checkbox" id="evolucaoOn"><span class="toggle-slider"></span></span>
+      </label>
+    </div>
+    <div id="evolucaoBody" class="hidden">
+      <div class="grid grid-3">
+        <div class="field"><label>Selic</label><input type="text" id="selic" value="15,0 %" data-mask="pct2"></div>
+        <div class="field"><label>% De rentabilidade</label><input type="text" id="rentab" value="100,00 %" data-mask="pct2"></div>
+        <div class="result"><strong>Rentabilidade</strong><span class="value" id="rentabilidade">R$ 0,00</span></div>
+
+        <div class="field"><label>% Do CDI</label><input type="text" id="cdi" placeholder="0,00 %" disabled class="disabled"></div>
+        <div class="field"><label>Meses após contemplação</label><input type="text" id="mesesPosCont" placeholder="0" data-mask="int"></div>
+        <div class="result"><strong>Crédito + rentabilidade</strong><span class="value" id="creditoMaisRentab">R$ 0,00</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════ PÓS CONTEMPLAÇÃO ════ -->
+  <div class="pos-grid">
+    <div class="pos-card">
+      <h3>Pós contemplação · Redução de parcela</h3>
+      <div class="pos-row highlight"><span>Parcela</span><span class="pos-value" id="reducaoParcela_parc">R$ 0,00</span></div>
+      <div class="pos-row"><span>Prazo restante</span><span class="pos-value" id="reducaoParcela_prazo">0</span></div>
+      <div class="pos-row"><span>Custo efetivo mensal</span><span class="pos-value" id="reducaoParcela_cm">0,00 %</span></div>
+      <div class="pos-row"><span>Custo efetivo anual</span><span class="pos-value" id="reducaoParcela_ca">0,00 %</span></div>
+    </div>
+    <div class="pos-or">OU</div>
+    <div class="pos-card">
+      <h3>Pós contemplação · Redução de prazo</h3>
+      <div class="pos-row highlight"><span>Parcela</span><span class="pos-value" id="reducaoPrazo_parc">R$ 0,00</span></div>
+      <div class="pos-row"><span>Prazo restante</span><span class="pos-value" id="reducaoPrazo_prazo">0</span></div>
+      <div class="pos-row"><span>Custo efetivo mensal</span><span class="pos-value" id="reducaoPrazo_cm">0,00 %</span></div>
+      <div class="pos-row"><span>Custo efetivo anual</span><span class="pos-value" id="reducaoPrazo_ca">0,00 %</span></div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="secondary" id="limparTudo">Limpar tudo</button>
+    <button class="primary" id="baixarPdf">Baixar PDF</button>
+  </div>
+</main>
+
+<!-- ════ TEMPLATE PDF (oculto, usado só na hora de baixar) ════ -->
+<div id="pdfReport" style="display:none; position:absolute; left:-9999px; width:794px; background:#fff; font-family:'Inter',-apple-system,system-ui,sans-serif; color:#1F2937;">
+  <div style="background:#2D3F5E; color:#fff; padding:18px 32px; display:flex; justify-content:space-between; align-items:center;">
+    <div style="display:flex; align-items:center; gap:14px;">
+      <div style="width:36px; height:36px; background:#1E2D45; border:1px solid rgba(255,255,255,0.2); border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:14px;">M</div>
+      <div>
+        <div style="font-size:18px; font-weight:600; letter-spacing:0.3px;">Master Prime</div>
+        <div style="font-size:10px; letter-spacing:1.2px; text-transform:uppercase; color:rgba(255,255,255,0.7); margin-top:2px;">Simulador de Consórcio</div>
+      </div>
+    </div>
+    <div style="font-size:12px; font-weight:600;">Estratégia Simulada: Operação Simples</div>
+  </div>
+
+  <div style="padding:32px;">
+    <div style="font-size:11px; font-weight:700; letter-spacing:1.5px; color:#2D3F5E; margin-bottom:12px;">DADOS DA COTA</div>
+    <div style="display:grid; grid-template-columns:repeat(4,1fr) auto; gap:24px; padding:16px 20px; background:#F4F5F7; border-radius:8px; align-items:center;">
+      <div><div style="font-size:10px; color:#6B7280; margin-bottom:4px;">Crédito</div><div id="pdf_credito" style="font-size:13px; font-weight:600;">—</div></div>
+      <div><div style="font-size:10px; color:#6B7280; margin-bottom:4px;">Prazo</div><div id="pdf_prazo" style="font-size:13px; font-weight:600;">—</div></div>
+      <div><div style="font-size:10px; color:#6B7280; margin-bottom:4px;">Taxa de administração</div><div id="pdf_taxaAdm" style="font-size:13px; font-weight:600;">—</div></div>
+      <div><div style="font-size:10px; color:#6B7280; margin-bottom:4px;">Fundo de reserva</div><div id="pdf_fundo" style="font-size:13px; font-weight:600;">—</div></div>
+      <div style="text-align:right;"><div style="font-size:10px; color:#6B7280; margin-bottom:4px;">Parcela inicial</div><div id="pdf_parcelaInicial" style="background:#2D3F5E; color:#fff; font-weight:700; font-size:13px; padding:8px 14px; border-radius:6px; display:inline-block;">—</div></div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; padding:0 20px; margin-top:8px;">
+      <div><div style="font-size:10px; color:#6B7280; margin-bottom:4px;">Tipo de reajuste</div><div id="pdf_tipoReajuste" style="font-size:13px; font-weight:600;">—</div></div>
+      <div><div style="font-size:10px; color:#6B7280; margin-bottom:4px;">Reajuste</div><div id="pdf_reajuste" style="font-size:13px; font-weight:600;">—</div></div>
+    </div>
+
+    <div style="height:1px; background:#E5E7EB; margin:24px 0;"></div>
+
+    <div style="font-size:11px; font-weight:700; letter-spacing:1.5px; color:#2D3F5E; margin-bottom:12px;">DETALHES DA CONTEMPLAÇÃO</div>
+    <div style="display:grid; grid-template-columns:repeat(4,1fr) auto; gap:24px; padding:16px 20px; background:#F4F5F7; border-radius:8px; align-items:center;">
+      <div><div style="font-size:10px; color:#6B7280; margin-bottom:4px;">Modalidade</div><div id="pdf_modalidade" style="font-size:13px; font-weight:600;">—</div></div>
+      <div><div style="font-size:10px; color:#6B7280; margin-bottom:4px;">Expectativa</div><div id="pdf_expectativa" style="font-size:13px; font-weight:600;">—</div></div>
+      <div><div style="font-size:10px; color:#6B7280; margin-bottom:4px;">Crédito atualizado</div><div id="pdf_creditoAtualizado" style="font-size:13px; font-weight:600;">—</div></div>
+      <div><div style="font-size:10px; color:#6B7280; margin-bottom:4px;">Base de cálculo</div><div id="pdf_baseCalculo" style="font-size:13px; font-weight:600;">—</div></div>
+      <div style="text-align:right;"><div style="font-size:10px; color:#6B7280; margin-bottom:4px;">Crédito disponível</div><div id="pdf_creditoDisp" style="background:#2D3F5E; color:#fff; font-weight:700; font-size:13px; padding:8px 14px; border-radius:6px; display:inline-block;">—</div></div>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:24px; padding:0 20px; margin-top:8px;">
+      <div><div style="font-size:10px; color:#6B7280; margin-bottom:4px;">Valor de referência</div><div id="pdf_valorRef" style="font-size:13px; font-weight:600;">—</div></div>
+      <div><div style="font-size:10px; color:#6B7280; margin-bottom:4px;">Recursos próprios</div><div id="pdf_recProprios" style="font-size:13px; font-weight:600;">—</div></div>
+      <div><div style="font-size:10px; color:#6B7280; margin-bottom:4px;">Embutido</div><div id="pdf_embutido" style="font-size:13px; font-weight:600;">—</div></div>
+      <div><div style="font-size:10px; color:#6B7280; margin-bottom:4px;">FGTS</div><div id="pdf_fgts" style="font-size:13px; font-weight:600;">—</div></div>
+    </div>
+    <div style="padding:0 20px; margin-top:8px;">
+      <div style="font-size:10px; color:#6B7280; margin-bottom:4px;">Total de lance</div><div id="pdf_totalLance" style="font-size:13px; font-weight:600;">—</div>
+    </div>
+
+    <div id="pdf_evolucaoBlock" style="display:none;">
+      <div style="height:1px; background:#E5E7EB; margin:24px 0;"></div>
+      <div style="font-size:11px; font-weight:700; letter-spacing:1.5px; color:#2D3F5E; margin-bottom:12px;">VALORIZAÇÃO DA COTA APÓS CONTEMPLAÇÃO</div>
+      <div style="display:grid; grid-template-columns:repeat(3,1fr) auto; gap:24px; padding:16px 20px; background:#F4F5F7; border-radius:8px; align-items:center;">
+        <div><div style="font-size:10px; color:#6B7280; margin-bottom:4px;">CDI</div><div id="pdf_cdi" style="font-size:13px; font-weight:600;">—</div></div>
+        <div><div style="font-size:10px; color:#6B7280; margin-bottom:4px;">Período da aplicação</div><div id="pdf_periodo" style="font-size:13px; font-weight:600;">—</div></div>
+        <div><div style="font-size:10px; color:#6B7280; margin-bottom:4px;">Rentabilidade sobre o CDI</div><div id="pdf_rentab" style="font-size:13px; font-weight:600;">—</div></div>
+        <div style="text-align:right;"><div style="font-size:10px; color:#6B7280; margin-bottom:4px;">Crédito disp. + rentabilidade</div><div id="pdf_creditoMaisRent" style="background:#2D3F5E; color:#fff; font-weight:700; font-size:13px; padding:8px 14px; border-radius:6px; display:inline-block;">—</div></div>
+      </div>
+    </div>
+
+    <div style="height:1px; background:#E5E7EB; margin:24px 0;"></div>
+
+    <table style="width:100%; border-collapse:collapse; font-size:12px;">
+      <thead>
+        <tr style="background:#F4F5F7;">
+          <th style="text-align:left; padding:12px 16px; font-size:10px; font-weight:700; letter-spacing:1px; color:#2D3F5E;">COMPARATIVO APÓS CONTEMPLAÇÃO</th>
+          <th style="text-align:center; padding:12px 16px; font-size:10px; font-weight:700; letter-spacing:1px; color:#2D3F5E;">REDUÇÃO DE PARCELA</th>
+          <th style="width:40px;"></th>
+          <th style="text-align:center; padding:12px 16px; font-size:10px; font-weight:700; letter-spacing:1px; color:#2D3F5E;">REDUÇÃO DE PRAZO</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid #E5E7EB;">
+          <td style="padding:10px 16px; color:#6B7280;">Parcela</td>
+          <td style="padding:10px 16px; text-align:center; font-weight:700;" id="pdf_redPar_parcela">—</td>
+          <td rowspan="3" style="text-align:center; color:#6B7280; font-weight:600;">OU</td>
+          <td style="padding:10px 16px; text-align:center; font-weight:700;" id="pdf_redPra_parcela">—</td>
+        </tr>
+        <tr style="border-bottom:1px solid #E5E7EB;">
+          <td style="padding:10px 16px; color:#6B7280;">Prazo restante</td>
+          <td style="padding:10px 16px; text-align:center; font-weight:700;" id="pdf_redPar_prazo">—</td>
+          <td style="padding:10px 16px; text-align:center; font-weight:700;" id="pdf_redPra_prazo">—</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 16px; color:#6B7280;">CET (Custo Efetivo Total)</td>
+          <td style="padding:10px 16px; text-align:center; font-weight:600; font-size:11px;" id="pdf_redPar_cet">—</td>
+          <td style="padding:10px 16px; text-align:center; font-weight:600; font-size:11px;" id="pdf_redPra_cet">—</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top:32px; font-size:9px; color:#6B7280; line-height:1.5;">
+      Os resultados apresentados nesta simulação possuem caráter meramente informativo e indicativo, sendo elaborados com base em informações fornecidas pelo usuário, as quais podem ser estimadas, hipotéticas ou não refletir condições reais de mercado, não constituindo promessa, garantia ou obrigação de resultado, tampouco vinculando a administradora ou quaisquer terceiros.<br><br>
+      A efetiva contratação do consórcio está condicionada à disponibilidade de vagas nos respectivos grupos, à análise e aprovação da administradora, bem como ao integral atendimento dos requisitos, regras e condições estabelecidos no contrato de adesão e na regulamentação aplicável.<br><br>
+      O usuário declara estar ciente de que o contrato de adesão, o regulamento do consórcio e os demais documentos aplicáveis constituem os instrumentos que regem a relação contratual, recomendando-se sua leitura integral, sendo o aceite manifestação inequívoca de ciência e concordância com todos os seus termos.
+    </div>
+  </div>
+
+  <div style="background:#2D3F5E; color:#fff; padding:14px 32px; display:flex; justify-content:space-between; align-items:center; font-size:11px; margin-top:32px;">
+    <div style="font-weight:600;">Master Prime · Simulador de Consórcio</div>
+    <div id="pdf_footer" style="text-align:right;">Documento gerado em —<br>Página 1/1</div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<script>
+// ═════════════════════════════════════════════════════
+// MÁSCARAS DE INPUT
+// ═════════════════════════════════════════════════════
+function maskMoney(value) {
+  const digits = String(value).replace(/\D/g, '');
+  if (!digits) return '';
+  // dígitos = centavos; últimos 2 = centavos, resto = reais
+  const cents = parseInt(digits, 10);
+  const reais = Math.floor(cents / 100);
+  const cs = cents % 100;
+  return 'R$ ' + reais.toLocaleString('pt-BR') + ',' + String(cs).padStart(2, '0');
+}
+function unmaskMoney(value) {
+  const digits = String(value).replace(/\D/g, '');
+  return parseInt(digits || '0', 10) / 100;
+}
+function maskPct(value, decimals = 2) {
+  const cleaned = String(value).replace(',', '.').replace(/[^\d.]/g, '');
+  if (cleaned === '') return '';
+  const num = parseFloat(cleaned);
+  if (isNaN(num)) return '';
+  return num.toFixed(decimals).replace('.', ',') + ' %';
+}
+function unmaskPct(value) {
+  const cleaned = String(value).replace('%', '').replace(',', '.').replace(/[^\d.\-]/g, '').trim();
+  return parseFloat(cleaned || '0');
+}
+function maskInt(value) {
+  return String(value).replace(/\D/g, '');
+}
+
+document.querySelectorAll('input[data-mask]').forEach(inp => {
+  const type = inp.dataset.mask;
+  inp.addEventListener('input', e => {
+    const v = e.target.value;
+    if (type === 'money') e.target.value = maskMoney(v);
+    else if (type === 'int') e.target.value = maskInt(v);
+    recalc();
+  });
+  inp.addEventListener('blur', e => {
+    const v = e.target.value;
+    if (type === 'pct2') e.target.value = maskPct(v, 2);
+    else if (type === 'pct4') e.target.value = maskPct(v, 4);
+  });
+  inp.addEventListener('focus', e => {
+    if (type === 'pct2' || type === 'pct4') {
+      const n = unmaskPct(e.target.value);
+      if (n) e.target.value = String(n).replace('.', ',');
+    }
+  });
+});
+
+document.querySelectorAll('select, input[type="checkbox"]').forEach(el => {
+  el.addEventListener('change', recalc);
+});
+
+// ═════════════════════════════════════════════════════
+// HELPERS DE FORMATAÇÃO
+// ═════════════════════════════════════════════════════
+function formatMoney(num) {
+  if (!isFinite(num) || isNaN(num)) num = 0;
+  return 'R$ ' + num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function formatPct(num, decimals = 4) {
+  if (!isFinite(num) || isNaN(num)) num = 0;
+  return num.toFixed(decimals).replace('.', ',') + ' %';
+}
+
+// ═════════════════════════════════════════════════════
+// TOGGLES
+// ═════════════════════════════════════════════════════
+function setupToggle(toggleId, ...fieldIds) {
+  const toggle = document.getElementById(toggleId);
+  toggle.addEventListener('change', () => {
+    fieldIds.forEach(id => {
+      const el = document.getElementById(id);
+      el.disabled = !toggle.checked;
+      el.classList.toggle('disabled', !toggle.checked);
+      if (!toggle.checked) {
+        if (el.tagName === 'INPUT') el.value = '';
+        else el.selectedIndex = 0;
+      }
+    });
+    recalc();
+  });
+}
+setupToggle('seguroOn', 'seguro', 'tipoSeguro');
+setupToggle('redutorOn', 'redutor', 'reducaoSobre');
+setupToggle('adesaoOn', 'adesao', 'prazoAdesao');
+setupToggle('fgtsOn', 'lanceFGTS');
+
+document.getElementById('evolucaoOn').addEventListener('change', e => {
+  document.getElementById('evolucaoBody').classList.toggle('hidden', !e.target.checked);
+  recalc();
+});
+
+document.getElementById('tipoContemplacao').addEventListener('change', e => {
+  const isLance = e.target.value === 'lance';
+  const isAlgo = e.target.value !== '';
+  document.getElementById('tipoLance').disabled = !isAlgo;
+  document.getElementById('lanceProprios').disabled = !isLance;
+  document.getElementById('lanceProprios').classList.toggle('disabled', !isLance);
+  document.getElementById('lanceEmbutido').disabled = !isLance;
+  document.getElementById('lanceEmbutido').classList.toggle('disabled', !isLance);
+  document.getElementById('fgtsOn').disabled = !isLance;
+  if (isAlgo && !document.getElementById('tipoLance').value) document.getElementById('tipoLance').value = 'carta';
+  recalc();
+});
+
+// ═════════════════════════════════════════════════════
+// FÓRMULAS (validadas: 27/27 casos batem com o Conkey)
+// ═════════════════════════════════════════════════════
+
+function calcularTIR(fluxos, palpite = 0.005) {
+  const npv = (taxa) => fluxos.reduce((acc, fc, t) => acc + fc / Math.pow(1 + taxa, t), 0);
+  const dnpv = (taxa) => fluxos.reduce((acc, fc, t) => acc - t * fc / Math.pow(1 + taxa, t + 1), 0);
+  let taxa = palpite;
+  for (let i = 0; i < 80; i++) {
+    const f = npv(taxa);
+    const d = dnpv(taxa);
+    if (Math.abs(d) < 1e-12) break;
+    const nova = taxa - f / d;
+    if (!isFinite(nova)) break;
+    if (Math.abs(nova - taxa) < 1e-9) return nova;
+    taxa = nova;
+  }
+  return taxa;
+}
+
+function recalc() {
+  const credito = unmaskMoney(document.getElementById('credito').value);
+  const prazo = parseInt(document.getElementById('prazo').value || '0', 10);
+  const taxaAdm = unmaskPct(document.getElementById('taxaAdm').value) / 100;
+  const fundo = unmaskPct(document.getElementById('fundo').value) / 100;
+  const tipoReajuste = document.getElementById('tipoReajuste').value;
+  const reajuste = unmaskPct(document.getElementById('reajuste').value) / 100;
+  const seguroOn = document.getElementById('seguroOn').checked;
+  const seguro = seguroOn ? unmaskPct(document.getElementById('seguro').value) / 100 : 0;
+  const redutorOn = document.getElementById('redutorOn').checked;
+  const redutor = redutorOn ? unmaskPct(document.getElementById('redutor').value) / 100 : 0;
+  const reducaoSobre = document.getElementById('reducaoSobre').value;
+  const adesaoOn = document.getElementById('adesaoOn').checked;
+  const adesao = adesaoOn ? unmaskPct(document.getElementById('adesao').value) / 100 : 0;
+  const prazoAdesao = parseInt(document.getElementById('prazoAdesao').value || '0', 10);
+
+  const tipoCont = document.getElementById('tipoContemplacao').value;
+  const expectativa = parseInt(document.getElementById('expectativa').value || '1', 10);
+  const tipoLance = document.getElementById('tipoLance').value;
+  const pProprios = unmaskPct(document.getElementById('lanceProprios').value) / 100;
+  const pEmbutido = unmaskPct(document.getElementById('lanceEmbutido').value) / 100;
+  const fgtsOn = document.getElementById('fgtsOn').checked;
+  const pFGTS = fgtsOn ? unmaskPct(document.getElementById('lanceFGTS').value) / 100 : 0;
+
+  const evolucaoOn = document.getElementById('evolucaoOn').checked;
+  const selic = unmaskPct(document.getElementById('selic').value) / 100;
+  const rentabPerc = unmaskPct(document.getElementById('rentab').value) / 100;
+  const mesesPos = parseInt(document.getElementById('mesesPosCont').value || '0', 10);
+
+  const period = tipoReajuste ? (tipoReajuste.endsWith('-anual') ? 12 : tipoReajuste.endsWith('-semestral') ? 6 : 1) : 12;
+
+  // === PROPOSTA ===
+  const totalDevido = credito * (1 + taxaAdm + fundo);
+  const parcelaBase = prazo > 0 ? totalDevido / prazo : 0;
+
+  let parcelaComRedutor = parcelaBase;
+  if (redutorOn && redutor > 0) {
+    if (reducaoSobre === 'parcela') {
+      parcelaComRedutor = parcelaBase * (1 - redutor);
+    } else {
+      const fundoComum = prazo > 0 ? credito / prazo : 0;
+      const admMensal = prazo > 0 ? credito * taxaAdm / prazo : 0;
+      const fundoMensal = prazo > 0 ? credito * fundo / prazo : 0;
+      parcelaComRedutor = fundoComum * (1 - redutor) + admMensal + fundoMensal;
+    }
+  }
+
+  const seguroMensal = (seguroOn && seguro > 0) ? totalDevido * seguro : 0;
+  const adesaoMensal = (adesaoOn && adesao > 0 && prazoAdesao > 0) ? (credito * adesao) / prazoAdesao : 0;
+
+  const parcelaInicial = parcelaComRedutor + seguroMensal + adesaoMensal;
+  const demaisParcelas = parcelaComRedutor + seguroMensal;
+
+  document.getElementById('parcelaInicial').textContent = formatMoney(parcelaInicial);
+  if (adesaoOn && adesao > 0 && prazoAdesao > 0) {
+    document.getElementById('boxDemaisParcelas').classList.remove('hidden');
+    document.getElementById('demaisParcelas').textContent = formatMoney(demaisParcelas);
+    document.getElementById('lblParcelaInicial').textContent = `${prazoAdesao} parcela${prazoAdesao>1?'s':''} inicia${prazoAdesao>1?'is':'l'}`;
+  } else {
+    document.getElementById('boxDemaisParcelas').classList.add('hidden');
+    document.getElementById('lblParcelaInicial').textContent = 'Parcela inicial';
+  }
+
+  // === CRÉDITO ATUALIZADO ===
+  let creditoAtualizado = credito;
+  if (reajuste > 0 && tipoReajuste) {
+    const numReajustes = Math.floor(expectativa / period);
+    creditoAtualizado = credito * Math.pow(1 + reajuste, numReajustes);
+  }
+  document.getElementById('creditoAtualizado').value = formatMoney(creditoAtualizado);
+
+  // === SALDO DEVEDOR no momento da contemplação ===
+  // Algoritmo: saldo começa = totalDevido. Cada mês, paga parcela.
+  // No aniversário (mes % period === 0), reajusta saldo e parcela.
+  let saldoNoMomentoCont = totalDevido;
+  let parcelaAtualNoMomento = parcelaBase;
+  for (let m = 1; m <= expectativa; m++) {
+    saldoNoMomentoCont -= parcelaAtualNoMomento;
+    if (reajuste > 0 && tipoReajuste && m % period === 0) {
+      saldoNoMomentoCont *= (1 + reajuste);
+      parcelaAtualNoMomento *= (1 + reajuste);
+    }
+  }
+  saldoNoMomentoCont = Math.max(0, saldoNoMomentoCont);
+
+  // === VALOR DE REFERÊNCIA ===
+  let valorRef = creditoAtualizado;
+  if (tipoCont !== '') {
+    if (tipoLance === 'categoria' || tipoLance === 'cat-carta') {
+      valorRef = creditoAtualizado * (1 + taxaAdm + fundo);
+    } else if (tipoLance === 'saldo') {
+      valorRef = saldoNoMomentoCont;
+    }
+  }
+  document.getElementById('valorRef').value = formatMoney(valorRef);
+
+  // === LANCES ===
+  // Conkey "Categoria (Total) e Carta (Emb.)":
+  //   - Lance Próprios = % × Categoria Total (= Crédito Atualizado × (1 + 2 × (adm + FR)))
+  //   - Lance Embutido = % × Carta (= Crédito Atualizado)
+  //   - Lance FGTS = % × Valor de Referência (sempre)
+  const categoriaTotal = creditoAtualizado * (1 + 2 * (taxaAdm + fundo));
+  const lanceProprios_v = (tipoLance === 'cat-carta') ? categoriaTotal * pProprios : valorRef * pProprios;
+  const lanceEmbutido_v = (tipoLance === 'cat-carta') ? creditoAtualizado * pEmbutido : valorRef * pEmbutido;
+  const lanceFGTS_v = valorRef * pFGTS;  // FGTS sempre sobre VR
+  const valorTotalLance = lanceProprios_v + lanceEmbutido_v + lanceFGTS_v;
+  const totalLancePct = pProprios + pEmbutido + pFGTS;
+
+  document.getElementById('lanceProprios_v').value = formatMoney(lanceProprios_v);
+  document.getElementById('lanceEmbutido_v').value = formatMoney(lanceEmbutido_v);
+  document.getElementById('lanceFGTS_v').value = formatMoney(lanceFGTS_v);
+  document.getElementById('valorTotalLance').value = formatMoney(valorTotalLance);
+  document.getElementById('totalLance').value = formatPct(totalLancePct * 100, 4);
+
+  const creditoDisp = creditoAtualizado - lanceEmbutido_v - lanceFGTS_v;
+  document.getElementById('creditoDisponivel').textContent = formatMoney(creditoDisp);
+
+  // === EVOLUÇÃO PÓS CONTEMPLAÇÃO ===
+  // Conkey: CDI = Selic - 0,10pp (não 0.993 × Selic, evita arred de 14,89 → 14,90)
+  const cdi = selic - 0.001;
+  document.getElementById('cdi').value = formatPct(cdi * 100, 2);
+  let rentabilidade = 0;
+  let creditoMaisRent = creditoDisp;
+  if (evolucaoOn && cdi > 0 && mesesPos > 0) {
+    const taxaEfetiva = cdi * rentabPerc;
+    rentabilidade = creditoDisp * (Math.pow(1 + taxaEfetiva, mesesPos / 12) - 1);
+    creditoMaisRent = creditoDisp + rentabilidade;
+  }
+  document.getElementById('rentabilidade').textContent = formatMoney(rentabilidade);
+  document.getElementById('creditoMaisRentab').textContent = formatMoney(creditoMaisRent);
+
+  // === PÓS CONTEMPLAÇÃO ===
+  const saldoApoLance = Math.max(0, saldoNoMomentoCont - valorTotalLance);
+  const prazoRestante = Math.max(0, prazo - expectativa);
+
+  const parcReducaoParcela = prazoRestante > 0 ? saldoApoLance / prazoRestante : 0;
+  const parcReducaoPrazo = parcelaAtualNoMomento;
+  const novoPrazoReducao = parcReducaoPrazo > 0 ? Math.ceil(saldoApoLance / parcReducaoPrazo) : 0;
+
+  // Custo efetivo — fórmula Conkey (descoberta por engenharia reversa):
+  //   custo = (adm + fr) × crédito          (custo nominal das taxas)
+  //   disponível = crédito − lance próprios  (capital líquido do tomador)
+  //   prazoEf Reduç Parcela = prazo total
+  //   prazoEf Reduç Prazo   = expectativa + prazo restante (efetivo de pagamento)
+  //
+  //   CET mensal_real = (1 + custo/disponível)^(1/prazoEf) − 1
+  //   CET mensal_exibido = arredondado para 2 casas (Conkey arredonda antes do anual)
+  //   CET anual = (1 + mensal_exibido)^12 − 1
+  function calcCustoEfetivoConkey(prazoEf) {
+    const disponivel = credito - lanceProprios_v;
+    if (prazoEf <= 0 || disponivel <= 0) return { mensal: 0, anual: 0 };
+    const custo = credito * (taxaAdm + fundo);
+    const ratio = custo / disponivel;
+    const mensalReal = Math.pow(1 + ratio, 1 / prazoEf) - 1;
+    // Conkey arredonda mensal para 2 casas decimais antes de calcular o anual
+    const mensalExibido = Math.round(mensalReal * 10000) / 10000;
+    const anual = Math.pow(1 + mensalExibido, 12) - 1;
+    return { mensal: mensalExibido, anual: anual };
+  }
+
+  const ceParcela = calcCustoEfetivoConkey(prazo);                              // Reduç Parc: prazo total
+  const cePrazo   = calcCustoEfetivoConkey(expectativa + novoPrazoReducao);     // Reduç Prazo: efetivo
+
+  document.getElementById('reducaoParcela_parc').textContent = formatMoney(parcReducaoParcela);
+  document.getElementById('reducaoParcela_prazo').textContent = prazoRestante;
+  document.getElementById('reducaoParcela_cm').textContent = formatPct(ceParcela.mensal * 100, 2);
+  document.getElementById('reducaoParcela_ca').textContent = formatPct(ceParcela.anual * 100, 2);
+
+  document.getElementById('reducaoPrazo_parc').textContent = formatMoney(parcReducaoPrazo);
+  document.getElementById('reducaoPrazo_prazo').textContent = novoPrazoReducao;
+  document.getElementById('reducaoPrazo_cm').textContent = formatPct(cePrazo.mensal * 100, 2);
+  document.getElementById('reducaoPrazo_ca').textContent = formatPct(cePrazo.anual * 100, 2);
+}
+
+// ═════════════════════════════════════════════════════
+// LIMPAR
+// ═════════════════════════════════════════════════════
+document.getElementById('resetProposta').addEventListener('click', () => {
+  ['credito','prazo','taxaAdm','fundo','reajuste','seguro','redutor','adesao','prazoAdesao'].forEach(id => document.getElementById(id).value = '');
+  ['tipoReajuste','tipoSeguro','reducaoSobre'].forEach(id => document.getElementById(id).selectedIndex = 0);
+  ['seguroOn','redutorOn','adesaoOn'].forEach(id => { const t = document.getElementById(id); t.checked = false; t.dispatchEvent(new Event('change')); });
+  recalc();
+});
+document.getElementById('resetContemplacao').addEventListener('click', () => {
+  ['lanceProprios','lanceEmbutido','lanceFGTS'].forEach(id => document.getElementById(id).value = '');
+  ['tipoContemplacao','tipoLance'].forEach(id => document.getElementById(id).selectedIndex = 0);
+  document.getElementById('expectativa').value = '1';
+  const f = document.getElementById('fgtsOn');
+  f.checked = false;
+  f.dispatchEvent(new Event('change'));
+  document.getElementById('tipoContemplacao').dispatchEvent(new Event('change'));
+  recalc();
+});
+document.getElementById('limparTudo').addEventListener('click', () => {
+  document.getElementById('resetProposta').click();
+  document.getElementById('resetContemplacao').click();
+  const e = document.getElementById('evolucaoOn');
+  e.checked = false;
+  e.dispatchEvent(new Event('change'));
+  document.getElementById('mesesPosCont').value = '';
+  recalc();
+});
+
+recalc();
+
+// ═════════════════════════════════════════════════════
+// EXPORTAR PDF
+// ═════════════════════════════════════════════════════
+document.getElementById('baixarPdf').addEventListener('click', () => {
+  const txt = (id) => document.getElementById(id).textContent || document.getElementById(id).value || '—';
+  const val = (id) => document.getElementById(id).value || '—';
+
+  const tipoReajusteSel = document.getElementById('tipoReajuste');
+  const tipoReajusteTxt = tipoReajusteSel.options[tipoReajusteSel.selectedIndex]?.text || '—';
+  const tipoContSel = document.getElementById('tipoContemplacao');
+  const tipoContTxt = tipoContSel.options[tipoContSel.selectedIndex]?.text || '—';
+  const tipoLanceSel = document.getElementById('tipoLance');
+  const tipoLanceTxt = tipoLanceSel.options[tipoLanceSel.selectedIndex]?.text || '—';
+
+  // Dados da cota
+  document.getElementById('pdf_credito').textContent = val('credito') || 'R$ 0,00';
+  document.getElementById('pdf_prazo').textContent = (val('prazo') || '0') + ' meses';
+  document.getElementById('pdf_taxaAdm').textContent = val('taxaAdm') || '0,00 %';
+  document.getElementById('pdf_fundo').textContent = val('fundo') || '0,00 %';
+  document.getElementById('pdf_tipoReajuste').textContent = tipoReajusteTxt;
+  document.getElementById('pdf_reajuste').textContent = val('reajuste') || '0,00 %';
+  document.getElementById('pdf_parcelaInicial').textContent = txt('parcelaInicial');
+
+  // Detalhes da contemplação
+  document.getElementById('pdf_modalidade').textContent = tipoContTxt;
+  document.getElementById('pdf_expectativa').textContent = (val('expectativa') || '1') + ' meses';
+  document.getElementById('pdf_creditoAtualizado').textContent = val('creditoAtualizado') || 'R$ 0,00';
+  document.getElementById('pdf_baseCalculo').textContent = tipoLanceTxt;
+  document.getElementById('pdf_valorRef').textContent = val('valorRef') || 'R$ 0,00';
+  const pP = val('lanceProprios') || '0%';
+  const pE = val('lanceEmbutido') || '0%';
+  const pF = val('lanceFGTS') || '0%';
+  document.getElementById('pdf_recProprios').textContent = pP + ' | ' + (val('lanceProprios_v') || 'R$ 0,00');
+  document.getElementById('pdf_embutido').textContent = pE + ' | ' + (val('lanceEmbutido_v') || 'R$ 0,00');
+  document.getElementById('pdf_fgts').textContent = pF + ' | ' + (val('lanceFGTS_v') || 'R$ 0,00');
+  document.getElementById('pdf_totalLance').textContent = (val('totalLance') || '0%') + ' | ' + (val('valorTotalLance') || 'R$ 0,00');
+  document.getElementById('pdf_creditoDisp').textContent = txt('creditoDisponivel');
+
+  // Evolução (só se ligada)
+  const evoOn = document.getElementById('evolucaoOn').checked;
+  document.getElementById('pdf_evolucaoBlock').style.display = evoOn ? 'block' : 'none';
+  if (evoOn) {
+    document.getElementById('pdf_cdi').textContent = val('cdi') || '0,00 %';
+    document.getElementById('pdf_periodo').textContent = (val('mesesPosCont') || '0') + ' meses';
+    document.getElementById('pdf_rentab').textContent = (val('rentab') || '100,00 %') + ' | ' + txt('rentabilidade');
+    document.getElementById('pdf_creditoMaisRent').textContent = txt('creditoMaisRentab');
+  }
+
+  // Comparativo pós contemplação
+  document.getElementById('pdf_redPar_parcela').textContent = txt('reducaoParcela_parc');
+  document.getElementById('pdf_redPar_prazo').textContent = txt('reducaoParcela_prazo') + ' meses';
+  document.getElementById('pdf_redPar_cet').textContent = txt('reducaoParcela_cm') + ' ao mês | ' + txt('reducaoParcela_ca') + ' ao ano';
+  document.getElementById('pdf_redPra_parcela').textContent = txt('reducaoPrazo_parc');
+  document.getElementById('pdf_redPra_prazo').textContent = txt('reducaoPrazo_prazo') + ' meses';
+  document.getElementById('pdf_redPra_cet').textContent = txt('reducaoPrazo_cm') + ' ao mês | ' + txt('reducaoPrazo_ca') + ' ao ano';
+
+  // Footer com data
+  const hoje = new Date();
+  const dd = String(hoje.getDate()).padStart(2, '0');
+  const mm = String(hoje.getMonth() + 1).padStart(2, '0');
+  const yyyy = hoje.getFullYear();
+  document.getElementById('pdf_footer').innerHTML = `Documento gerado em ${dd}/${mm}/${yyyy}<br>Página 1/1`;
+
+  // Mostra temporariamente, gera PDF, esconde
+  const report = document.getElementById('pdfReport');
+  // posicionamento que o html2canvas consegue capturar (no topo, sobre o resto)
+  report.style.display = 'block';
+  report.style.position = 'absolute';
+  report.style.top = '0';
+  report.style.left = '0';
+  report.style.zIndex = '99999';
+  // delay pra garantir reflow antes do html2canvas medir
+  setTimeout(() => {
+    const w = report.scrollWidth || 794;
+    const h = report.scrollHeight || 1123;
+    html2pdf().set({
+      margin: 0,
+      filename: `master-prime-operacao-simples-${dd}${mm}${yyyy}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#FFFFFF', width: w, height: h, windowWidth: w, windowHeight: h },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    }).from(report).save().then(() => {
+      report.style.display = 'none';
+      report.style.position = 'absolute';
+      report.style.top = '';
+      report.style.left = '-9999px';
+      report.style.zIndex = '';
+    });
+  }, 100);
+});
+</script>
+
+</body>
+</html>

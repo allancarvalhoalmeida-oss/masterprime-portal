@@ -126,7 +126,8 @@ body.embedded-mode .portal-menu-fab { display:flex; }
 }
 .sb-item:hover { color:rgba(255,255,255,.85); background:rgba(255,255,255,.05); }
 .sb-item.active { color:#fff; border-left-color:var(--mp-yellow); background:rgba(255,255,255,.08); }
-.sb-item .ic { width:16px; text-align:center; font-size:14px; flex-shrink:0; }
+.sb-item .ic { width:18px; height:18px; flex-shrink:0; display:inline-flex; align-items:center; justify-content:center; }
+.sb-item .ic svg { width:18px; height:18px; stroke-width:2; }
 .sb-user-card { margin-top:auto; padding:16px 20px; border-top:1px solid rgba(255,255,255,.1); }
 .sb-user-info { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
 .sb-avatar { width:36px; height:36px; border-radius:50%; background:var(--mp-teal); color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; flex-shrink:0; }
@@ -287,7 +288,7 @@ body.embedded-mode .portal-menu-fab { display:flex; }
       <label class="login-label">Senha</label>
       <div class="pw-field">
         <input type="password" class="login-input" id="login-senha" placeholder="Digite sua senha" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
-        <button class="pw-toggle" onclick="togglePw('login-senha',this)" type="button" tabindex="-1">&#128065;</button>
+        <button class="pw-toggle" onclick="togglePw('login-senha',this)" type="button" tabindex="-1"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
       </div>
     </div>
     <button class="login-btn" id="login-btn" onclick="doLogin()">Entrar</button>
@@ -297,9 +298,9 @@ body.embedded-mode .portal-menu-fab { display:flex; }
 
 <!-- ═══ PORTAL ═══ -->
 <div id="portal-screen" style="display:none">
-  <button class="mobile-toggle" onclick="toggleSidebar()">&#9776;</button>
+  <button class="mobile-toggle" onclick="toggleSidebar()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
   <div class="sidebar-backdrop" onclick="toggleSidebar()"></div>
-  <button class="portal-menu-fab" id="portal-menu-fab" onclick="exitEmbedded()" title="Voltar ao menu do portal">&#9776;</button>
+  <button class="portal-menu-fab" id="portal-menu-fab" onclick="exitEmbedded()" title="Voltar ao menu do portal"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
   <div class="app" id="portal-app">
     <aside class="sidebar" id="sidebar">
       <div class="sb-logo">
@@ -307,18 +308,18 @@ body.embedded-mode .portal-menu-fab { display:flex; }
         <div class="sb-ver">PORTAL DO CONSULTOR v1.0</div>
       </div>
       <div class="sb-section">Menu</div>
-      <div class="sb-item active" onclick="nav('dashboard')" id="ni-dashboard"><span class="ic">&#128202;</span> Demonstrativo</div>
-      <div class="sb-item" onclick="nav('historico')" id="ni-historico"><span class="ic">&#128197;</span> Historico</div>
-      <div class="sb-item" onclick="nav('assembleia')" id="ni-assembleia"><span class="ic">&#127942;</span> Resultado Assembleia</div>
-      <div class="sb-item" onclick="nav('lances')" id="ni-lances"><span class="ic">&#128269;</span> Consulta de Lances</div>
-      <div class="sb-item" onclick="nav('simuladores')" id="ni-simuladores"><span class="ic">&#128200;</span> Simuladores</div>
-      <div class="sb-item" onclick="nav('perfil')" id="ni-perfil"><span class="ic">&#128100;</span> Meu Perfil</div>
+      <div class="sb-item active" onclick="nav('dashboard')" id="ni-dashboard"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg></span> Demonstrativo</div>
+      <div class="sb-item" onclick="nav('historico')" id="ni-historico"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg></span> Historico</div>
+      <div class="sb-item" onclick="nav('assembleia')" id="ni-assembleia"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg></span> Resultado Assembleia</div>
+      <div class="sb-item" onclick="nav('lances')" id="ni-lances"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span> Consulta de Lances</div>
+      <div class="sb-item" onclick="nav('simuladores')" id="ni-simuladores"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="16" y1="14" x2="16" y2="18"/><line x1="16" y1="10" x2="16.01" y2="10"/><line x1="12" y1="10" x2="12.01" y2="10"/><line x1="8" y1="10" x2="8.01" y2="10"/><line x1="12" y1="14" x2="12.01" y2="14"/><line x1="8" y1="14" x2="8.01" y2="14"/><line x1="12" y1="18" x2="12.01" y2="18"/><line x1="8" y1="18" x2="8.01" y2="18"/></svg></span> Simuladores</div>
+      <div class="sb-item" onclick="nav('perfil')" id="ni-perfil"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span> Meu Perfil</div>
       <div id="admin-nav" class="hidden">
         <div class="sb-section">Administracao</div>
-        <div class="sb-item" onclick="nav('admin-overview')" id="ni-admin-overview"><span class="ic">&#128200;</span> Visao Geral</div>
-        <div class="sb-item" onclick="nav('admin-upload')" id="ni-admin-upload"><span class="ic">&#128228;</span> Upload Demonstrativos</div>
-        <div class="sb-item" onclick="nav('admin-users')" id="ni-admin-users"><span class="ic">&#128101;</span> Gerenciar Usuarios</div>
-        <div class="sb-item" onclick="nav('painel')" id="ni-painel"><span class="ic">&#9881;</span> Painel Split</div>
+        <div class="sb-item" onclick="nav('admin-overview')" id="ni-admin-overview"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg></span> Visao Geral</div>
+        <div class="sb-item" onclick="nav('admin-upload')" id="ni-admin-upload"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span> Upload Demonstrativos</div>
+        <div class="sb-item" onclick="nav('admin-users')" id="ni-admin-users"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span> Gerenciar Usuarios</div>
+        <div class="sb-item" onclick="nav('painel')" id="ni-painel"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span> Painel Split</div>
       </div>
       <div class="sb-user-card">
         <div class="sb-user-info">
@@ -334,14 +335,14 @@ body.embedded-mode .portal-menu-fab { display:flex; }
       <div class="screen active" id="s-dashboard">
         <div class="page-title">Demonstrativo</div>
         <div class="page-sub" id="dash-sub">Seu demonstrativo de comissoes do mes atual</div>
-        <div id="dash-content"><div class="empty-state"><div class="empty-state-icon">&#128196;</div><div class="empty-state-title">Nenhum demonstrativo disponivel</div><div class="empty-state-desc">Seu demonstrativo do mes ainda nao foi publicado.</div></div></div>
+        <div id="dash-content"><div class="empty-state"><div class="empty-state-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="empty-state-title">Nenhum demonstrativo disponivel</div><div class="empty-state-desc">Seu demonstrativo do mes ainda nao foi publicado.</div></div></div>
       </div>
 
       <!-- HISTORICO -->
       <div class="screen" id="s-historico">
         <div class="page-title">Historico</div>
         <div class="page-sub">Todos os seus demonstrativos anteriores</div>
-        <div id="hist-content"><div class="empty-state"><div class="empty-state-icon">&#128197;</div><div class="empty-state-title">Nenhum historico</div><div class="empty-state-desc">Seus demonstrativos anteriores aparecerao aqui.</div></div></div>
+        <div id="hist-content"><div class="empty-state"><div class="empty-state-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><div class="empty-state-title">Nenhum historico</div><div class="empty-state-desc">Seus demonstrativos anteriores aparecerao aqui.</div></div></div>
       </div>
 
       <!-- ASSEMBLEIA (iframe carregado sob demanda) -->
@@ -395,18 +396,18 @@ body.embedded-mode .portal-menu-fab { display:flex; }
           <label style="font-size:12px;color:var(--text2);font-weight:600">Mes:</label>
           <select id="overview-mes" class="form-select" style="padding:8px 12px;font-size:12px;border-radius:6px;border:1px solid var(--border2)" onchange="renderAdminOverview()"></select>
         </div>
-        <div id="overview-content"><div class="empty-state"><div class="empty-state-icon">&#128202;</div><div class="empty-state-title">Carregando...</div></div></div>
+        <div id="overview-content"><div class="empty-state"><div class="empty-state-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg></div><div class="empty-state-title">Carregando...</div></div></div>
       </div>
 
       <!-- ADMIN: UPLOAD -->
       <div class="screen" id="s-admin-upload">
         <div class="page-title">Upload de Demonstrativos</div>
         <div class="page-sub">Envie os demonstrativos processados para os consultores</div>
-        <div class="alert alert-info"><span>&#8505;</span><span>No <strong>Painel Split</strong>, clique <strong>"Publicar no Portal"</strong> para gerar o JSON. Depois faca o upload aqui. Ou clique em <strong>"Abrir Painel Split"</strong> na sidebar para fazer tudo online.</span></div>
+        <div class="alert alert-info"><span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span><span>No <strong>Painel Split</strong>, clique <strong>"Publicar no Portal"</strong> para gerar o JSON. Depois faca o upload aqui. Ou clique em <strong>"Abrir Painel Split"</strong> na sidebar para fazer tudo online.</span></div>
         <div class="card"><div class="card-head"><div><div class="card-title">Enviar demonstrativos do mes</div><div class="card-sub">Arquivo JSON gerado pelo Painel Split</div></div></div>
           <div class="card-body">
             <div class="upload-zone" id="upload-zone"><input type="file" accept=".json" onchange="adminUpload(event)">
-              <div style="font-size:36px;margin-bottom:8px">&#128228;</div>
+              <div style="font-size:36px;margin-bottom:8px"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
               <div style="font-size:13px;font-weight:600">Arraste o JSON aqui ou clique para selecionar</div>
               <div style="font-size:11px;color:var(--text2)">demonstrativos_YYYY-MM.json</div>
             </div>
@@ -830,7 +831,7 @@ async function renderDashboard() {
   const meses = await DB.getMeses();
   let demo=null, mesAtual=null;
   for (const m of meses) { demo=await DB.getDemo(m, currentUser.nome); if(demo){mesAtual=m; break;} }
-  if (!demo) { sub.textContent='Seu demonstrativo de comissoes'; el.innerHTML='<div class="empty-state"><div class="empty-state-icon">&#128196;</div><div class="empty-state-title">Nenhum demonstrativo disponivel</div><div class="empty-state-desc">Seu demonstrativo do mes ainda nao foi publicado.</div></div>'; return; }
+  if (!demo) { sub.textContent='Seu demonstrativo de comissoes'; el.innerHTML='<div class="empty-state"><div class="empty-state-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="empty-state-title">Nenhum demonstrativo disponivel</div><div class="empty-state-desc">Seu demonstrativo do mes ainda nao foi publicado.</div></div>'; return; }
   sub.textContent='Demonstrativo de '+fmtMes(mesAtual);
   el.innerHTML=renderDemo(demo, mesAtual);
 }
@@ -842,7 +843,7 @@ function renderDemo(data, mes) {
     const nome = data.nome || currentUser.nome;
     const nomeSafe = nome.replace(/[^a-zA-Z0-9]/g,'_');
     return `
-    <div class="card"><div class="card-head"><div><div class="card-title">Demonstrativo - ${nome}</div><div class="card-sub">${fmtMes(mes)}</div></div><div style="display:flex;gap:8px"><button class="btn btn-outline btn-sm" onclick="baixarDemoExcel('${nomeSafe}', '${nome.replace(/'/g,"\\'")}', '${mes}')">&#128202; Excel</button><button class="btn btn-outline btn-sm" onclick="imprimirDemo('${nomeSafe}')">&#128424; PDF / Imprimir</button></div></div>
+    <div class="card"><div class="card-head"><div><div class="card-title">Demonstrativo - ${nome}</div><div class="card-sub">${fmtMes(mes)}</div></div><div style="display:flex;gap:8px"><button class="btn btn-outline btn-sm" onclick="baixarDemoExcel('${nomeSafe}', '${nome.replace(/'/g,"\\'")}', '${mes}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:4px"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg> Excel</button><button class="btn btn-outline btn-sm" onclick="imprimirDemo('${nomeSafe}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:4px"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> PDF / Imprimir</button></div></div>
       <div class="card-body" id="demo-body-${nomeSafe}" style="padding:20px">${data.html}</div>
     </div>`;
   }
@@ -896,7 +897,7 @@ function renderDemo(data, mes) {
     <div class="stat stat-teal"><div class="stat-label">Bruto total</div><div class="stat-value">${fmtBRL(tB)}</div><div class="stat-sub">antes de deducoes</div></div>
     <div class="stat stat-green"><div class="stat-label">Liquido a receber</div><div class="stat-value" style="color:var(--green)">${fmtBRL(totalFinal)}</div><div class="stat-sub">valor final</div></div>
   </div>
-  <div class="card"><div class="card-head"><div><div class="card-title">Demonstrativo - ${nome}</div><div class="card-sub">${fmtMes(mes)}</div></div><button class="btn btn-outline btn-sm" onclick="window.print()">&#128424; Imprimir</button></div>
+  <div class="card"><div class="card-head"><div><div class="card-title">Demonstrativo - ${nome}</div><div class="card-sub">${fmtMes(mes)}</div></div><button class="btn btn-outline btn-sm" onclick="window.print()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:4px"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> Imprimir</button></div>
     <div class="tbl-wrap" style="padding:0"><table class="tbl">
       <thead><tr><th>Admin</th><th>Tipo</th><th>Ref</th><th>Cliente</th><th>Data</th><th>Parc</th><th class="num">Bruto</th><th class="num">NF</th><th class="num">ADM</th><th class="num">Liquido</th></tr></thead>
       <tbody>${rows}</tbody>
@@ -912,7 +913,7 @@ async function renderHistorico() {
   const meses=await DB.getMeses();
   const meus=[];
   for(const m of meses){const d=await DB.getDemo(m,currentUser.nome);if(d)meus.push({mes:m,data:d});}
-  if(!meus.length){el.innerHTML='<div class="empty-state"><div class="empty-state-icon">&#128197;</div><div class="empty-state-title">Nenhum historico</div><div class="empty-state-desc">Seus demonstrativos aparecerao aqui.</div></div>';return;}
+  if(!meus.length){el.innerHTML='<div class="empty-state"><div class="empty-state-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><div class="empty-state-title">Nenhum historico</div><div class="empty-state-desc">Seus demonstrativos aparecerao aqui.</div></div>';return;}
   el.innerHTML='<div class="hist-grid">'+meus.map((item,i)=>{
     const tf=item.data.totalFinal||0, nl=(item.data.linhas||[]).length;
     return `<div class="hist-card ${i===0?'current':''}" onclick="viewHist('${item.mes}')"><div class="hist-mes">${fmtMes(item.mes)}</div><div class="hist-lanctos">${nl} lancamentos</div><div class="hist-valor">${fmtBRL(tf)}</div><div style="margin-top:8px"><span class="tag ${i===0?'tag-green':'tag-gray'}">${i===0?'Mais recente':'Historico'}</span></div></div>`;
@@ -1048,7 +1049,7 @@ async function renderAdminOverview() {
   const meses = await DB.getMeses();
   if (!meses.length) {
     sel.innerHTML = '<option value="">(nenhum)</option>';
-    content.innerHTML = '<div class="empty-state"><div class="empty-state-icon">&#128202;</div><div class="empty-state-title">Nenhum demonstrativo publicado</div><div class="empty-state-desc">Faca o upload de um JSON em "Upload Demonstrativos" para comecar.</div></div>';
+    content.innerHTML = '<div class="empty-state"><div class="empty-state-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg></div><div class="empty-state-title">Nenhum demonstrativo publicado</div><div class="empty-state-desc">Faca o upload de um JSON em "Upload Demonstrativos" para comecar.</div></div>';
     return;
   }
   // Preserva selecao atual
@@ -1060,7 +1061,7 @@ async function renderAdminOverview() {
   const demos = await DB.getDemosMes(mes); // { nome: dados }
   const nomes = Object.keys(demos).sort();
   if (!nomes.length) {
-    content.innerHTML = '<div class="empty-state"><div class="empty-state-icon">&#128196;</div><div class="empty-state-title">Sem demos neste mes</div></div>';
+    content.innerHTML = '<div class="empty-state"><div class="empty-state-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="empty-state-title">Sem demos neste mes</div></div>';
     return;
   }
 
