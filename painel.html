@@ -1235,6 +1235,38 @@ function parseBradesco(data) {
   return rows;
 }
 
+function parseAdemicon(data) {
+  // Layout planilha Ademicon (real, abril/2026):
+  // Col 0: Valor bruto | 1: % comissao | 2: Grupo | 3: Cota | 4: Segmento
+  // Col 5: Contrato | 6: Data da venda | 7: Parcela | 8: Nome do Cliente
+  const rows = [];
+  for (let i = 1; i < data.length; i++) {
+    const r = data[i];
+    const recebido = parseFloat(String(r[0]||0).replace(',','.')) || 0;
+    if (!recebido) continue;
+    const grupo = String(r[2]||'').trim();
+    const cota = String(r[3]||'').trim();
+    const segmento = String(r[4]||'').trim();
+    const contrato = String(r[5]||'').replace(/\D/g,'');
+    const parcela = String(r[7]||'');
+    rows.push({
+      adm: 'ADEMICON',
+      grupo,
+      cota,
+      grupoCota: (grupo && cota) ? grupo + '/' + cota : (grupo || cota || ''),
+      contrato,
+      parcela,
+      dataVenda: parseDateFromCell(r[6]),
+      recebido,
+      isPesado: false,
+      isItau5a: false,
+      isEstorno: recebido < 0,
+      segmento,
+    });
+  }
+  return rows;
+}
+
 function parseGenerico(data, adm) {
   const rows = [];
   const h = (data[0]||[]).map(x => String(x).toLowerCase());
@@ -1272,6 +1304,7 @@ function loadExtrato(evt, adm) {
       if (adm === 'PORTO')         rows = parsePorto(data);
       else if (adm === 'ITAU')     rows = parseItau(data);
       else if (adm === 'BRADESCO') rows = parseBradesco(data);
+      else if (adm === 'ADEMICON') rows = parseAdemicon(data);
       else                         rows = parseGenerico(data, adm);
       if (!S.extratos[adm]) S.extratos[adm] = [];
       S.extratos[adm].push(...rows);
