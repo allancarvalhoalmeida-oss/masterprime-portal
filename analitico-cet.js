@@ -12,19 +12,27 @@
 //
 // Dados esperados em set(chave, dados):
 //   {
-//     titulo:        'Pós contemplação · Redução de parcela',  // texto do header
-//     credito:       100000,           // valor da carta de crédito
-//     taxaAdm:       0.18,             // decimal (18% = 0.18)
-//     fundo:         0.02,             // decimal
-//     lanceProprios: 40000,            // R$
-//     prazoEf:       100,              // prazo usado no expoente do CET
-//     parcelaInicial:1200,             // R$
-//     expectativa:   1,                // mês da contemplação
-//     parcelaPos:    795.96,           // R$
-//     prazoRestPos:  99,               // meses restantes pós contemplação
-//     cetMensal:     0.0029,           // decimal (0,29% = 0.0029)
-//     cetAnual:      0.0354,           // decimal (3,54% = 0.0354)
+//     titulo:         'Pós contemplação · Redução de parcela',  // texto do header
+//     credito:        100000,           // valor da carta de crédito
+//     taxaAdm:        0.18,             // decimal (18% = 0.18)
+//     fundo:          0.02,             // decimal
+//     lanceProprios:  40000,            // R$
+//     valorTotalLance:40000,            // R$ (próprios + embutido + FGTS) — opcional, default = lanceProprios
+//     prazoEf:        100,              // prazo usado no expoente do CET
+//     parcelaInicial: 1200,             // R$
+//     parcelaBase:    1200,             // R$ — opcional, default = parcelaInicial (usado para reconstruir parcelas com reaj)
+//     expectativa:    1,                // mês da contemplação
+//     parcelaPos:     795.96,           // R$
+//     prazoRestPos:   99,               // meses restantes pós contemplação
+//     reajuste:       0.04,             // decimal — opcional (0 ou ausente = sem reaj na tabela)
+//     tipoReajuste:   'cota-anual',     // string — opcional
+//     period:         12,               // 12 anual, 6 semestral, 1 mensal — opcional
+//     cetMensal:      0.0044,           // decimal (0,44% = 0.0044)
+//     cetAnual:       0.0541,           // decimal (5,41% = 0.0541)
 //   }
+//
+// Pode-se também passar `memoriaHtml` com HTML pronto para sobrescrever
+// a memória de cálculo padrão (quando o simulador usa fórmula específica).
 // ═══════════════════════════════════════════════════════════════════════
 (function(){
   'use strict';
@@ -137,14 +145,25 @@
     if (!d || !d.credito) { alert('Preencha primeiro a simulação.'); return; }
     ensureModal();
 
-    // Constrói parcelas mês a mês
+    // Constrói parcelas mês a mês — com reajuste cumulativo se reaj > 0
     const parcelas = [];
     const exp = d.expectativa || 1;
-    const parcIni = d.parcelaInicial || 0;
+    const parcBase = d.parcelaBase || d.parcelaInicial || 0;
     const parcPos = d.parcelaPos || 0;
     const prazoRestPos = d.prazoRestPos || 0;
-    for (let m = 1; m <= exp; m++) parcelas.push(parcIni);
-    for (let m = 1; m <= prazoRestPos; m++) parcelas.push(parcPos);
+    const reaj = d.reajuste || 0;
+    const period = d.period || 12;
+    const reajOn = reaj > 0 && d.tipoReajuste;
+    let pPre = parcBase;
+    for (let m = 1; m <= exp; m++) {
+      parcelas.push(pPre);
+      if (reajOn && m % period === 0) pPre *= (1 + reaj);
+    }
+    let pPos = parcPos;
+    for (let m = exp + 1; m <= exp + prazoRestPos; m++) {
+      parcelas.push(pPos);
+      if (reajOn && m % period === 0) pPos *= (1 + reaj);
+    }
 
     const totalGeral = parcelas.reduce((a,b)=>a+b, 0);
 
@@ -173,11 +192,13 @@
       // Caller passou HTML pronto (fórmula específica do simulador)
       memHTML = `<h4>Memória de cálculo do CET</h4>${d.memoriaHtml}`;
     } else {
-      // Fórmula padrão Op Simples / Conkey
-      const taxaAdm = d.taxaAdm || 0;
-      const fundo = d.fundo || 0;
+      // Fórmula padrão Conkey v2 (com reajuste cumulativo)
+      //   custo      = Σ parcelas (com reaj) + lance total − crédito
+      //   disponível = crédito − lance próprios
+      //   mensal     = (1 + custo / disponível)^(1 / prazoEf) − 1
       const lanceProp = d.lanceProprios || 0;
-      const custo = d.credito * (taxaAdm + fundo);
+      const lanceTotal = d.valorTotalLance != null ? d.valorTotalLance : lanceProp;
+      const custo = totalGeral + lanceTotal - d.credito;
       const disponivel = d.credito - lanceProp;
       const ratio = disponivel > 0 ? custo/disponivel : 0;
       const prazoEf = d.prazoEf || (exp + prazoRestPos);
@@ -185,7 +206,11 @@
       memHTML = `
         <h4>Memória de cálculo do CET</h4>
         <div class="ace-mem-step">
-          <span><strong>Custo</strong> = crédito × (taxa adm + fundo) = ${fmt(d.credito)} × ${fmtPct(taxaAdm + fundo, 2)}</span>
+          <span><strong>Total parcelas pagas</strong> = Σ parcelas com reajuste cumulativo (${prazoEf} meses)</span>
+          <span class="ace-mem-res">${fmt(totalGeral)}</span>
+        </div>
+        <div class="ace-mem-step">
+          <span><strong>Custo</strong> = total pagas + lance total − crédito = ${fmt(totalGeral)} + ${fmt(lanceTotal)} − ${fmt(d.credito)}</span>
           <span class="ace-mem-res">${fmt(custo)}</span>
         </div>
         <div class="ace-mem-step">
@@ -193,7 +218,7 @@
           <span class="ace-mem-res">${fmt(disponivel)}</span>
         </div>
         <div class="ace-mem-step">
-          <span><strong>Razão</strong> = custo / disponível = ${fmt(custo)} / ${fmt(disponivel)}</span>
+          <span><strong>Razão</strong> = custo / disponível</span>
           <span class="ace-mem-res">${ratio.toFixed(4)}</span>
         </div>
         <div class="ace-mem-step">

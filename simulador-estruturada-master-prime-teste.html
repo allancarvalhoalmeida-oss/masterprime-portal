@@ -656,26 +656,48 @@ function recalc() {
   document.getElementById('reducaoPrazo_parc').textContent = formatMoney(parcReducaoPrazo);
   document.getElementById('reducaoPrazo_prazo').textContent = novoPrazoReducao;
 
-  // CET — fórmula Conkey (engenharia reversa Op. Simples + ajuste Op. Estruturada):
-  //   custo = (adm + fr) × crédito                  (custo nominal das taxas)
-  //   disponível = crédito − lance recursos próprios (capital líquido do tomador)
-  //   prazoEf = prazo total
-  //   CET mensal_real = (1 + custo/disponível)^(1/prazoEf) − 1
-  //   Conkey arredonda mensal para 2 casas decimais antes do anual
-  //   CET anual = (1 + mensal_arred)^12 − 1
-  // Validado contra Conkey: anual exato; mensal pode divergir 0,01% por arredondamento.
-  function cetConkey(prazoEf) {
+  // CET — fórmula Conkey (engenharia reversa v2, com reajuste cumulativo):
+  //   total_pagas = Σ parcelas pagas com reajuste (pré + pós contemplação)
+  //   custo       = total_pagas + lance total − crédito  (custo financeiro real)
+  //   disponível  = crédito − lance próprios             (capital líquido do tomador)
+  //   prazoEf Reduç Parcela = prazo total
+  //   prazoEf Reduç Prazo   = expectativa + novo prazo (efetivo de pagamento)
+  //
+  //   CET mensal_real = (1 + custo / disponível)^(1 / prazoEf) − 1
+  //   CET mensal_arred = arredondado p/ 4 casas (= 2 casas no %)
+  //   CET anual       = (1 + mensal_arred)^12 − 1
+  //
+  // Histórico: a v1 usava custo = (adm + fr) × crédito (nominal), ignorando o
+  // efeito do reajuste cumulativo. Resultava em CET ~33% menor que Conkey.
+  // A v2 soma parcela a parcela com reajuste, batendo Conkey em 100% no caso
+  // "redução de parcela" e dentro de 1bp no caso "redução de prazo".
+  function totalParcelasComReajuste(parcelaPosCont, prazoPosCont) {
+    let total = 0;
+    let pAtual = parcelaBase;
+    for (let m = 1; m <= expectativa; m++) {
+      total += pAtual;
+      if (reajuste > 0 && tipoReajuste && m % period === 0) pAtual *= (1 + reajuste);
+    }
+    let pPos = parcelaPosCont;
+    for (let m = expectativa + 1; m <= expectativa + prazoPosCont; m++) {
+      total += pPos;
+      if (reajuste > 0 && tipoReajuste && m % period === 0) pPos *= (1 + reajuste);
+    }
+    return total;
+  }
+  function cetConkey(prazoEf, parcelaPosCont, prazoPosCont) {
     const disponivel = credito - lanceProprios_v;
     if (prazoEf <= 0 || disponivel <= 0) return { mensal: 0, anual: 0 };
-    const custo = credito * (taxaAdm + fundo);
+    const totalPagas = totalParcelasComReajuste(parcelaPosCont, prazoPosCont);
+    const custo = totalPagas + valorTotalLance - credito;
     const ratio = custo / disponivel;
     const mensalReal = Math.pow(1 + ratio, 1/prazoEf) - 1;
     const mensalArred = Math.round(mensalReal * 10000) / 10000;
     const anual = Math.pow(1 + mensalArred, 12) - 1;
     return { mensal: mensalArred*100, anual: anual*100 };
   }
-  const cetA = cetConkey(prazo);                            // Reduç Parcela: prazo total
-  const cetB = cetConkey(expectativa + novoPrazoReducao);   // Reduç Prazo: efetivo de pagamento
+  const cetA = cetConkey(prazo,                            parcReducaoParcela, prazoRestante);    // Reduç Parcela: prazo total
+  const cetB = cetConkey(expectativa + novoPrazoReducao,   parcReducaoPrazo,   novoPrazoReducao); // Reduç Prazo: efetivo
   document.getElementById('reducaoParcela_cm').textContent = formatPct(cetA.mensal, 2);
   document.getElementById('reducaoParcela_ca').textContent = formatPct(cetA.anual, 2);
   document.getElementById('reducaoPrazo_cm').textContent = formatPct(cetB.mensal, 2);

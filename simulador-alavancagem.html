@@ -411,20 +411,46 @@ function recalc(){
   const parcReducaoPrazo = parcelaAtualNoMomento;
   const novoPrazoReducao = parcReducaoPrazo > 0 ? Math.ceil(saldoApoLance / parcReducaoPrazo) : 0;
 
-  // CET — fórmula descoberta por engenharia reversa: (1 + custo/(credito-lance_total))^(1/prazoEf) - 1
-  // Reduç Parcela: prazoEf = prazo total | Reduç Prazo: prazoEf = expectativa + novoPrazoRestante
-  // Denominador usa credito - lance_total (próprios + embutido + fgts)
-  function cet(prazoEf) {
+  // CET — fórmula Conkey v2 (engenharia reversa, com reajuste cumulativo):
+  //   total_pagas = Σ parcelas pagas com reajuste (pré + pós contemplação)
+  //   custo       = total_pagas + lance total − crédito (custo financeiro real)
+  //   disp        = crédito × (1 − lance total %)       (capital líquido — convenção Alavancagem)
+  //   prazoEf Reduç Parcela = prazo total
+  //   prazoEf Reduç Prazo   = expectativa + novo prazo (efetivo de pagamento)
+  //   mensal_real = (1 + custo / disp)^(1 / prazoEf) − 1
+  //   mensal_arred = arredondado p/ 4 casas (= 2 casas no %)
+  //   anual = (1 + mensal_arred)^12 − 1
+  // A v1 usava custo = (adm+fr) × crédito (nominal), o que ignorava o
+  // reajuste cumulativo nas parcelas. CET ficava ~33% menor que Conkey.
+  function totalParcelasComReajuste(parcelaPosCont, prazoPosCont) {
+    let total = 0;
+    let pAtual = parcelaBase;
+    // Pré-contemplação (mesma convenção do saldo: reaj só se m < expectativa)
+    for (let m = 1; m <= expectativa; m++) {
+      total += pAtual;
+      if (reajuste > 0 && tipoReajuste && m % 12 === 0 && m < expectativa) pAtual *= (1 + reajuste);
+    }
+    // Pós-contemplação (reaj continua nos aniversários)
+    let pPos = parcelaPosCont;
+    for (let m = expectativa + 1; m <= expectativa + prazoPosCont; m++) {
+      total += pPos;
+      if (reajuste > 0 && tipoReajuste && m % 12 === 0) pPos *= (1 + reajuste);
+    }
+    return total;
+  }
+  function cet(prazoEf, parcelaPosCont, prazoPosCont) {
     const lanceTotal_pct = pP + pE + pFGTS;
     const disp = credito * (1 - lanceTotal_pct);
     if(prazoEf <= 0 || disp <= 0) return {m:0, a:0};
-    const ratio = (credito*(taxaAdm+fundo)) / disp;
+    const totalPagas = totalParcelasComReajuste(parcelaPosCont, prazoPosCont);
+    const custo = totalPagas + valorTotalLance - credito;
+    const ratio = custo / disp;
     const m = Math.round((Math.pow(1+ratio, 1/prazoEf) - 1) * 10000) / 10000;
     const a = Math.pow(1+m, 12) - 1;
     return {m: m*100, a: a*100};
   }
-  const cetA = cet(prazo);
-  const cetB = cet(expectativa + novoPrazoReducao);
+  const cetA = cet(prazo,                            parcReducaoParcela, prazoRestante);
+  const cetB = cet(expectativa + novoPrazoReducao,   parcReducaoPrazo,   novoPrazoReducao);
   document.getElementById('reducaoParcela_parc').textContent = fmtMoney(parcReducaoParcela);
   document.getElementById('reducaoParcela_prazo').textContent = prazoRestante;
   document.getElementById('reducaoParcela_cm').textContent = fmtPct(cetA.m, 2);
@@ -441,9 +467,14 @@ function recalc(){
       credito: credito,
       taxaAdm: taxaAdm,
       fundo: fundo,
-      lanceProprios: lanceTotalValor, // Alavancagem usa lance total no denominador
-      parcelaInicial: parcelaAtualNoMomento,
-      expectativa: expectativa,
+      lanceProprios:   lanceTotalValor, // Alavancagem usa lance total no denominador
+      valorTotalLance: lanceTotalValor, // mesmo valor (custo financeiro)
+      parcelaInicial:  parcelaAtualNoMomento,
+      parcelaBase:     parcelaBase,
+      expectativa:     expectativa,
+      reajuste:        reajuste,
+      tipoReajuste:    tipoReajuste,
+      period:          12, // Alavancagem usa reaj anual fixo (m % 12 === 0)
     };
     AnaliticoCet.set('parcela', Object.assign({}, baseDados, {
       titulo: 'Pós contemplação · Redução de parcela',

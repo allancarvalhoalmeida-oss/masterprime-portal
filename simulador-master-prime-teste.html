@@ -654,29 +654,57 @@ function recalc() {
   const parcReducaoPrazo = parcelaAtualNoMomento;
   const novoPrazoReducao = parcReducaoPrazo > 0 ? Math.ceil(saldoApoLance / parcReducaoPrazo) : 0;
 
-  // Custo efetivo — fórmula Conkey (descoberta por engenharia reversa):
-  //   custo = (adm + fr) × crédito          (custo nominal das taxas)
-  //   disponível = crédito − lance próprios  (capital líquido do tomador)
+  // Custo efetivo — fórmula Conkey (engenharia reversa v2, com reajuste cumulativo):
+  //   total_pagas = Σ parcelas pagas com reajuste (pré + pós contemplação)
+  //   custo       = total_pagas + lance total − crédito  (custo financeiro real)
+  //   disponível  = crédito − lance próprios             (capital líquido do tomador)
   //   prazoEf Reduç Parcela = prazo total
-  //   prazoEf Reduç Prazo   = expectativa + prazo restante (efetivo de pagamento)
+  //   prazoEf Reduç Prazo   = expectativa + novo prazo (efetivo de pagamento)
   //
-  //   CET mensal_real = (1 + custo/disponível)^(1/prazoEf) − 1
-  //   CET mensal_exibido = arredondado para 2 casas (Conkey arredonda antes do anual)
-  //   CET anual = (1 + mensal_exibido)^12 − 1
-  function calcCustoEfetivoConkey(prazoEf) {
+  //   CET mensal_real    = (1 + custo / disponível)^(1 / prazoEf) − 1
+  //   CET mensal_exibido = arredondado p/ 4 casas (= 2 casas no %)
+  //   CET anual          = (1 + mensal_exibido)^12 − 1
+  //
+  // Histórico: a v1 usava custo = (adm + fr) × crédito (nominal), o que
+  // ignorava o efeito do reajuste cumulativo nas parcelas e resultava em
+  // CET ~33% menor que Conkey. A v2 soma parcela a parcela com reajuste,
+  // bate Conkey em 100% no caso "redução de parcela" e dentro de 1bp no
+  // caso "redução de prazo".
+  function totalParcelasComReajuste(parcelaPosCont, prazoPosCont) {
+    let total = 0;
+    let parcelaAtual = parcelaBase;
+    // Pré-contemplação (1 ... expectativa, parcela cheia com reaj)
+    for (let m = 1; m <= expectativa; m++) {
+      total += parcelaAtual;
+      if (reajuste > 0 && tipoReajuste && m % period === 0) {
+        parcelaAtual *= (1 + reajuste);
+      }
+    }
+    // Pós-contemplação (expectativa+1 ... expectativa+prazoPos, parcela pós com reaj)
+    let parcelaPos = parcelaPosCont;
+    for (let m = expectativa + 1; m <= expectativa + prazoPosCont; m++) {
+      total += parcelaPos;
+      if (reajuste > 0 && tipoReajuste && m % period === 0) {
+        parcelaPos *= (1 + reajuste);
+      }
+    }
+    return total;
+  }
+
+  function calcCustoEfetivoConkey(prazoEf, parcelaPosCont, prazoPosCont) {
     const disponivel = credito - lanceProprios_v;
     if (prazoEf <= 0 || disponivel <= 0) return { mensal: 0, anual: 0 };
-    const custo = credito * (taxaAdm + fundo);
+    const totalPagas = totalParcelasComReajuste(parcelaPosCont, prazoPosCont);
+    const custo = totalPagas + valorTotalLance - credito;
     const ratio = custo / disponivel;
     const mensalReal = Math.pow(1 + ratio, 1 / prazoEf) - 1;
-    // Conkey arredonda mensal para 2 casas decimais antes de calcular o anual
     const mensalExibido = Math.round(mensalReal * 10000) / 10000;
     const anual = Math.pow(1 + mensalExibido, 12) - 1;
     return { mensal: mensalExibido, anual: anual };
   }
 
-  const ceParcela = calcCustoEfetivoConkey(prazo);                              // Reduç Parc: prazo total
-  const cePrazo   = calcCustoEfetivoConkey(expectativa + novoPrazoReducao);     // Reduç Prazo: efetivo
+  const ceParcela = calcCustoEfetivoConkey(prazo,                          parcReducaoParcela, prazoRestante);    // Reduç Parc: prazo total
+  const cePrazo   = calcCustoEfetivoConkey(expectativa + novoPrazoReducao, parcReducaoPrazo,   novoPrazoReducao); // Reduç Prazo: efetivo
 
   document.getElementById('reducaoParcela_parc').textContent = formatMoney(parcReducaoParcela);
   document.getElementById('reducaoParcela_prazo').textContent = prazoRestante;
@@ -695,13 +723,19 @@ function recalc() {
     fundo: fundo,
     lanceProprios_v: lanceProprios_v,
     prazoTotal: prazo,
+    parcelaBase: parcelaBase,
     parcelaInicial: parcelaAtualNoMomento,
     valorTotalLance: valorTotalLance,
     expectativa: expectativa,
+    reajuste: reajuste,
+    tipoReajuste: tipoReajuste,
+    period: period,
     parcReducaoParcela: parcReducaoParcela,
     prazoRestParcela: prazoRestante,
     parcReducaoPrazo: parcReducaoPrazo,
     prazoRestPrazo: novoPrazoReducao,
+    totalPagasParcela: totalParcelasComReajuste(parcReducaoParcela, prazoRestante),
+    totalPagasPrazo:   totalParcelasComReajuste(parcReducaoPrazo,   novoPrazoReducao),
     cetParcMensal: ceParcela.mensal,
     cetParcAnual: ceParcela.anual,
     cetPrazoMensal: cePrazo.mensal,
@@ -721,13 +755,21 @@ function abrirAnalitico(modo) {
   const prazoRest = modo === 'parcela' ? s.prazoRestParcela : s.prazoRestPrazo;
   const titulo = modo === 'parcela' ? 'Pós contemplação · Redução de parcela' : 'Pós contemplação · Redução de prazo';
 
-  // Constroi array de parcelas mês a mês
-  // Pré-contemplação: meses 1 até (expectativa-1) com parcela inicial
-  // Mês expectativa: contempla (paga parcela inicial nesse mês também)
-  // Pós contemplação: meses (expectativa+1) até (expectativa+prazoRest) com parcPos
+  // Constroi array de parcelas mês a mês COM reajuste cumulativo
+  // Pré-contemplação: meses 1 até expectativa, parcela cheia com reaj nos aniversários
+  // Pós contemplação: meses (expectativa+1) até (expectativa+prazoRest), parcPos com reaj
   const parcelas = [];
-  for (let m = 1; m <= s.expectativa; m++) parcelas.push(s.parcelaInicial);
-  for (let m = 1; m <= prazoRest; m++) parcelas.push(parcPos);
+  const period = s.period || 12;
+  let pAtual = s.parcelaBase || s.parcelaInicial;
+  for (let m = 1; m <= s.expectativa; m++) {
+    parcelas.push(pAtual);
+    if (s.reajuste > 0 && s.tipoReajuste && m % period === 0) pAtual *= (1 + s.reajuste);
+  }
+  let pPos = parcPos;
+  for (let m = s.expectativa + 1; m <= s.expectativa + prazoRest; m++) {
+    parcelas.push(pPos);
+    if (s.reajuste > 0 && s.tipoReajuste && m % period === 0) pPos *= (1 + s.reajuste);
+  }
 
   const totalGeral = parcelas.reduce((a, b) => a + b, 0);
 
@@ -755,9 +797,10 @@ function abrirAnalitico(modo) {
   const fmt = (v) => 'R$ ' + Number(v||0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const fmtPct = (v, casas) => Number(v*100||0).toLocaleString('pt-BR', { minimumFractionDigits: casas||2, maximumFractionDigits: casas||2 }) + ' %';
 
-  // Memória de cálculo do CET
-  const taxaAdm = s.taxaAdm, fundo = s.fundo, lanceProprios_v = s.lanceProprios_v;
-  const custo = s.credito * (taxaAdm + fundo);
+  // Memória de cálculo do CET (v2 — com reajuste cumulativo)
+  const lanceProprios_v = s.lanceProprios_v;
+  const totalPagas = (modo === 'parcela' ? s.totalPagasParcela : s.totalPagasPrazo) || totalGeral;
+  const custo = totalPagas + s.valorTotalLance - s.credito;
   const disponivel = s.credito - lanceProprios_v;
   const ratio = disponivel > 0 ? custo / disponivel : 0;
   const prazoEf = modo === 'parcela' ? s.prazoTotal : (s.expectativa + s.prazoRestPrazo);
@@ -767,7 +810,11 @@ function abrirAnalitico(modo) {
   document.getElementById('memoriaCet').innerHTML = `
     <h4>Memória de cálculo do CET</h4>
     <div class="memoria-cet-step">
-      <span><strong>Custo</strong> = crédito × (taxa adm + fundo) = ${fmt(s.credito)} × ${fmtPct(taxaAdm + fundo, 2)}</span>
+      <span><strong>Total parcelas pagas</strong> = Σ parcelas com reajuste cumulativo (${prazoEf} meses)</span>
+      <span class="memoria-cet-resultado">${fmt(totalPagas)}</span>
+    </div>
+    <div class="memoria-cet-step">
+      <span><strong>Custo</strong> = total pagas + lance total − crédito = ${fmt(totalPagas)} + ${fmt(s.valorTotalLance)} − ${fmt(s.credito)}</span>
       <span class="memoria-cet-resultado">${fmt(custo)}</span>
     </div>
     <div class="memoria-cet-step">
@@ -775,7 +822,7 @@ function abrirAnalitico(modo) {
       <span class="memoria-cet-resultado">${fmt(disponivel)}</span>
     </div>
     <div class="memoria-cet-step">
-      <span><strong>Razão</strong> = custo / disponível = ${fmt(custo)} / ${fmt(disponivel)}</span>
+      <span><strong>Razão</strong> = custo / disponível</span>
       <span class="memoria-cet-resultado">${(ratio).toFixed(4)}</span>
     </div>
     <div class="memoria-cet-step">

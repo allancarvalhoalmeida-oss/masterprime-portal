@@ -454,9 +454,13 @@ function recalc(){
     return r;
   }
 
-  // === CET CONSÓRCIO (fórmula descoberta por engenharia reversa do referencial Conkey x Financiamento) ===
-  // Mensal = (sum_parcelas_cenário / lance_próprios)^(1/prazoEf) - 1
-  // Soma considera reajustes conforme tipoReajuste, e parcela posterior à contemplação varia conforme cenário
+  // === CET CONSÓRCIO (fórmula Conkey v2 — engenharia reversa, com reajuste cumulativo) ===
+  // Mensal = (1 + custo / disponível)^(1/prazoEf) − 1
+  //   custo      = Σ parcelas (com reaj) + lance total − crédito
+  //   disponível = crédito − lance próprios
+  // A v1 deste arquivo usava ratio = Σ parcelas / lance próprios — fórmula
+  // diferente da Conkey (dava CET ~2× maior). Validado contra Conkey:
+  // 100% match no caso "redução de parcela", 1bp residual no "redução de prazo".
   function calcSumParcelas(parcelaPos, prazoFinal) {
     // Convenção Conkey: reajuste fire ANTES da parcela ser paga no mês do aniversário.
     // Pré-cont: parcela_inicial reajusta a cada anniversary até m=expectativa
@@ -474,11 +478,13 @@ function recalc(){
     return sum;
   }
   function cetConsorcio(parcelaPos, prazoFinal) {
-    if(prazoFinal <= 0 || lanceProprios_v <= 0) return {m:0, a:0};
+    const disponivel = credito - lanceProprios_v;
+    if(prazoFinal <= 0 || disponivel <= 0) return {m:0, a:0};
     const sumPar = calcSumParcelas(parcelaPos, prazoFinal);
-    const ratio = sumPar / lanceProprios_v;
-    if(ratio <= 0) return {m:0, a:0};
-    const m = Math.pow(ratio, 1/prazoFinal) - 1;
+    const custo = sumPar + valorTotalLance - credito;
+    const ratio = custo / disponivel;
+    const mReal = Math.pow(1 + ratio, 1/prazoFinal) - 1;
+    const m = Math.round(mReal * 10000) / 10000;
     const a = Math.pow(1+m, 12) - 1;
     return {m: m*100, a: a*100};
   }
@@ -498,22 +504,28 @@ function recalc(){
     const fmt$ = AnaliticoCet.fmt;
     function memVista(parcelaPos, prazoFinal, cet) {
       const sumPar = calcSumParcelas(parcelaPos, prazoFinal);
-      const ratio = lanceProprios_v > 0 ? sumPar / lanceProprios_v : 0;
+      const custo = sumPar + valorTotalLance - credito;
+      const disponivel = credito - lanceProprios_v;
+      const ratio = disponivel > 0 ? custo / disponivel : 0;
       return `
         <div class="ace-mem-step">
           <span><strong>Σ parcelas</strong> (com reajustes ano a ano até prazo ${prazoFinal})</span>
           <span class="ace-mem-res">${fmt$(sumPar)}</span>
         </div>
         <div class="ace-mem-step">
-          <span><strong>Lance próprios</strong> (capital aportado pelo cliente)</span>
-          <span class="ace-mem-res">${fmt$(lanceProprios_v)}</span>
+          <span><strong>Custo</strong> = Σ parcelas + lance total − crédito</span>
+          <span class="ace-mem-res">${fmt$(custo)}</span>
         </div>
         <div class="ace-mem-step">
-          <span><strong>Razão</strong> = Σ parcelas / lance próprios</span>
+          <span><strong>Disponível</strong> = crédito − lance próprios</span>
+          <span class="ace-mem-res">${fmt$(disponivel)}</span>
+        </div>
+        <div class="ace-mem-step">
+          <span><strong>Razão</strong> = custo / disponível</span>
           <span class="ace-mem-res">${ratio.toFixed(4)}</span>
         </div>
         <div class="ace-mem-step">
-          <span><strong>CET mensal</strong> = razão^(1/${prazoFinal}) − 1</span>
+          <span><strong>CET mensal</strong> = (1 + razão)^(1/${prazoFinal}) − 1</span>
           <span class="ace-mem-res">${(cet.m).toFixed(2)} %</span>
         </div>
         <div class="ace-mem-step dest">

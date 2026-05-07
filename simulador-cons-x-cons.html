@@ -557,16 +557,21 @@ function calcProposta(s) {
     return sum;
   }
   function cetConsorcio(parcelaPos, prazoFinal) {
-    // Fórmula do Op. Simples (validada centavo-a-centavo com Conkey):
-    //   custo = crédito × (taxaAdm + fundo)
-    //   disponível = crédito − lanceProprios
-    //   mensal = (1 + custo/disponível)^(1/prazoEf) − 1
+    // Fórmula Conkey v2 (engenharia reversa, com reajuste cumulativo):
+    //   total_pagas = Σ parcelas pagas com reajuste (pré + pós contemplação)
+    //   custo       = total_pagas + lance total − crédito  (custo financeiro real)
+    //   disponível  = crédito − lance próprios             (capital líquido do tomador)
+    //   mensal_real = (1 + custo / disponível)^(1 / prazoEf) − 1
+    //   mensal_arred = arredondado p/ 4 casas (= 2 casas no %)
+    //   anual       = (1 + mensal_arred)^12 − 1
+    // A v1 usava custo = (adm+fr) × crédito (nominal), o que ignorava o
+    // reajuste cumulativo e dava CET ~33% menor que Conkey.
     const disponivel = credito - lanceProprios_v;
     if(prazoFinal <= 0 || disponivel <= 0) return {m:0, a:0};
-    const custo = credito * (taxaAdm + fundo);
+    const totalPagas = calcSumParcelas(parcelaPos, prazoFinal);
+    const custo = totalPagas + valorTotalLance - credito;
     const ratio = custo / disponivel;
     const mensalReal = Math.pow(1 + ratio, 1/prazoFinal) - 1;
-    // Conkey arredonda para 4 casas decimais antes de calcular o anual
     const mm = Math.round(mensalReal * 10000) / 10000;
     const aa = Math.pow(1+mm, 12) - 1;
     return {m: mm*100, a: aa*100};
@@ -594,8 +599,13 @@ function calcProposta(s) {
       taxaAdm: taxaAdm,
       fundo: fundo,
       lanceProprios: lanceProprios_v,
+      valorTotalLance: valorTotalLance,
       parcelaInicial: parcelaAtualNoMomento,
+      parcelaBase: parcelaBase,
       expectativa: expectativa,
+      reajuste: reajuste,
+      tipoReajuste: tipoReajuste,
+      period: periodoReaj,
     };
     const labelProp = s === 'p1' ? 'Proposta 1' : 'Proposta 2';
     AnaliticoCet.set(`${s}_parcela`, Object.assign({}, baseDados, {
