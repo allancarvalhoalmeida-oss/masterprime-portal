@@ -1675,7 +1675,7 @@ async function renderAdminFaturamento() {
   // Monta a query — admin vê tudo, demais só os processos atribuídos a si
   let q = sb
     .from('portal_processos')
-    .select(`*, portal_arquivos(count), portal_mensagens(count)`)
+    .select('*')
     .order('criado_em', { ascending: false });
 
   if (!isAdm) {
@@ -1873,6 +1873,9 @@ async function fatVerProcesso(id) {
     `<option value="${e.status}" ${proc.status === e.status ? 'selected' : ''}>${e.icone} ${e.status}</option>`
   ).join('') + `<option value="Cancelado" ${proc.status === 'Cancelado' ? 'selected' : ''}>❌ Cancelado</option>`;
 
+  // isAdm deve estar disponível antes de ser usado no HTML abaixo
+  const isAdm = fatIsAdmin();
+
   // SVG icons reusados na lista
   const _SVG_FILE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
   const _SVG_X_SM = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" style="width:11px;height:11px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
@@ -1917,7 +1920,7 @@ async function fatVerProcesso(id) {
           </div>
         </div>`).join('');
 
-  const isAdm = fatIsAdmin();
+  // isAdm já declarado acima — apenas monta opções do consultor
   const consultorOpts = `<option value="">— Não atribuído —</option>` + fatConsultores.map(c =>
     `<option value="${esc(c.auth_id)}" ${proc.consultor_id === c.auth_id ? 'selected':''}>${esc(c.nome)}${c.tipo==='admin'?' (admin)':c.tipo==='socio'?' (sócio)':''}</option>`
   ).join('');
@@ -1970,6 +1973,8 @@ async function fatVerProcesso(id) {
         <button class="btn btn-outline btn-sm" onclick='fatSalvarProtocolo(${procIdArg})'>Salvar</button>
         <button class="btn btn-outline btn-sm" onclick='fatGerarProtocoloCampo(${procIdArg})'>Gerar</button>
       </div>
+
+      ${fatRenderDadosEstruturados(proc)}
 
       <div class="fat-form-dados">
         <div><label class="login-label">Nome</label><input class="login-input" id="fat-edit-nome-${proc.id}" value="${esc(proc.nome || '')}"></div>
@@ -2165,16 +2170,67 @@ async function fatAtribuirConsultor(processoId) {
 
 async function fatEnviarMsg(processoId) {
   const campo = document.getElementById(`fat-nova-msg-${processoId}`);
+  if (!campo) return;
   const texto = campo.value.trim();
   if (!texto) return;
+
+  // Feedback otimista: adiciona a mensagem imediatamente na UI
+  const wrap = document.getElementById(`fat-msgs-${processoId}`);
+  const textoEsc = esc(texto);
+  const msgTemp = document.createElement('div');
+  msgTemp.className = 'fat-msg admin';
+  msgTemp.id = 'msg-temp-sending';
+  msgTemp.innerHTML = `
+    <div class="fat-msg-av">M</div>
+    <div>
+      <div class="fat-msg-balao" style="opacity:.7">${textoEsc}</div>
+      <div class="fat-msg-hora" style="color:var(--amber)">Enviando...</div>
+    </div>`;
+  if (wrap) { wrap.appendChild(msgTemp); wrap.scrollTop = wrap.scrollHeight; }
+
+  campo.value = '';
+  campo.disabled = true;
+
   const { error } = await sb.from('portal_mensagens').insert({
     processo_id: processoId,
     autor: 'admin',
     texto
   });
-  if (error) { alert('Erro: ' + error.message); return; }
-  campo.value = '';
-  await fatVerProcesso(processoId);
+
+  campo.disabled = false;
+  campo.focus();
+
+  if (error) {
+    // Remove otimista e mostra erro
+    msgTemp?.remove();
+    campo.value = texto; // restaura o texto
+    alert('Erro ao enviar mensagem: ' + error.message);
+    return;
+  }
+
+  // Recarrega apenas o bloco de mensagens do modal (sem fechar/reabrir)
+  const { data: msgs } = await sb.from('portal_mensagens')
+    .select('*').eq('processo_id', processoId).order('criado_em');
+
+  if (wrap && msgs) {
+    const procRes = await sb.from('portal_processos').select('nome').eq('id', processoId).single();
+    const nomeCliente = procRes.data?.nome || '';
+    const _ini = (n) => String(n||'').trim().split(/\s+/).map(p=>p[0]).slice(0,2).join('').toUpperCase() || '?';
+    wrap.innerHTML = msgs.length === 0
+      ? '<p style="font-size:11.5px;color:var(--text3);text-align:center;padding:14px 0;">Sem mensagens ainda.</p>'
+      : msgs.map(m => {
+          const lado = m.autor === 'admin' ? 'admin' : 'cliente';
+          const av = lado === 'admin' ? 'M' : _ini(nomeCliente);
+          return `<div class="fat-msg ${lado}">
+            <div class="fat-msg-av">${av}</div>
+            <div>
+              <div class="fat-msg-balao">${esc(m.texto)}</div>
+              <div class="fat-msg-hora">${lado === 'admin' ? 'Equipe Master Prime' : esc(nomeCliente)} · ${fmtDataHoraBR(m.criado_em)}</div>
+            </div>
+          </div>`;
+        }).join('');
+    wrap.scrollTop = wrap.scrollHeight;
+  }
 }
 
 async function fatUploadArquivos(processoId, token, input) {
@@ -2246,6 +2302,165 @@ function fatExportarCSV() {
 }
 
 // Funções auxiliares
+// ─── Renderiza dados estruturados salvos pelo cliente no campo descricao ───
+// O cliente.html salva JSON.stringify({banco, tipo_operacao, cedente, cessionario,
+// consorciado, dados_bancarios, grupos_cotas, veiculo, vendedor, descricao}) em p_descricao.
+// Esta função parseia e exibe tudo de forma legível para o admin.
+function fatRenderDadosEstruturados(proc) {
+  let d = null;
+  try { d = JSON.parse(proc.descricao || ''); } catch(e) { /* texto puro */ }
+  if (!d || typeof d !== 'object') return ''; // sem dados estruturados
+
+  const banco = d.banco || '';
+  const op    = d.tipo_operacao || '';
+  const obs   = d.descricao || '';
+
+  // Helper: linha de dado
+  const linha = (label, val) => val
+    ? `<div class="fat-dado"><div class="fat-dado-label">${label}</div><div class="fat-dado-valor">${esc(String(val))}</div></div>`
+    : '';
+
+  // Helper: seção colapsável
+  const secao = (titulo, cor, itens) => {
+    const conteudo = itens.filter(Boolean).join('');
+    if (!conteudo) return '';
+    return `
+      <div style="border:1px solid ${cor}33;border-left:4px solid ${cor};border-radius:10px;padding:14px 16px;margin-bottom:12px;background:${cor}08;">
+        <div style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:${cor};margin-bottom:10px;">${titulo}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 20px;">${conteudo}</div>
+      </div>`;
+  };
+
+  let html = `
+    <div style="margin-bottom:16px;">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Dados preenchidos pelo cliente
+        ${banco ? `<span class="tag tag-navy" style="font-size:9px;margin-left:4px;">${esc(banco.toUpperCase())}</span>` : ''}
+        ${op    ? `<span class="tag tag-teal" style="font-size:9px;">${esc(op)}</span>` : ''}
+      </div>`;
+
+  // Transferência Porto: cedente + cessionário
+  if (d.cedente) {
+    html += secao('Cedente (titular atual)', '#2563EB', [
+      linha('Nome',     d.cedente.nome),
+      linha('CPF',      d.cedente.cpf ? fmtCPF(d.cedente.cpf) : ''),
+      linha('Grupo',    d.cedente.grupo),
+      linha('Cota',     d.cedente.cota),
+      linha('E-mail',   d.cedente.email),
+      linha('Telefone', d.cedente.telefone),
+    ]);
+  }
+  if (d.cessionario) {
+    html += secao('Cessionário (novo titular)', '#7C3AED', [
+      linha('Nome',         d.cessionario.nome),
+      linha('CPF',          d.cessionario.cpf ? fmtCPF(d.cessionario.cpf) : ''),
+      linha('Grupo',        d.cessionario.grupo),
+      linha('Cota',         d.cessionario.cota),
+      linha('E-mail',       d.cessionario.email),
+      linha('Telefone',     d.cessionario.telefone),
+      linha('Endereço',     d.cessionario.endereco),
+      linha('Estado Civil', d.cessionario.estado_civil),
+    ]);
+  }
+
+  // Bradesco: consorciado completo
+  if (d.consorciado) {
+    const c = d.consorciado;
+    html += secao('Dados do Consorciado', '#CC092F', [
+      linha('Nome',              c.nome),
+      linha('CPF/CNPJ',         c.cpf ? fmtCPF(c.cpf) : ''),
+      linha('Data Nasc.',        c.data_nasc),
+      linha('Estado Civil',      c.estado_civil),
+      linha('Doc. Identificação',c.doc_id),
+      linha('Tipo Doc.',         c.tipo_doc),
+      linha('Data Expedição',    c.data_expedicao),
+      linha('Órgão Emissor',     c.orgao_emissor),
+      linha('Renda',             c.renda ? `R$ ${Number(c.renda).toFixed(2).replace('.',',')}` : ''),
+      linha('Cargo',             c.cargo),
+      linha('Nacionalidade',     c.nacionalidade),
+      linha('Naturalidade',      c.estado_naturalidade),
+      linha('Celular',           c.celular),
+      linha('E-mail',            c.email),
+      `<div class="fat-dado" style="grid-column:1/-1;">${linha('Endereço', c.endereco)}</div>`,
+    ]);
+  }
+
+  // Dados bancários (Bradesco)
+  if (d.dados_bancarios) {
+    const b = d.dados_bancarios;
+    html += secao('Dados Bancários', '#16A34A', [
+      linha('Titular',    b.nome),
+      linha('Banco',      b.banco),
+      linha('Agência',    b.agencia),
+      linha('Conta',      b.conta),
+      linha('Tipo Conta', b.tipo_conta),
+    ]);
+  }
+
+  // Grupos e cotas múltiplos (Bradesco)
+  if (d.grupos_cotas && d.grupos_cotas.length) {
+    const linhasGC = d.grupos_cotas.map((gc, i) =>
+      linha(`Grupo/Cota ${i+1}`, `${gc.grupo} / ${gc.cota}`)
+    );
+    html += secao('Grupos e Cotas', '#D97706', linhasGC);
+  }
+
+  // Veículo (Bradesco)
+  if (d.veiculo && (d.veiculo.chassi || d.veiculo.placa || d.veiculo.modelo)) {
+    const v = d.veiculo;
+    html += secao('Dados do Veículo', '#0891B2', [
+      linha('Chassi',       v.chassi),
+      linha('Placa',        v.placa),
+      linha('Renavam',      v.renavam),
+      linha('UF Licenc.',   v.uf_lic),
+      linha('Marca',        v.marca),
+      linha('Modelo',       v.modelo),
+      linha('Cor',          v.cor),
+      linha('Ano Fab.',     v.ano_fab),
+      linha('Ano Modelo',   v.ano_modelo),
+      linha('Valor Venda',  v.valor_venda ? `R$ ${Number(v.valor_venda).toFixed(2).replace('.',',')}` : ''),
+    ]);
+  }
+
+  // Vendedor (Bradesco)
+  if (d.vendedor && d.vendedor.nome) {
+    const vd = d.vendedor;
+    html += secao('Dados do Vendedor', '#6B7280', [
+      linha('Nome',       vd.nome),
+      linha('CPF/CNPJ',  vd.cpf ? fmtCPF(vd.cpf) : ''),
+      linha('Endereço',  vd.endereco),
+      linha('Banco',     vd.banco),
+      linha('Ag/Conta',  vd.ag_conta),
+      linha('Tipo Conta',vd.tipo_conta),
+      linha('E-mail',    vd.email),
+      linha('Telefone',  vd.telefone),
+    ]);
+  }
+
+  // Porto/Itaú faturamento: campos extras (condição do bem, modelo, etc.)
+  if (!d.cedente && !d.consorciado && d.banco) {
+    // Dados extras vindos da descrição do processo (condição bem, modelo, etc.)
+    const descObj = d;
+    const extras = [
+      linha('Banco/Admin',    descObj.banco),
+      linha('Tipo Operação',  descObj.tipo_operacao),
+    ].filter(Boolean);
+    if (obs) extras.push(`<div class="fat-dado" style="grid-column:1/-1;">${linha('Observações do cliente', obs)}</div>`);
+    if (extras.length) html += secao('Detalhes da Operação', '#4DBCC8', extras);
+  }
+
+  // Observações finais (texto livre)
+  if (obs && (d.cedente || d.consorciado)) {
+    html += `<div style="padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;margin-bottom:12px;font-size:12px;color:var(--text2);">
+      <span style="font-weight:700;color:var(--text);">Obs. do cliente:</span> ${esc(obs)}
+    </div>`;
+  }
+
+  html += '</div>';
+  return html;
+}
+
 function fatTagClass(s) {
   const m = { 'Recebido':'tag-blue', 'Em análise':'tag-amber', 'Enviado para administradora':'tag-purple', 'Em retorno da administradora':'tag-teal', 'Finalizado':'tag-green', 'Cancelado':'tag-red' };
   return m[s] || 'tag-gray';
