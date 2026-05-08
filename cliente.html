@@ -136,12 +136,44 @@
     .campo textarea{resize:vertical;min-height:64px;font-family:inherit}
     .campo .hint{font-size:11px;color:var(--text3);margin-top:4px}
 
-    .alerta{display:none; padding:11px 14px; border-radius:8px;font-size:12px; margin-bottom:14px;border:1px solid transparent; line-height:1.5;}
-    .alerta.visivel{display:flex;align-items:flex-start;gap:8px}
-    .alerta-erro{background:var(--red-bg);color:#991B1B;border-color:#FCA5A5}
-    .alerta-aviso{background:var(--amber-bg);color:#92400E;border-color:#FCD34D}
-    .alerta-sucesso{background:var(--green-bg);color:#166534;border-color:#86EFAC}
-    .alerta-info{background:var(--blue-bg);color:#1E40AF;border-color:#93C5FD}
+    /* Alertas melhorados */
+    .alerta{
+      display: none;
+      padding: 14px 16px;
+      border-radius: 10px;
+      font-size: 14px;
+      margin-top: 16px;
+      border: 1px solid transparent;
+      line-height: 1.5;
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      transition: all 0.3s;
+    }
+    .alerta.visivel{
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .alerta-erro{
+      background: #FFF5F5;
+      color: #C53030;
+      border-color: #FEB2B2;
+    }
+    .alerta-aviso{
+      background: #FFFFF0;
+      color: #975A16;
+      border-color: #F6E05E;
+    }
+    .alerta-sucesso{
+      background: #F0FFF4;
+      color: #276749;
+      border-color: #9AE6B4;
+    }
+    .alerta-info{
+      background: #EBF8FF;
+      color: #2A4365;
+      border-color: #90CDF4;
+    }
 
     .tag{display:inline-flex;align-items:center;gap:5px;padding:3px 9px; font-size:10.5px; font-weight:700;border-radius:999px; line-height:1.3;background:#F1F5F9;color:var(--text2);}
     .tag-blue{background:var(--blue-bg);color:#1E40AF}
@@ -619,8 +651,7 @@ function renderTelaCadastro(banco, operacao){
         <a href="#" onclick="voltarEtapaAnterior();return false;" style="font-size:12px;color:var(--text2);display:inline-flex;align-items:center;gap:5px">
           ${ico('back')} Voltar
         </a>
-      </div>
-      <div id="alerta-cadastro" class="alerta"></div>`;
+      </div>`;
 
   if (operacao.id === 'transferencia') {
     html += `
@@ -883,6 +914,7 @@ function renderTelaCadastro(banco, operacao){
       <button class="btn btn-primary w-100" id="btn-enviar" onclick="enviarCadastro()" style="background:${cor}; box-shadow:0 2px 8px ${cor}40; padding:14px;font-size:13px">
         Enviar processo ${ico('arrow')}
       </button>
+      <div id="alerta-cadastro" class="alerta" style="margin-top:16px;"></div>
     </div>`;
 
   root.innerHTML = html;
@@ -914,6 +946,7 @@ function toggleCamposBem() {
   const divNovo = document.getElementById('campos-bem-novo');
   if (!select || !divNovo) return;
   divNovo.style.display = (select.value === 'novo') ? 'block' : 'none';
+  atualizarSlotCRLV();
 }
 
 function obterValorReal(id) {
@@ -928,17 +961,45 @@ function voltarEtapaAnterior(){
   else renderTelaSelecaoBanco();
 }
 
+// Nova função para atualizar o slot do CRLV quando a condição do bem muda
+function atualizarSlotCRLV() {
+  if (!operacaoSelecionada || !bancoSelecionado) return;
+  if ((bancoSelecionado.id === 'porto' || bancoSelecionado.id === 'itau') && operacaoSelecionada.id === 'faturamento') {
+    renderSlotsAnexo(operacaoSelecionada.documentos);
+  }
+}
+
 function renderSlotsAnexo(documentos){
   const slots = document.getElementById('doc-slots');
   if (!slots) return;
+
+  // Determina se o CRLV deve ser considerado obrigatório com base na condição do bem
+  let crlvObrigatorio = false;
+  if (bancoSelecionado && operacaoSelecionada && operacaoSelecionada.id === 'faturamento') {
+    const selectCondicao = document.getElementById('f-condicao-bem');
+    if (selectCondicao && selectCondicao.value === 'usado') {
+      crlvObrigatorio = true;
+    }
+  }
+
   slots.innerHTML = documentos.map(cat => {
     const arq = arquivosPendentes[cat.key];
+    // Verifica se é o campo CRLV (Porto ou Itaú)
+    const isCRLV = (bancoSelecionado?.id === 'porto' && cat.key === 'Doc.CRLV') ||
+                   (bancoSelecionado?.id === 'itau' && cat.key === 'crlv');
+    const obrigatorioAgora = cat.obrigatorio || (isCRLV && crlvObrigatorio);
+
     return `
-      <div class="doc-slot ${arq?'preenchido':''} ${cat.obrigatorio?'':'opcional'}" data-cat="${cat.key}">
+      <div class="doc-slot ${arq?'preenchido':''} ${!obrigatorioAgora?'opcional':''}" data-cat="${cat.key}">
         <div class="doc-slot-head">
           <div class="doc-slot-icon">${ico(cat.iconKey,'ico ico-lg')}</div>
           <div style="flex:1">
-            <div class="doc-slot-title">${esc(cat.label)} ${cat.obrigatorio?'<span class="tag tag-red" style="font-size:9.5px">Obrigatório</span>':'<span class="tag tag-gray" style="font-size:9.5px">Opcional</span>'}</div>
+            <div class="doc-slot-title">
+              ${esc(cat.label)}
+              ${obrigatorioAgora
+                ? '<span class="tag tag-red" style="font-size:9.5px">Obrigatório</span>'
+                : '<span class="tag tag-gray" style="font-size:9.5px">Opcional</span>'}
+            </div>
             <div class="doc-slot-sub">${esc(cat.sub)}</div>
           </div>
           <div class="doc-slot-action">
@@ -1088,8 +1149,7 @@ async function enviarCadastro(){
     dadosExtras = { banco: bancoSelecionado.id, tipo_operacao: operacaoSelecionada.id };
   }
 
-  const descricaoFinal = JSON.stringify({ ...dadosExtras, descricao: descricao || '' });
-
+  // Documentos obrigatórios fixos (sem considerar o CRLV dinâmico, que já é validado acima)
   const docsObrigatorios = operacaoSelecionada.documentos.filter(d => d.obrigatorio);
   for (const cat of docsObrigatorios){
     if (!arquivosPendentes[cat.key]) return alerta('alerta-cadastro', `Anexo obrigatório: ${cat.label}.`, 'erro');
@@ -1130,7 +1190,6 @@ async function enviarCadastro(){
     }
 
     arquivosPendentes = {};
-    // ✅ CORRIGIDO: Mostra tela de sucesso em vez de redirecionar direto
     renderTelaSucesso(novoT, cpf);
   } catch(e){
     alerta('alerta-cadastro', 'Erro ao enviar: '+e.message, 'erro');
@@ -1346,7 +1405,6 @@ async function carregarDocumentos(){
   const rpcRes = await sb.rpc('cliente_listar_arquivos', { p_token: processoAtual.token });
   data = rpcRes.data; error = rpcRes.error;
 
-  // Fallback direto
   if (error) {
     const { data: proc } = await sb
       .from('portal_processos').select('id').eq('token', processoAtual.token).single();
@@ -1386,12 +1444,9 @@ async function carregarMensagens(){
   if (!timeline) return;
 
   let data, error;
-
-  // Tenta via RPC primeiro
   const rpcRes = await sb.rpc('cliente_listar_mensagens', { p_token: processoAtual.token });
   data = rpcRes.data; error = rpcRes.error;
 
-  // Fallback: busca direto pelo processo_id (quando RPC não existe ou falha)
   if (error) {
     const { data: proc } = await sb
       .from('portal_processos').select('id').eq('token', processoAtual.token).single();
@@ -1411,7 +1466,6 @@ async function carregarMensagens(){
     timeline.innerHTML = '<div class="empty">Nenhuma mensagem ainda. Envie sua primeira mensagem!</div>';
     return;
   }
-  // A coluna na portal_mensagens é "autor"
   timeline.innerHTML = data.map(m => {
     const lado = (m.autor === 'admin') ? 'admin' : 'cliente';
     return `
@@ -1434,7 +1488,6 @@ async function carregarHistorico(){
   const rpcRes = await sb.rpc('cliente_listar_historico_status', { p_token: processoAtual.token });
   data = rpcRes.data; error = rpcRes.error;
 
-  // Fallback direto
   if (error) {
     const { data: proc } = await sb
       .from('portal_processos').select('id').eq('token', processoAtual.token).single();
@@ -1465,7 +1518,6 @@ async function carregarHistorico(){
   `).join('');
 }
 
-// ════════════════ ENVIAR MENSAGEM ════════════════
 async function enviarMensagem(){
   const textarea = document.getElementById('nova-msg');
   const txt = textarea?.value.trim();
@@ -1475,7 +1527,6 @@ async function enviarMensagem(){
   if (btn){ btn.disabled=true; btn.innerHTML='<span class="spinner"></span>'; }
   textarea.disabled = true;
 
-  // Tenta via RPC; se falhar (parâmetro ou função inexistente), escreve direto
   let error = null;
   const rpcRes = await sb.rpc('cliente_enviar_mensagem', {
     p_token: processoAtual.token,
@@ -1484,9 +1535,7 @@ async function enviarMensagem(){
   });
   error = rpcRes.error;
 
-  // Fallback: insert direto na tabela (necessário se a RPC ainda usa p_remetente ou não existe)
   if (error) {
-    // Descobre processo_id pelo token
     const { data: proc, error: ep } = await sb
       .from('portal_processos')
       .select('id')
@@ -1525,7 +1574,6 @@ function iniciarPolling(){
       processoAtual = data;
       renderPortalProcesso();
     } else {
-      // Só atualiza mensagens e histórico sem recarregar tudo
       await carregarMensagens();
       await carregarHistorico();
     }
@@ -1537,7 +1585,6 @@ function abrirTab(id){
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('ativa'));
   const painel = document.getElementById(id);
   if (painel) painel.classList.add('ativo');
-  // Mapeia painel → tab
   const tabMap = { 'painel-docs':'tab-docs', 'painel-msg':'tab-msg', 'painel-hist':'tab-hist' };
   const tabEl = document.getElementById(tabMap[id]);
   if (tabEl) tabEl.classList.add('ativa');
