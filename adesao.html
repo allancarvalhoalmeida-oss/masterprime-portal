@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Master Prime — Adesão Bradesco</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════
@@ -296,6 +297,15 @@ select.login-input { cursor: pointer; }
 
 <script>
 // ═══════════════════════════════════════════════════════
+// SUPABASE
+//   Usa a mesma sessão de auth do Portal do Consultor
+//   (mesmo origin → localStorage compartilhado).
+// ═══════════════════════════════════════════════════════
+const SUPABASE_URL = 'https://jhwciwvgagnuxakukyob.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_fy-iwSFNHKRuqP1pDokFuQ_X_UCiqzx';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ═══════════════════════════════════════════════════════
 // MÁSCARA DE CPF (mesmo padrão do Portal do Consultor)
 // ═══════════════════════════════════════════════════════
 function maskCPF(el) {
@@ -333,20 +343,31 @@ function selectBradescoForm(tipo) {
     formPj.style.display = 'block';
     formPf.style.display = 'none';
   }
-  // Rola até o formulário
   const target = tipo === 'pf' ? formPf : formPj;
   setTimeout(() => target.scrollIntoView({behavior: 'smooth', block: 'start'}), 50);
 }
 
 // ═══════════════════════════════════════════════════════
-// SUBMIT (STUB — backend pendente, aguardando Erik/Leo)
+// LIMPEZA DE FORMULÁRIO (após salvar com sucesso)
 // ═══════════════════════════════════════════════════════
-function submitForm(tipoForm) {
+function clearFormFields(prefix) {
+  document.querySelectorAll('[id^="' + prefix + '"]').forEach(el => {
+    if (el.tagName === 'SELECT') el.selectedIndex = 0;
+    else el.value = '';
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// SUBMIT — grava no Supabase
+// ═══════════════════════════════════════════════════════
+async function submitForm(tipoForm) {
   const isPF = tipoForm === 'BradescoFormPF';
   const prefix = isPF ? 'bpf-' : 'bpj-';
+  const tabela = isPF ? 'portal_bradesco_propostas_pf' : 'portal_bradesco_propostas_pj';
   const msgEl = document.getElementById(isPF ? 'form-bradesco-pf-msg' : 'form-bradesco-pj-msg');
+  const btnEl = document.querySelector('button[onclick="submitForm(\'' + tipoForm + '\')"]');
 
-  // Validação mínima: campos obrigatórios marcados com * no label
+  // Campos obrigatórios (espelha os labels com *)
   const requiredIds = isPF
     ? ['cpf','nome_completo','data_nascimento','nacionalidade','nome_mae','estado_civil',
        'nome_empresa','data_admissao','renda_mensal','cep','logradouro','numero','bairro',
@@ -372,17 +393,55 @@ function submitForm(tipoForm) {
     return;
   }
 
-  // STUB: log no console + aviso amigável.
-  // TODO: trocar para chamada real ao Supabase quando Erik/Leo confirmarem
-  //       o nome da tabela e o schema das colunas.
-  console.log('[Adesão Bradesco — STUB] Dados validados:', tipoForm, dados);
+  // Confere sessão de auth
+  const { data: sess } = await sb.auth.getSession();
+  if (!sess?.session?.user) {
+    msgEl.innerHTML =
+      '<div class="form-msg error">Sessão expirada. Faça login novamente no portal e tente de novo.</div>';
+    msgEl.scrollIntoView({behavior: 'smooth', block: 'center'});
+    return;
+  }
+  const user = sess.session.user;
+
+  // Busca o nome do consultor em portal_users (opcional, falha-suave)
+  let consultorNome = null;
+  try {
+    const { data: u } = await sb.from('portal_users').select('nome').eq('auth_id', user.id).maybeSingle();
+    consultorNome = u?.nome || null;
+  } catch (e) { /* ignora — coluna fica null */ }
+
+  // Monta payload
+  const payload = Object.assign({}, dados, {
+    consultor_auth_id: user.id,
+    consultor_nome: consultorNome,
+  });
+
+  // Bloqueia o botão durante o insert
+  if (btnEl) { btnEl.disabled = true; btnEl.style.opacity = '.6'; btnEl.textContent = 'Salvando...'; }
+  msgEl.innerHTML = '<div class="form-msg info">Enviando proposta...</div>';
+
+  const { data: inserted, error } = await sb.from(tabela).insert(payload).select('id').single();
+
+  if (btnEl) { btnEl.disabled = false; btnEl.style.opacity = '1'; btnEl.textContent = isPF ? 'Salvar Proposta PF' : 'Salvar Proposta PJ'; }
+
+  if (error) {
+    console.error('[Adesão Bradesco] Erro Supabase:', error);
+    msgEl.innerHTML =
+      '<div class="form-msg error">Erro ao salvar: ' + (error.message || 'desconhecido') +
+      '. Tente novamente ou avise o administrador.</div>';
+    msgEl.scrollIntoView({behavior: 'smooth', block: 'center'});
+    return;
+  }
+
+  // Sucesso!
   msgEl.innerHTML =
-    '<div class="form-msg warn">' +
-    '<strong>Proposta validada.</strong> Backend ainda não está conectado — ' +
-    'os dados foram apenas registrados no console (F12 → Console). ' +
-    'Será integrado ao Supabase em breve.' +
+    '<div class="form-msg success">' +
+    '<strong>Proposta registrada com sucesso!</strong> ' +
+    'Protocolo: <span style="font-family:\'DM Mono\',monospace;">' + (inserted?.id || '—').slice(0,8) + '</span>. ' +
+    'Você pode preencher uma nova proposta abaixo.' +
     '</div>';
   msgEl.scrollIntoView({behavior: 'smooth', block: 'center'});
+  clearFormFields(prefix);
 }
 </script>
 </body>
