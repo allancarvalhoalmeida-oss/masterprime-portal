@@ -54,15 +54,21 @@
   const LOGO_HTML = `<img src="${LOGO_DATA_URL}" alt="Master Prime" style="height:64px; width:auto; display:block;">`;
 
   // ─── HEADER ───
-  // O logo já contém "Master Prime" + "Corretora de Consórcios e Seguros" embutidos.
-  // Não duplicamos esse texto no header.
-  function renderHeader(tituloEstrategia) {
+  // O logo Master Prime já contém "Master Prime" + "Corretora de Consórcios e Seguros".
+  // Quando há logo de administradora (Porto/Itaú/Bradesco), mostra à direita.
+  function renderHeader(tituloEstrategia, logoAdmin) {
+    const logoAdminHtml = logoAdmin
+      ? `<img src="${logoAdmin}" crossorigin="anonymous" style="height:54px; width:54px; object-fit:contain; background:#fff; padding:6px; border-radius:8px; margin-right:14px;">`
+      : '';
     return `
       <div style="background:${NAVY}; color:#fff; padding:24px 50px; display:flex; justify-content:space-between; align-items:center;">
         <div style="display:flex; align-items:center;">
           ${LOGO_HTML}
         </div>
-        <div style="font-size:18px; font-weight:600;">Estratégia Simulada: ${tituloEstrategia || ''}</div>
+        <div style="display:flex; align-items:center; gap:0;">
+          ${logoAdminHtml}
+          <div style="font-size:18px; font-weight:600;">Estratégia Simulada: ${tituloEstrategia || ''}</div>
+        </div>
       </div>`;
   }
 
@@ -484,7 +490,7 @@
 
     return `
       <div style="width:1300px; background:#fff; font-family:'Inter',-apple-system,system-ui,sans-serif; color:#1F2937; font-size:18px; line-height:1.5;">
-        ${renderHeader(opts.tituloEstrategia)}
+        ${renderHeader(opts.tituloEstrategia, opts.logoAdmin)}
         <div style="padding:42px 50px;">
           ${blocosHtml}
           ${renderDisclaimer(opts.disclaimer)}

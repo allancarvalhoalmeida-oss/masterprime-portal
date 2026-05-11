@@ -697,6 +697,7 @@ document.getElementById('baixarPdfItau').addEventListener('click', async () => {
     await PdfMasterPrime.gerar({
       tituloEstrategia: 'Itaú · Parcela Reduzida',
       filename: 'itau-parcela-reduzida',
+      logoAdmin: 'logo-itau.png',
       blocos: _coletarBlocosItauReduzida()
     });
   } catch (err) {

@@ -140,7 +140,7 @@
       <h3>Proposta</h3>
       <button type="button" class="reset-btn" id="btnLimparProposta">Limpar</button>
     </div>
-    <div class="grid grid-3">
+    <div class="grid grid-4">
       <div class="field">
         <label>Valor do bem (crédito)</label>
         <input type="text" id="br-credito" placeholder="R$ 0,00" data-mask="money">
@@ -162,11 +162,6 @@
         <label>Contemplação na parcela</label>
         <input type="text" id="br-contempla" placeholder="0" data-mask="int">
       </div>
-      <div class="field">
-        <label>Decomposição parcelas antecipação</label>
-        <input type="text" id="br-qtdAntecipacao" value="8" data-mask="int">
-        <span class="field-suffix">primeiras parcelas</span>
-      </div>
     </div>
   </section>
 
@@ -177,11 +172,18 @@
       <h3>Taxas do grupo</h3>
       <button type="button" class="reset-btn" id="btnTaxasDefault">Restaurar padrão</button>
     </div>
-    <div class="grid grid-4">
+    <div class="grid grid-2">
       <div class="field">
         <label>Taxa antecipação</label>
         <input type="text" id="br-taxaAntecipacao" data-mask="pct2" value="4,25 %">
       </div>
+      <div class="field">
+        <label>Decomposição parcelas antecipação</label>
+        <input type="text" id="br-qtdAntecipacao" value="8" data-mask="int">
+        <span class="field-suffix">primeiras parcelas</span>
+      </div>
+    </div>
+    <div class="grid grid-3" style="margin-top: 16px;">
       <div class="field">
         <label>Taxa administrativa</label>
         <input type="text" id="br-taxaAdm" data-mask="pct2" placeholder="0,00 %">
@@ -671,6 +673,7 @@ document.getElementById('baixarPdfBradesco').addEventListener('click', async () 
     await PdfMasterPrime.gerar({
       tituloEstrategia: 'Bradesco · Consórcio',
       filename: 'bradesco-consorcio',
+      logoAdmin: 'logo-bradesco.png',
       blocos: _coletarBlocosBradesco()
     });
   } catch (err) {
