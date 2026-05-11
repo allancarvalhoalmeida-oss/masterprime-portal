@@ -83,6 +83,8 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', -apple-s
 .sim-card.cat-comparativo::before { background: var(--mp-yellow); }
 .sim-card.cat-porto::before { background: var(--mp-navy); }
 .sim-card.cat-porto .sim-icon { background: linear-gradient(135deg, #FEF2F2, #FEE2E2); color: #B91C1C; }
+.sim-icon-img { background: transparent !important; padding: 0 !important; overflow: hidden; }
+.sim-icon-img img { width: 100%; height: 100%; object-fit: contain; display: block; }
 
 .sim-card.cat-base:hover::before,
 .sim-card.cat-investimento:hover::before,
@@ -155,9 +157,9 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', -apple-s
 
   <div class="cards-grid">
     <div class="sim-card cat-porto" onclick="openPorto()">
-      <div class="sim-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V8l7-5 7 5v13"/><path d="M9 21V12h6v9"/></svg></div>
+      <div class="sim-icon sim-icon-img"><img src="logo-porto.png" alt="Porto" onerror="this.style.display='none'"></div>
       <div class="name">Porto Consórcio</div>
-      <div class="desc">Simuladores específicos da Porto: Imóvel, Auto, Pesados e Estruturado.</div>
+      <div class="desc">Simuladores específicos da Porto: Imóvel, Auto e Pesados.</div>
       <div class="arrow">Abrir &rarr;</div>
     </div>
 
@@ -231,25 +233,18 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', -apple-s
       <div class="arrow">Abrir &rarr;</div>
     </div>
 
-    <div class="sim-card cat-porto disabled" title="Em breve">
+    <div class="sim-card cat-porto" onclick="openSim('porto-auto', 'Porto · Auto', 'simulador-porto-auto.html')">
       <div class="sim-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a1 1 0 0 0-.8-.4H5.24a2 2 0 0 0-1.8 1.1l-.8 1.63A6 6 0 0 0 2 12.42V16h2"/><circle cx="6.5" cy="16.5" r="2.5"/><circle cx="16.5" cy="16.5" r="2.5"/></svg></div>
       <div class="name">Auto</div>
       <div class="desc">Consórcio Porto Auto: lance livre e fixo configurável, taxa adm. 18 %.</div>
-      <span class="porto-soon-tag">Em breve</span>
+      <div class="arrow">Abrir &rarr;</div>
     </div>
 
-    <div class="sim-card cat-porto disabled" title="Em breve">
+    <div class="sim-card cat-porto" onclick="openSim('porto-pesados', 'Porto · Pesados', 'simulador-porto-pesados.html')">
       <div class="sim-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h2v2H5zm12 0h2v2h-2z"/><rect x="3" y="7" width="18" height="10" rx="1"/><path d="M5 11h14"/></svg></div>
       <div class="name">Pesados</div>
       <div class="desc">Consórcio Porto Pesados: 2 modalidades de Lance Fixo (30 % e 40 %).</div>
-      <span class="porto-soon-tag">Em breve</span>
-    </div>
-
-    <div class="sim-card cat-porto disabled" title="Em breve">
-      <div class="sim-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/><line x1="2" y1="8.5" x2="12" y2="15"/><line x1="12" y1="15" x2="22" y2="8.5"/><line x1="12" y1="15" x2="12" y2="22"/></svg></div>
-      <div class="name">Estruturado Imóvel</div>
-      <div class="desc">Múltiplas cotas Porto lado a lado, com regras individuais por linha.</div>
-      <span class="porto-soon-tag">Em breve</span>
+      <div class="arrow">Abrir &rarr;</div>
     </div>
   </div>
 </div>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Master Prime - Porto Consórcio Imóvel</title>
+<title>Master Prime - Porto Consórcio Pesados</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -79,15 +79,20 @@
   .result-teal strong { font-size: 11.5px; color: var(--mp-teal-dark); letter-spacing: 1px; text-transform: uppercase; font-weight: 600; }
   .result-teal .value { font-size: 19px; font-weight: 700; color: var(--mp-navy); font-family: 'DM Mono', ui-monospace, monospace; }
 
-  /* Lance buttons */
-  .lance-buttons { display: grid; grid-template-columns: repeat(4, 1fr) auto; gap: 8px; margin-bottom: 18px; }
-  @media (max-width: 1024px) { .lance-buttons { grid-template-columns: repeat(2, 1fr); } .lance-buttons .clear-btn { grid-column: 1 / -1; } }
+  /* Lance buttons - 6 estratégias + limpar */
+  .lance-buttons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 18px; }
+  .lance-buttons .clear-btn-row { grid-column: 1 / -1; display: flex; justify-content: flex-end; }
+  @media (max-width: 1024px) { .lance-buttons { grid-template-columns: repeat(2, 1fr); } }
   @media (max-width: 600px) { .lance-buttons { grid-template-columns: 1fr; } }
   .lance-btn { padding: 12px 14px; background: #fff; border: 1px solid var(--mp-teal); color: var(--mp-teal-dark); border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; transition: 0.15s; letter-spacing: 0.3px; line-height: 1.3; }
   .lance-btn:hover { background: var(--mp-teal); color: #fff; }
   .lance-btn:active { transform: translateY(1px); }
-  .lance-buttons .clear-btn { background: #fff; border: 1px solid var(--border); color: var(--text-muted); padding: 12px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; }
-  .lance-buttons .clear-btn:hover { background: var(--bg); border-color: var(--text-muted); }
+  .lance-btn.fixo30 { border-color: var(--gold); color: #8B6A2A; }
+  .lance-btn.fixo30:hover { background: var(--gold); color: #fff; }
+  .lance-btn.fixo40 { border-color: var(--mp-navy); color: var(--mp-navy); }
+  .lance-btn.fixo40:hover { background: var(--mp-navy); color: #fff; }
+  .clear-btn { background: #fff; border: 1px solid var(--border); color: var(--text-muted); padding: 12px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; }
+  .clear-btn:hover { background: var(--bg); border-color: var(--text-muted); }
 
   /* Resumo de parcelas */
   .resumo-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
@@ -111,6 +116,8 @@
   /* Footer aviso */
   .aviso { background: var(--warning-bg); border: 1px solid var(--warning-border); border-radius: 8px; padding: 14px 18px; color: var(--warning-text); font-size: 12.5px; line-height: 1.5; margin-top: 8px; }
   .aviso strong { color: var(--warning-text); }
+
+  .info-pesados { background: #FFF8E8; border: 1px solid var(--warning-border); border-radius: 6px; padding: 10px 14px; font-size: 12px; color: var(--warning-text); margin-bottom: 14px; line-height: 1.4; }
 
   .actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px; padding-bottom: 32px; }
   button.primary, button.secondary { padding: 11px 22px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.15s; border: 1px solid transparent; font-family: inherit; }
@@ -150,7 +157,7 @@
 
 <main>
 
-  <h2 class="section-title">Porto · Consórcio Imóvel</h2>
+  <h2 class="section-title">Porto · Consórcio Pesados</h2>
   <p class="subtitle">Cálculo de proposta, contemplação e estratégias de lance</p>
 
   <!-- ════════ PROPOSTA ════════ -->
@@ -163,11 +170,11 @@
     <div class="grid grid-3">
       <div class="field">
         <label>Crédito contratado</label>
-        <input type="text" id="pi-credito" placeholder="R$ 0,00" data-mask="money">
+        <input type="text" id="pp-credito" placeholder="R$ 0,00" data-mask="money">
       </div>
       <div class="field">
         <label>Tipo de contratação</label>
-        <select id="pi-tipo">
+        <select id="pp-tipo">
           <option value="" selected>Selecione…</option>
           <option value="PF">Física</option>
           <option value="PJ">Jurídica</option>
@@ -175,11 +182,11 @@
       </div>
       <div class="field">
         <label>Prazo total (meses)</label>
-        <input type="text" id="pi-prazo" placeholder="0" data-mask="int">
+        <input type="text" id="pp-prazo" placeholder="0" data-mask="int">
       </div>
       <div class="field">
         <label>Redutor do grupo</label>
-        <select id="pi-redutor">
+        <select id="pp-redutor">
           <option value="" selected>Selecione…</option>
           <option value="0">0% (sem redutor)</option>
           <option value="0.20">20%</option>
@@ -193,13 +200,8 @@
         </select>
       </div>
       <div class="field">
-        <label>Decomposição parcelas adesão</label>
-        <input type="text" id="pi-qtdAdesao" placeholder="12" data-mask="int">
-        <span class="field-suffix">primeiras parcelas</span>
-      </div>
-      <div class="field">
         <label>Contemplação na parcela</label>
-        <input type="text" id="pi-contempla" placeholder="0" data-mask="int">
+        <input type="text" id="pp-contempla" placeholder="0" data-mask="int">
       </div>
     </div>
   </section>
@@ -212,33 +214,42 @@
       <button type="button" class="reset-btn" id="btnLimparLance">Limpar</button>
     </div>
 
+    <div class="info-pesados">
+      <strong>Atenção:</strong> Existem grupos de Pesados com Lance Fixo de 30% e 40%. Verifique a característica do grupo antes de enviar a simulação.
+    </div>
+
     <div class="lance-buttons">
       <button type="button" class="lance-btn" data-strat="livre-bolso">Lance Livre · Total Bolso</button>
       <button type="button" class="lance-btn" data-strat="livre-embutido">Lance Livre + Embutido</button>
-      <button type="button" class="lance-btn" data-strat="fixo-bolso">Lance Fixo · Total Bolso</button>
-      <button type="button" class="lance-btn" data-strat="fixo-embutido">Lance Fixo + Embutido</button>
-      <button type="button" class="clear-btn" data-strat="limpar">Limpar dados</button>
+      <button type="button" class="lance-btn fixo30" data-strat="fixo30-bolso">Lance Fixo 30% · Total Bolso</button>
+      <button type="button" class="lance-btn fixo30" data-strat="fixo30-embutido">Lance Fixo 30% + Embutido</button>
+      <button type="button" class="lance-btn fixo40" data-strat="fixo40-bolso">Lance Fixo 40% · Total Bolso</button>
+      <button type="button" class="lance-btn fixo40" data-strat="fixo40-embutido">Lance Fixo 40% + Embutido</button>
+      <div class="clear-btn-row">
+        <button type="button" class="clear-btn" data-strat="limpar">Limpar dados</button>
+      </div>
     </div>
 
     <div class="grid grid-3">
       <div class="field">
         <label>Recurso próprio</label>
-        <input type="text" id="pi-recProp" placeholder="R$ 0,00" data-mask="money">
+        <input type="text" id="pp-recProp" placeholder="R$ 0,00" data-mask="money">
       </div>
       <div class="field">
-        <label>FGTS</label>
-        <input type="text" id="pi-fgts" placeholder="R$ 0,00" data-mask="money">
+        <label>Embutido (% máx. do crédito)</label>
+        <input type="text" id="pp-pctEmbutido" data-mask="pct2" value="30,00 %">
+        <span class="field-suffix">do crédito</span>
       </div>
       <div class="field">
-        <label>Embutido (máx. 30%)</label>
-        <input type="text" id="pi-embutido" placeholder="R$ 0,00" data-mask="money">
+        <label>Embutido</label>
+        <input type="text" id="pp-embutido" placeholder="R$ 0,00" data-mask="money">
       </div>
     </div>
 
     <div style="margin-top: 14px;">
       <div class="result-teal">
         <strong>Representatividade do lance</strong>
-        <span class="value" id="pi-representatividade">—</span>
+        <span class="value" id="pp-representatividade">—</span>
       </div>
     </div>
   </section>
@@ -253,22 +264,22 @@
     <div style="margin-bottom: 16px;">
       <div class="result-primary">
         <strong>Crédito liberado (após embutido)</strong>
-        <span class="value" id="pi-creditoLiberado">—</span>
+        <span class="value" id="pp-creditoLiberado">—</span>
       </div>
     </div>
 
     <div class="pos-grid">
       <div class="pos-card">
         <h4>Abatimento na parcela</h4>
-        <div class="pos-row highlight"><span class="lbl">Nova parcela</span><span class="val" id="pi-novaParcela">—</span></div>
-        <div class="pos-row"><span class="lbl">Prazo restante (referência)</span><span class="val" id="pi-novoPrazo">—</span></div>
-        <div class="pos-row"><span class="lbl">Saldo devedor pós-contempla</span><span class="val" id="pi-saldoPos">—</span></div>
-        <div class="pos-row"><span class="lbl">Novo seguro mensal (PF)</span><span class="val" id="pi-novoSeguro">—</span></div>
+        <div class="pos-row highlight"><span class="lbl">Nova parcela</span><span class="val" id="pp-novaParcela">—</span></div>
+        <div class="pos-row"><span class="lbl">Prazo restante (referência)</span><span class="val" id="pp-novoPrazo">—</span></div>
+        <div class="pos-row"><span class="lbl">Saldo devedor pós-contempla</span><span class="val" id="pp-saldoPos">—</span></div>
+        <div class="pos-row"><span class="lbl">Novo seguro mensal (PF)</span><span class="val" id="pp-novoSeguro">—</span></div>
       </div>
       <div class="pos-card">
         <h4>Reduzir somente o prazo</h4>
-        <div class="pos-row highlight"><span class="lbl">Prazo restante</span><span class="val" id="pi-prazoReduzido">—</span></div>
-        <div class="pos-row"><span class="lbl">Com parcela de</span><span class="val" id="pi-parcelaSeReduzPrazo">—</span></div>
+        <div class="pos-row highlight"><span class="lbl">Prazo restante</span><span class="val" id="pp-prazoReduzido">—</span></div>
+        <div class="pos-row"><span class="lbl">Com parcela de</span><span class="val" id="pp-parcelaSeReduzPrazo">—</span></div>
         <div class="pos-row"><span class="lbl">(parcela mantém o valor da integral)</span><span class="val">&nbsp;</span></div>
       </div>
     </div>
@@ -281,28 +292,24 @@
       <h3>Taxas do grupo</h3>
       <button type="button" class="reset-btn" id="btnTaxasDefault">Restaurar padrão</button>
     </div>
-    <div class="grid grid-4">
-      <div class="field">
-        <label>Taxa antecipada (adesão)</label>
-        <input type="text" id="pi-adesao" data-mask="pct2" value="2,00 %">
-      </div>
+    <div class="grid grid-3">
       <div class="field">
         <label>Taxa administrativa</label>
-        <input type="text" id="pi-taxaAdm" data-mask="pct2" value="17,00 %">
+        <input type="text" id="pp-taxaAdm" data-mask="pct2" value="14,00 %">
       </div>
       <div class="field">
         <label>Fundo de reserva</label>
-        <input type="text" id="pi-fundo" data-mask="pct2" value="2,00 %">
+        <input type="text" id="pp-fundo" data-mask="pct2" value="2,00 %">
       </div>
       <div class="field">
         <label>Seguro de vida (PF)</label>
-        <input type="text" id="pi-seguro" data-mask="pct4" value="0,0380 %">
+        <input type="text" id="pp-seguro" data-mask="pct4" value="0,0380 %">
       </div>
     </div>
 
     <div class="grid grid-2" style="margin-top: 16px;">
-      <div class="result"><strong>Taxa por mês</strong><span class="value" id="pi-taxaMes">—</span></div>
-      <div class="result"><strong>Taxa por ano</strong><span class="value" id="pi-taxaAno">—</span></div>
+      <div class="result"><strong>Taxa por mês</strong><span class="value" id="pp-taxaMes">—</span></div>
+      <div class="result"><strong>Taxa por ano</strong><span class="value" id="pp-taxaAno">—</span></div>
     </div>
   </section>
 
@@ -314,19 +321,16 @@
     </div>
 
     <div class="resumo-grid" style="margin-bottom: 12px;">
-      <div class="resumo-row"><span class="lbl">Categoria</span><span class="val" id="pi-categoria">—</span></div>
-      <div class="resumo-row"><span class="lbl">Saldo devedor</span><span class="val" id="pi-saldoDevedor">—</span></div>
+      <div class="resumo-row"><span class="lbl">Categoria</span><span class="val" id="pp-categoria">—</span></div>
+      <div class="resumo-row"><span class="lbl">Saldo devedor</span><span class="val" id="pp-saldoDevedor">—</span></div>
 
-      <div class="resumo-row"><span class="lbl">Parcela integral · PF</span><span class="val" id="pi-parcelaPF">—</span></div>
-      <div class="resumo-row"><span class="lbl">Parcela integral · PJ</span><span class="val" id="pi-parcelaPJ">—</span></div>
-
-      <div class="resumo-row"><span class="lbl">Parcela reduzida · PF</span><span class="val" id="pi-parcelaReduzPF">—</span></div>
-      <div class="resumo-row"><span class="lbl">Parcela reduzida · PJ</span><span class="val" id="pi-parcelaReduzPJ">—</span></div>
+      <div class="resumo-row"><span class="lbl">Parcela integral · PF</span><span class="val" id="pp-parcelaPF">—</span></div>
+      <div class="resumo-row"><span class="lbl">Parcela integral · PJ</span><span class="val" id="pp-parcelaPJ">—</span></div>
     </div>
 
     <div class="resumo-grid">
-      <div class="resumo-row highlight"><span class="lbl" id="pi-lblParcelaInicial">1ª a 12ª (com adesão)</span><span class="val" id="pi-parcelaInicial">—</span></div>
-      <div class="resumo-row highlight"><span class="lbl" id="pi-lblParcelaDemais">Demais parcelas</span><span class="val" id="pi-parcelaDemais">—</span></div>
+      <div class="resumo-row highlight"><span class="lbl">Parcela reduzida · PF</span><span class="val" id="pp-parcelaReduzPF">—</span></div>
+      <div class="resumo-row highlight"><span class="lbl">Parcela reduzida · PJ</span><span class="val" id="pp-parcelaReduzPJ">—</span></div>
     </div>
   </section>
 
@@ -351,12 +355,12 @@
     <div class="modal-body">
       <div class="field">
         <label>Percentual (%)</label>
-        <input type="text" id="pi-modal-pctLivre" placeholder="58,00 %" data-mask="pct2" value="58,00 %" autofocus>
+        <input type="text" id="pp-modal-pctLivre" placeholder="60,00 %" data-mask="pct2" value="60,00 %" autofocus>
       </div>
     </div>
     <div class="modal-foot">
       <button type="button" class="secondary" onclick="fecharModalLance()">Cancelar</button>
-      <button type="button" class="primary" id="pi-modal-confirmar">Aplicar</button>
+      <button type="button" class="primary" id="pp-modal-confirmar">Aplicar</button>
     </div>
   </div>
 </div>
@@ -444,24 +448,24 @@ function setOut(id, value) {
 // ═══════════════════════════════════════════════════════
 function readInputs() {
   return {
-    credito: unmaskMoney(get('pi-credito').value),
-    tipo: get('pi-tipo').value,
-    prazo: parseInt(get('pi-prazo').value || '0', 10),
-    redutor: get('pi-redutor').value,
-    qtdAdesao: parseInt(get('pi-qtdAdesao').value || '0', 10),
-    contempla: parseInt(get('pi-contempla').value || '0', 10),
-    recProp: unmaskMoney(get('pi-recProp').value),
-    fgts: unmaskMoney(get('pi-fgts').value),
-    embutido: unmaskMoney(get('pi-embutido').value),
-    adesao: unmaskPct(get('pi-adesao').value) / 100,
-    taxaAdm: unmaskPct(get('pi-taxaAdm').value) / 100,
-    fundo: unmaskPct(get('pi-fundo').value) / 100,
-    seguro: unmaskPct(get('pi-seguro').value) / 100,
+    credito: unmaskMoney(get('pp-credito').value),
+    tipo: get('pp-tipo').value,
+    prazo: parseInt(get('pp-prazo').value || '0', 10),
+    redutor: get('pp-redutor').value,
+    contempla: parseInt(get('pp-contempla').value || '0', 10),
+    recProp: unmaskMoney(get('pp-recProp').value),
+    embutido: unmaskMoney(get('pp-embutido').value),
+    pctEmbutido: unmaskPct(get('pp-pctEmbutido').value) / 100,
+    taxaAdm: unmaskPct(get('pp-taxaAdm').value) / 100,
+    fundo: unmaskPct(get('pp-fundo').value) / 100,
+    seguro: unmaskPct(get('pp-seguro').value) / 100,
   };
 }
 
 // ═══════════════════════════════════════════════════════
-// FÓRMULAS — EXATAS DA PLANILHA (aba IMÓVEL)
+// FÓRMULAS — EXATAS DA PLANILHA (aba PESADOS)
+// PESADOS não tem taxa de adesão — Categoria = Saldo Devedor
+// P62 = F65*(1+(F88+F89))  (credito × (1 + adm + fundo))
 // ═══════════════════════════════════════════════════════
 function calc(i) {
   const r = {};
@@ -469,66 +473,51 @@ function calc(i) {
   const seguroPF = isPF ? i.seguro : 0;
 
   // CONSTANTES DO CRÉDITO
-  r.saldoDevedor = i.credito * (1 + i.taxaAdm + i.fundo);                                  // P50
-  r.categoria    = i.credito * (1 + i.taxaAdm + i.adesao + i.fundo);                       // L54
-  r.valorSeguro  = r.saldoDevedor * seguroPF;                                              // P51 (seguro só PF)
-  r.maxEmbutido  = i.credito * 0.30;                                                       // L59
+  r.categoria    = i.credito * (1 + i.taxaAdm + i.fundo);                                   // P62
+  r.saldoDevedor = r.categoria;                                                             // mesmo
+  r.valorSeguro  = r.categoria * seguroPF;                                                  // P63
+  r.maxEmbutido  = i.credito * i.pctEmbutido;                                               // K74 (configurável)
 
   // PARCELAS PRÉ-CONTEMPLAÇÃO
-  r.parcelaPJ = (i.prazo > 0) ? r.saldoDevedor / i.prazo : NaN;                            // P53
-  r.parcelaPF = r.parcelaPJ + r.valorSeguro;                                               // P52
+  r.parcelaPJ = (i.prazo > 0) ? r.categoria / i.prazo : NaN;                                // P65
+  r.parcelaPF = r.parcelaPJ + r.valorSeguro;                                                // P64
 
   // REDUZIDA
   // Aceita qualquer valor decimal (0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50…) ou 'campanha'
   let redutorPct = parseFloat(i.redutor);
   if (!Number.isFinite(redutorPct)) redutorPct = 0;
   if (i.redutor === 'campanha') {
-    // Campanha Parcela Original: divisor fixo 200
-    r.parcelaReduzidaPJ = (i.credito * (1 + i.taxaAdm + i.fundo)) / 200;                   // P55 caso campanha
+    r.parcelaReduzidaPJ = (i.credito * (1 + i.taxaAdm + i.fundo)) / 200;
   } else {
-    r.parcelaReduzidaPJ = (i.prazo > 0) ? (r.saldoDevedor / i.prazo) * (1 - redutorPct) : NaN;
+    r.parcelaReduzidaPJ = (i.prazo > 0) ? (r.categoria / i.prazo) * (1 - redutorPct) : NaN; // P67
   }
-  r.parcelaReduzidaPF = r.parcelaReduzidaPJ + r.valorSeguro;                               // P54
+  r.parcelaReduzidaPF = r.parcelaReduzidaPJ + r.valorSeguro;                                // P66
 
-  // ADESÃO DILUÍDA
-  r.adesaoTotal  = i.credito * i.adesao;                                                   // P57
-  r.adesaoMensal = (i.qtdAdesao > 0) ? r.adesaoTotal / i.qtdAdesao : NaN;                  // F57
-  // Base = parcela reduzida (aplica redutor se houver) — segue a planilha
-  const baseParcelaPre = (i.tipo === 'PJ') ? r.parcelaReduzidaPJ : r.parcelaReduzidaPF;
-  r.parcelaInicial = r.adesaoMensal + baseParcelaPre;                                      // F56
-  r.parcelaDemais  = baseParcelaPre;                                                       // F58
+  // REPRESENTATIVIDADE DO LANCE — F75 = (F74+F73)/P62
+  const totalLance = i.recProp + i.embutido;
+  r.representatividade = (r.categoria > 0) ? (totalLance / r.categoria) : NaN;
 
-  // REPRESENTATIVIDADE DO LANCE
-  const totalLance = i.recProp + i.fgts + i.embutido;
-  r.representatividade = (r.categoria > 0) ? (totalLance / r.categoria) : NaN;             // F64
-
-  // CRÉDITO LIBERADO
-  r.creditoLiberado = i.credito - i.embutido;                                              // F68
+  // CRÉDITO LIBERADO — F80
+  r.creditoLiberado = i.credito - i.embutido;
 
   // PÓS-CONTEMPLAÇÃO
-  const lanceTotal = i.recProp + i.fgts + i.embutido;
-  r.saldoAposParcNormal   = r.saldoDevedor - (r.parcelaPJ * i.contempla) - lanceTotal;     // P70
-  r.saldoAposParcReduzida = r.saldoDevedor - (r.parcelaReduzidaPJ * i.contempla) - lanceTotal; // P71
+  r.saldoAposParcNormal   = r.categoria - (r.parcelaPJ * i.contempla) - totalLance;         // P86
+  r.saldoAposParcReduzida = r.categoria - (r.parcelaReduzidaPJ * i.contempla) - totalLance; // P87
 
   const saldoUsadoPos = (redutorPct !== 0 || i.redutor === 'campanha')
     ? r.saldoAposParcReduzida
     : r.saldoAposParcNormal;
-  r.novoSeguro = saldoUsadoPos * seguroPF;                                                 // P72
+  r.novoSeguro = saldoUsadoPos * seguroPF;                                                  // P88
 
-  // NOVA PARCELA — abatimento na parcela
   const prazoRestante = i.prazo - i.contempla;
-  r.parcelaTeoricaPJ = (prazoRestante > 0) ? saldoUsadoPos / prazoRestante : NaN;          // P73
-  // P74: mínimo é metade da integral
-  r.parcelaRealPJ = Math.max(r.parcelaTeoricaPJ, r.parcelaPJ / 2);
-  r.parcelaRealPF = r.parcelaRealPJ + r.novoSeguro;                                        // P75
+  r.parcelaTeoricaPJ = (prazoRestante > 0) ? saldoUsadoPos / prazoRestante : NaN;           // P89
+  r.parcelaRealPJ = Math.max(r.parcelaTeoricaPJ, r.parcelaPJ / 2);                          // P91
+  r.parcelaRealPF = r.parcelaRealPJ + r.novoSeguro;                                         // P92
   r.novaParcela = isPF ? r.parcelaRealPF : r.parcelaRealPJ;
-  // novo prazo (referência) = saldo / parcela real
-  r.novoPrazo = (r.parcelaRealPJ > 0) ? saldoUsadoPos / r.parcelaRealPJ : NaN;             // P76
+  r.novoPrazo = (r.parcelaRealPJ > 0) ? saldoUsadoPos / r.parcelaRealPJ : NaN;              // P93
 
-  // SE PREFERIR REDUZIR SOMENTE O PRAZO (parcela mantém integral)
-  r.prazoReduzidoNormal   = (r.parcelaPJ > 0) ? r.saldoAposParcNormal / r.parcelaPJ : NaN; // P79
-  r.prazoReduzidoReduzida = (r.parcelaPJ > 0) ? r.saldoAposParcReduzida / r.parcelaPJ : NaN; // P80
-  // P81 — parcela se reduzir só o prazo
+  r.prazoReduzidoNormal   = (r.parcelaPJ > 0) ? r.saldoAposParcNormal / r.parcelaPJ : NaN;  // P95
+  r.prazoReduzidoReduzida = (r.parcelaPJ > 0) ? r.saldoAposParcReduzida / r.parcelaPJ : NaN; // P96
   if (redutorPct !== 0 || i.redutor === 'campanha') {
     if (isPF) {
       r.parcelaSeReduzPrazo = (r.prazoReduzidoReduzida > 0)
@@ -553,9 +542,10 @@ function calc(i) {
     r.prazoReduzidoFinal = r.prazoReduzidoNormal;
   }
 
-  // DEMONSTRATIVO TAXAS
-  r.taxaMes = (i.prazo > 0) ? i.taxaAdm / i.prazo : NaN;                                   // F81
-  r.taxaAno = r.taxaMes * 12;                                                              // F82
+  // DEMONSTRATIVO TAXAS — F94 = (F88+F89)/F67 — em PESADOS o Excel usa adm+fundo;
+  // mantemos só taxaAdm/prazo pra paridade com Imóvel
+  r.taxaMes = (i.prazo > 0) ? i.taxaAdm / i.prazo : NaN;
+  r.taxaAno = r.taxaMes * 12;
 
   return r;
 }
@@ -566,54 +556,40 @@ function calc(i) {
 function recalc() {
   const i = readInputs();
 
-  // Mostra "—" se não tem o suficiente
   if (!(i.credito > 0) || !(i.prazo > 0)) {
-    const ids = ['pi-categoria','pi-saldoDevedor','pi-parcelaPF','pi-parcelaPJ','pi-parcelaReduzPF','pi-parcelaReduzPJ','pi-parcelaInicial','pi-parcelaDemais','pi-representatividade','pi-creditoLiberado','pi-novaParcela','pi-novoPrazo','pi-saldoPos','pi-novoSeguro','pi-prazoReduzido','pi-parcelaSeReduzPrazo','pi-taxaMes','pi-taxaAno'];
+    const ids = ['pp-categoria','pp-saldoDevedor','pp-parcelaPF','pp-parcelaPJ','pp-parcelaReduzPF','pp-parcelaReduzPJ','pp-representatividade','pp-creditoLiberado','pp-novaParcela','pp-novoPrazo','pp-saldoPos','pp-novoSeguro','pp-prazoReduzido','pp-parcelaSeReduzPrazo','pp-taxaMes','pp-taxaAno'];
     ids.forEach(id => setOut(id, '—'));
-    atualizaLabelsParcelaInicial(i);
     return;
   }
 
   const r = calc(i);
   const isPF = i.tipo === 'PF';
 
-  // Resumo de parcelas
-  setOut('pi-categoria', formatMoney(r.categoria));
-  setOut('pi-saldoDevedor', formatMoney(r.saldoDevedor));
-  setOut('pi-parcelaPF', formatMoney(r.parcelaPF));
-  setOut('pi-parcelaPJ', formatMoney(r.parcelaPJ));
-  setOut('pi-parcelaReduzPF', formatMoney(r.parcelaReduzidaPF));
-  setOut('pi-parcelaReduzPJ', formatMoney(r.parcelaReduzidaPJ));
-  setOut('pi-parcelaInicial', formatMoney(r.parcelaInicial));
-  setOut('pi-parcelaDemais', formatMoney(r.parcelaDemais));
-  atualizaLabelsParcelaInicial(i);
+  setOut('pp-categoria', formatMoney(r.categoria));
+  setOut('pp-saldoDevedor', formatMoney(r.saldoDevedor));
+  setOut('pp-parcelaPF', formatMoney(r.parcelaPF));
+  setOut('pp-parcelaPJ', formatMoney(r.parcelaPJ));
+  setOut('pp-parcelaReduzPF', formatMoney(r.parcelaReduzidaPF));
+  setOut('pp-parcelaReduzPJ', formatMoney(r.parcelaReduzidaPJ));
 
-  // Lance
-  setOut('pi-representatividade', Number.isFinite(r.representatividade) ? formatPct(r.representatividade * 100, 2) : '—');
+  setOut('pp-representatividade', Number.isFinite(r.representatividade) ? formatPct(r.representatividade * 100, 2) : '—');
 
-  // Pós contemplação
-  setOut('pi-creditoLiberado', formatMoney(r.creditoLiberado));
-  setOut('pi-novaParcela', formatMoney(r.novaParcela));
-  setOut('pi-novoPrazo', Number.isFinite(r.novoPrazo) ? formatInt(r.novoPrazo) + ' meses' : '—');
+  setOut('pp-creditoLiberado', formatMoney(r.creditoLiberado));
+  setOut('pp-novaParcela', formatMoney(r.novaParcela));
+  setOut('pp-novoPrazo', Number.isFinite(r.novoPrazo) ? formatInt(r.novoPrazo) + ' meses' : '—');
   const saldoUsado = (i.redutor !== '0') ? r.saldoAposParcReduzida : r.saldoAposParcNormal;
-  setOut('pi-saldoPos', formatMoney(saldoUsado));
-  setOut('pi-novoSeguro', isPF ? formatMoney(r.novoSeguro) : '—');
-  setOut('pi-prazoReduzido', Number.isFinite(r.prazoReduzidoFinal) ? formatInt(r.prazoReduzidoFinal) + ' meses' : '—');
-  setOut('pi-parcelaSeReduzPrazo', formatMoney(r.parcelaSeReduzPrazo));
+  setOut('pp-saldoPos', formatMoney(saldoUsado));
+  setOut('pp-novoSeguro', isPF ? formatMoney(r.novoSeguro) : '—');
+  setOut('pp-prazoReduzido', Number.isFinite(r.prazoReduzidoFinal) ? formatInt(r.prazoReduzidoFinal) + ' meses' : '—');
+  setOut('pp-parcelaSeReduzPrazo', formatMoney(r.parcelaSeReduzPrazo));
 
-  // Taxas
-  setOut('pi-taxaMes', Number.isFinite(r.taxaMes) ? formatPct(r.taxaMes * 100, 4) : '—');
-  setOut('pi-taxaAno', Number.isFinite(r.taxaAno) ? formatPct(r.taxaAno * 100, 2) : '—');
-}
-
-function atualizaLabelsParcelaInicial(i) {
-  const qtd = i.qtdAdesao || 12;
-  setOut('pi-lblParcelaInicial', '1ª a ' + qtd + 'ª (com adesão)');
-  setOut('pi-lblParcelaDemais', 'A partir da ' + (qtd + 1) + 'ª');
+  setOut('pp-taxaMes', Number.isFinite(r.taxaMes) ? formatPct(r.taxaMes * 100, 4) : '—');
+  setOut('pp-taxaAno', Number.isFinite(r.taxaAno) ? formatPct(r.taxaAno * 100, 2) : '—');
 }
 
 // ═══════════════════════════════════════════════════════
-// ESTRATÉGIAS DE LANCE (replica VBA do Excel)
+// ESTRATÉGIAS DE LANCE
+// 6 estratégias: Livre/Bolso, Livre/Embutido, Fixo30/Bolso, Fixo30/Embutido, Fixo40/Bolso, Fixo40/Embutido
 // ═══════════════════════════════════════════════════════
 let estrategiaPendente = null;
 
@@ -626,43 +602,54 @@ function aplicaEstrategia(strat, pctLivre = null) {
   const r = calc(i);
   const categoria = r.categoria;
   const maxEmb = r.maxEmbutido;
-  const fgtsAtual = i.fgts;
 
   let recProp = 0, embutido = 0;
 
   switch (strat) {
     case 'livre-bolso': {
       const lance = categoria * pctLivre;
-      recProp = lance - fgtsAtual;
+      recProp = lance;
       embutido = 0;
       break;
     }
     case 'livre-embutido': {
       const lance = categoria * pctLivre;
       embutido = maxEmb;
-      recProp = lance - fgtsAtual - maxEmb;
+      recProp = lance - maxEmb;
       if (recProp < 0) recProp = 0;
       break;
     }
-    case 'fixo-bolso': {
-      const fixo = categoria * 0.40; // referência IMÓVEL
-      recProp = fixo - fgtsAtual;
+    case 'fixo30-bolso': {
+      const fixo = categoria * 0.30; // O82 = P62 * 30%
+      recProp = fixo;
       embutido = 0;
       break;
     }
-    case 'fixo-embutido': {
+    case 'fixo30-embutido': {
+      const fixo = categoria * 0.30;
+      embutido = maxEmb;
+      recProp = fixo - maxEmb;
+      if (recProp < 0) recProp = 0;
+      break;
+    }
+    case 'fixo40-bolso': {
+      const fixo = categoria * 0.40; // Q82 = P62 * 40%
+      recProp = fixo;
+      embutido = 0;
+      break;
+    }
+    case 'fixo40-embutido': {
       const fixo = categoria * 0.40;
       embutido = maxEmb;
-      recProp = fixo - fgtsAtual - maxEmb;
+      recProp = fixo - maxEmb;
       if (recProp < 0) recProp = 0;
       break;
     }
   }
 
   if (recProp < 0) recProp = 0;
-  get('pi-recProp').value = recProp > 0 ? maskMoney(String(Math.round(recProp * 100))) : '';
-  get('pi-embutido').value = embutido > 0 ? maskMoney(String(Math.round(embutido * 100))) : '';
-  // FGTS: mantém
+  get('pp-recProp').value = recProp > 0 ? maskMoney(String(Math.round(recProp * 100))) : '';
+  get('pp-embutido').value = embutido > 0 ? maskMoney(String(Math.round(embutido * 100))) : '';
   recalc();
 }
 
@@ -674,18 +661,17 @@ document.querySelectorAll('.lance-btn, .clear-btn').forEach(btn => {
       return;
     }
     if (strat === 'livre-bolso' || strat === 'livre-embutido') {
-      // pergunta % ao usuário via modal
       estrategiaPendente = strat;
       get('modalLanceLivre').classList.add('aberto');
-      setTimeout(() => get('pi-modal-pctLivre').focus(), 50);
+      setTimeout(() => get('pp-modal-pctLivre').focus(), 50);
     } else {
       aplicaEstrategia(strat);
     }
   });
 });
 
-get('pi-modal-confirmar').addEventListener('click', () => {
-  const pct = unmaskPct(get('pi-modal-pctLivre').value) / 100;
+get('pp-modal-confirmar').addEventListener('click', () => {
+  const pct = unmaskPct(get('pp-modal-pctLivre').value) / 100;
   if (!(pct > 0)) {
     alert('Informe um percentual válido.');
     return;
@@ -705,37 +691,36 @@ function fecharModalLance() {
 // LIMPAR
 // ═══════════════════════════════════════════════════════
 function limparTudo() {
-  ['pi-credito','pi-prazo','pi-qtdAdesao','pi-contempla','pi-recProp','pi-fgts','pi-embutido'].forEach(id => get(id).value = '');
-  get('pi-tipo').value = '';
-  get('pi-redutor').value = '';
+  ['pp-credito','pp-prazo','pp-contempla','pp-recProp','pp-embutido','pp-pctEmbutido'].forEach(id => { const el = get(id); if (el) el.value = ''; });
+  get('pp-tipo').value = '';
+  get('pp-redutor').value = '';
   recalc();
 }
 
 document.getElementById('btnLimparProposta').addEventListener('click', () => {
-  ['pi-credito','pi-prazo','pi-qtdAdesao','pi-contempla'].forEach(id => get(id).value = '');
-  get('pi-tipo').value = '';
-  get('pi-redutor').value = '';
+  ['pp-credito','pp-prazo','pp-contempla'].forEach(id => get(id).value = '');
+  get('pp-tipo').value = '';
+  get('pp-redutor').value = '';
   recalc();
 });
 
 document.getElementById('btnLimparLance').addEventListener('click', () => {
-  ['pi-recProp','pi-fgts','pi-embutido'].forEach(id => get(id).value = '');
+  ['pp-recProp','pp-embutido'].forEach(id => get(id).value = '');
   recalc();
 });
 
 document.getElementById('btnTaxasDefault').addEventListener('click', () => {
-  get('pi-adesao').value = '2,00 %';
-  get('pi-taxaAdm').value = '17,00 %';
-  get('pi-fundo').value = '2,00 %';
-  get('pi-seguro').value = '0,0380 %';
+  get('pp-taxaAdm').value = '14,00 %';
+  get('pp-fundo').value = '2,00 %';
+  get('pp-seguro').value = '0,0380 %';
   recalc();
 });
 
 document.getElementById('btnLimparTudo').addEventListener('click', limparTudo);
 
 // Enter no modal
-get('pi-modal-pctLivre').addEventListener('keydown', e => {
-  if (e.key === 'Enter') get('pi-modal-confirmar').click();
+get('pp-modal-pctLivre').addEventListener('keydown', e => {
+  if (e.key === 'Enter') get('pp-modal-confirmar').click();
 });
 
 // inicial
@@ -744,63 +729,60 @@ recalc();
 // ═════════════════════════════════════════════════════════════
 // PDF — usa módulo compartilhado pdf-master-prime.js
 // ═════════════════════════════════════════════════════════════
-function _coletarBlocosPortoImovel() {
+function _coletarBlocosPortoPesados() {
   const _v = (id) => { const el = document.getElementById(id); return (el?.value || '').trim(); };
   const _t = (id) => { const el = document.getElementById(id); return (el?.textContent || '').trim(); };
   const _selTxt = (id) => { const el = document.getElementById(id); return (el?.selectedOptions?.[0]?.textContent || '').trim() || '—'; };
   const _has = (s) => s && s !== '—' && s !== '?' && s !== '';
 
-  const tipoTxt = _selTxt('pi-tipo');
-  const redutorTxt = _selTxt('pi-redutor');
-  const prazoVal = _v('pi-prazo');
-  const adesaoQtd = _v('pi-qtdAdesao');
-  const contemplaN = parseInt(_v('pi-contempla') || '0', 10) || 0;
+  const tipoTxt = _selTxt('pp-tipo');
+  const redutorTxt = _selTxt('pp-redutor');
+  const prazoVal = _v('pp-prazo');
+  const contemplaN = parseInt(_v('pp-contempla') || '0', 10) || 0;
 
   // ─── BLOCO 1: PROPOSTA ───
   const propostaLinha1Campos = [
-    { label: 'Crédito Contratado', value: _v('pi-credito') || 'R$ 0,00' },
+    { label: 'Crédito Contratado', value: _v('pp-credito') || 'R$ 0,00' },
     { label: 'Tipo', value: tipoTxt },
     { label: 'Prazo total', value: (prazoVal || '0') + ' meses' },
     { label: 'Redutor', value: redutorTxt }
   ];
 
   const propostaLinha2Campos = [];
-  if (_has(adesaoQtd)) propostaLinha2Campos.push({ label: 'Decomposição adesão', value: adesaoQtd + ' primeiras parcelas' });
   if (contemplaN > 0) propostaLinha2Campos.push({ label: 'Contemplação na parcela', value: String(contemplaN) });
-  const saldoDevedor = _t('pi-saldoDevedor');
+  const saldoDevedor = _t('pp-saldoDevedor');
   if (_has(saldoDevedor)) propostaLinha2Campos.push({ label: 'Saldo devedor', value: saldoDevedor });
 
   const propostaLinhas = [
-    { campos: propostaLinha1Campos, destaque: { label: 'Categoria', value: _t('pi-categoria') || '—' } }
+    { campos: propostaLinha1Campos, destaque: { label: 'Categoria', value: _t('pp-categoria') || '—' } }
   ];
   if (propostaLinha2Campos.length) propostaLinhas.push({ campos: propostaLinha2Campos });
 
   // ─── BLOCO 2: TAXAS DO GRUPO ───
-  const taxaMes = _t('pi-taxaMes');
-  const taxaAno = _t('pi-taxaAno');
+  const taxaMes = _t('pp-taxaMes');
+  const taxaAno = _t('pp-taxaAno');
   const taxaCombo = (_has(taxaMes) || _has(taxaAno))
     ? `${taxaMes || '—'} a.m. · ${taxaAno || '—'} a.a.`
     : '—';
 
   const taxasLinhas = [{
     campos: [
-      { label: 'Taxa antecipada (adesão)', value: _v('pi-adesao') || '0,00 %' },
-      { label: 'Taxa administrativa', value: _v('pi-taxaAdm') || '0,00 %' },
-      { label: 'Fundo de reserva', value: _v('pi-fundo') || '0,00 %' },
-      { label: 'Seguro de vida (PF)', value: _v('pi-seguro') || '0,0000 %' }
+      { label: 'Taxa administrativa', value: _v('pp-taxaAdm') || '0,00 %' },
+      { label: 'Fundo de reserva', value: _v('pp-fundo') || '0,00 %' },
+      { label: 'Seguro de vida (PF)', value: _v('pp-seguro') || '0,0000 %' }
     ],
     destaque: { label: 'Taxa por mês / ano', value: taxaCombo }
   }];
 
   // ─── BLOCO 3: OFERTA DE LANCE ───
   const lanceCampos = [
-    { label: 'Recurso próprio', value: _v('pi-recProp') || 'R$ 0,00' },
-    { label: 'FGTS', value: _v('pi-fgts') || 'R$ 0,00' },
-    { label: 'Embutido', value: _v('pi-embutido') || 'R$ 0,00' }
+    { label: 'Recurso próprio', value: _v('pp-recProp') || 'R$ 0,00' },
+    { label: 'Embutido', value: _v('pp-embutido') || 'R$ 0,00' },
+    { label: '% Embutido (máx)', value: _v('pp-pctEmbutido') || '0,00 %' }
   ];
   const lanceLinhas = [{
     campos: lanceCampos,
-    destaque: { label: 'Representatividade', value: _t('pi-representatividade') || '—' }
+    destaque: { label: 'Representatividade', value: _t('pp-representatividade') || '—' }
   }];
 
   // ─── BLOCOS ───
@@ -810,15 +792,15 @@ function _coletarBlocosPortoImovel() {
     { tipo: 'card', titulo: 'OFERTA DE LANCE', linhas: lanceLinhas }
   ];
 
-  // ─── BLOCO 4: ESTIMATIVA PÓS-CONTEMPLAÇÃO (só se contempla > 0) ───
+  // ─── BLOCO 4: ESTIMATIVA PÓS-CONTEMPLAÇÃO ───
   if (contemplaN > 0) {
-    const credLib = _t('pi-creditoLiberado');
-    const saldoPos = _t('pi-saldoPos');
-    const novoSeg = _t('pi-novoSeguro');
-    const novaParc = _t('pi-novaParcela');
-    const novoPrazo = _t('pi-novoPrazo');
-    const prazoRed = _t('pi-prazoReduzido');
-    const parcSeRedPrazo = _t('pi-parcelaSeReduzPrazo');
+    const credLib = _t('pp-creditoLiberado');
+    const saldoPos = _t('pp-saldoPos');
+    const novoSeg = _t('pp-novoSeguro');
+    const novaParc = _t('pp-novaParcela');
+    const novoPrazo = _t('pp-novoPrazo');
+    const prazoRed = _t('pp-prazoReduzido');
+    const parcSeRedPrazo = _t('pp-parcelaSeReduzPrazo');
 
     const posCampos1 = [];
     if (_has(credLib)) posCampos1.push({ label: 'Crédito liberado', value: credLib });
@@ -846,26 +828,19 @@ function _coletarBlocosPortoImovel() {
   }
 
   // ─── BLOCO 5: RESUMO DE PARCELAS ───
-  const lblInicial = _t('pi-lblParcelaInicial') || '1ª a 12ª (com adesão)';
-  const lblDemais = _t('pi-lblParcelaDemais') || 'Demais parcelas';
   const resumoLinhas = [
     { campos: [
-        { label: 'Parcela integral · PF', value: _t('pi-parcelaPF') || '—' },
-        { label: 'Parcela integral · PJ', value: _t('pi-parcelaPJ') || '—' }
+        { label: 'Parcela integral · PF', value: _t('pp-parcelaPF') || '—' },
+        { label: 'Parcela integral · PJ', value: _t('pp-parcelaPJ') || '—' }
       ]
     },
     { campos: [
-        { label: 'Parcela reduzida · PF', value: _t('pi-parcelaReduzPF') || '—' },
-        { label: 'Parcela reduzida · PJ', value: _t('pi-parcelaReduzPJ') || '—' }
-      ]
-    },
-    { campos: [
-        { label: lblInicial, value: _t('pi-parcelaInicial') || '—' },
-        { label: lblDemais, value: _t('pi-parcelaDemais') || '—' }
+        { label: 'Parcela reduzida · PF', value: _t('pp-parcelaReduzPF') || '—' },
+        { label: 'Parcela reduzida · PJ', value: _t('pp-parcelaReduzPJ') || '—' }
       ],
       destaque: { multi: [
-        { label: lblInicial, value: _t('pi-parcelaInicial') || '—' },
-        { label: lblDemais, value: _t('pi-parcelaDemais') || '—' }
+        { label: 'Reduzida PF', value: _t('pp-parcelaReduzPF') || '—' },
+        { label: 'Reduzida PJ', value: _t('pp-parcelaReduzPJ') || '—' }
       ]}
     }
   ];
@@ -881,9 +856,9 @@ document.getElementById('baixarPdfPorto').addEventListener('click', async () => 
   btn.disabled = true;
   try {
     await PdfMasterPrime.gerar({
-      tituloEstrategia: 'Porto · Consórcio Imóvel',
-      filename: 'porto-consorcio-imovel',
-      blocos: _coletarBlocosPortoImovel()
+      tituloEstrategia: 'Porto · Consórcio Pesados',
+      filename: 'porto-consorcio-pesados',
+      blocos: _coletarBlocosPortoPesados()
     });
   } catch (err) {
     console.error(err);
