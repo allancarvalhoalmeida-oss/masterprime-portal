@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Master Prime - Itaú Parcela Integral</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="pdf-master-prime.js"></script>
+<style>
+  :root {
+    --mp-navy: #2D3F5E;
+    --mp-navy-dark: #1E2D45;
+    --mp-navy-soft: #3A4F73;
+    --mp-teal: #4DBCC8;
+    --mp-teal-dark: #2EA0AD;
+    --itau-orange: #EC7000;
+    --itau-orange-dark: #C45F00;
+    --gold: #E8B86D;
+    --bg: #F4F5F7;
+    --card: #FFFFFF;
+    --border: #E5E7EB;
+    --text: #1F2937;
+    --text-muted: #6B7280;
+    --text-light: #9CA3AF;
+    --soft-blue: #F1F5F9;
+    --soft-teal: #E8F6F8;
+    --soft-orange: #FFF4E8;
+    --error: #DC2626;
+    --warning-bg: #FFF8E8;
+    --warning-border: #F0D9A0;
+    --warning-text: #8B6A2A;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
+  header { background: var(--mp-navy); color: #fff; padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .brand-mark { width: 36px; height: 36px; background: var(--mp-navy-dark); border: 1px solid rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 14px; }
+  .brand-text h1 { font-size: 16px; font-weight: 600; letter-spacing: 0.3px; }
+  .brand-text p { font-size: 11px; color: rgba(255,255,255,0.7); letter-spacing: 1.2px; text-transform: uppercase; margin-top: 2px; }
+  .tag-admin { background: var(--itau-orange); color: #fff; padding: 6px 14px; border-radius: 4px; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700; }
+
+  main { max-width: 1280px; margin: 0 auto; padding: 32px; }
+  h2.section-title { font-size: 22px; font-weight: 600; color: var(--mp-navy); margin-bottom: 4px; text-align: center; letter-spacing: 0.5px; }
+  .subtitle { font-size: 12px; color: var(--text-muted); text-align: center; margin-bottom: 24px; letter-spacing: 1px; text-transform: uppercase; }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 16px; }
+  .card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+  .card-header h3 { font-size: 13px; font-weight: 600; color: var(--mp-navy); letter-spacing: 1.5px; text-transform: uppercase; }
+  .card-header .badge-orange { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--itau-orange); }
+  .card-header .reset-btn { margin-left: auto; background: none; border: 1px solid var(--border); color: var(--text-muted); cursor: pointer; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-family: inherit; }
+  .card-header .reset-btn:hover { background: var(--bg); }
+
+  .grid { display: grid; gap: 16px; }
+  .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  @media (max-width: 1024px) { .grid-3, .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 768px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } }
+
+  .field { position: relative; }
+  .field label { position: absolute; top: -7px; left: 12px; background: var(--card); padding: 0 6px; font-size: 11px; color: var(--text-muted); letter-spacing: 0.5px; text-transform: uppercase; font-weight: 500; z-index: 1; }
+  .field input, .field select { width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; font-family: inherit; background: #fff; color: var(--text); transition: border-color 0.15s; }
+  .field input:focus, .field select:focus { outline: none; border-color: var(--itau-orange); box-shadow: 0 0 0 3px rgba(236,112,0,0.12); }
+  .field input:disabled, .field select:disabled { background: var(--soft-blue); color: var(--text-light); cursor: not-allowed; }
+  .field select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M2 4l4 4 4-4z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+  .field-suffix { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 11px; color: var(--text-light); letter-spacing: 0.5px; pointer-events: none; }
+
+  /* Output cards */
+  .result { background: var(--soft-blue); border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .result strong { font-size: 11.5px; color: var(--mp-navy); letter-spacing: 1px; text-transform: uppercase; font-weight: 500; }
+  .result .value { font-size: 17px; font-weight: 600; color: var(--mp-navy); font-family: 'DM Mono', ui-monospace, monospace; }
+
+  .result-primary { background: linear-gradient(135deg, var(--itau-orange) 0%, var(--itau-orange-dark) 100%); color: white; padding: 14px 20px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .result-primary strong { color: rgba(255,255,255,0.85); font-size: 11.5px; letter-spacing: 1.2px; text-transform: uppercase; font-weight: 500; }
+  .result-primary .value { font-size: 20px; font-weight: 700; color: #fff; font-family: 'DM Mono', ui-monospace, monospace; }
+
+  .result-orange { background: var(--soft-orange); border: 1px solid #F5D4AB; border-radius: 8px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .result-orange strong { font-size: 11.5px; color: var(--itau-orange-dark); letter-spacing: 1px; text-transform: uppercase; font-weight: 600; }
+  .result-orange .value { font-size: 19px; font-weight: 700; color: var(--mp-navy); font-family: 'DM Mono', ui-monospace, monospace; }
+
+  /* Toggle parcela tipo */
+  .toggle-group { display: inline-flex; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 4px; gap: 4px; }
+  .toggle-group button { padding: 8px 16px; border: none; background: transparent; color: var(--text-muted); font-family: inherit; font-size: 12px; font-weight: 600; letter-spacing: 0.4px; cursor: pointer; border-radius: 7px; transition: 0.15s; }
+  .toggle-group button.active { background: var(--itau-orange); color: #fff; }
+
+  /* Radio "Reduzir após contemplação" */
+  .radio-group { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+  .radio-group label { display: inline-flex; align-items: center; gap: 7px; cursor: pointer; font-size: 13px; color: var(--text); }
+  .radio-group input[type="radio"] { accent-color: var(--itau-orange); cursor: pointer; }
+
+  /* Resumo de parcelas */
+  .resumo-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  @media (max-width: 768px) { .resumo-grid { grid-template-columns: 1fr; } }
+  .resumo-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: var(--soft-blue); border-radius: 6px; }
+  .resumo-row .lbl { font-size: 11.5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px; font-weight: 600; }
+  .resumo-row .val { font-size: 14px; font-weight: 700; color: var(--mp-navy); font-family: 'DM Mono', ui-monospace, monospace; }
+  .resumo-row.highlight { background: var(--soft-orange); border: 1px solid #F5D4AB; }
+
+  /* Pós contemplação */
+  .pos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 768px) { .pos-grid { grid-template-columns: 1fr; } }
+  .pos-card { background: var(--soft-blue); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+  .pos-card h4 { font-size: 11.5px; font-weight: 700; color: var(--mp-navy); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+  .pos-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; font-size: 13px; }
+  .pos-row .lbl { color: var(--text-muted); font-size: 12px; letter-spacing: 0.3px; }
+  .pos-row .val { font-weight: 600; color: var(--mp-navy); font-family: 'DM Mono', ui-monospace, monospace; }
+  .pos-row.highlight { background: #fff; padding: 10px 12px; border-radius: 6px; margin: 4px -4px; border: 1px solid var(--border); }
+  .pos-row.highlight .val { font-size: 16px; font-weight: 700; color: var(--itau-orange-dark); }
+
+  /* Footer aviso */
+  .aviso { background: var(--warning-bg); border: 1px solid var(--warning-border); border-radius: 8px; padding: 14px 18px; color: var(--warning-text); font-size: 12.5px; line-height: 1.5; margin-top: 8px; }
+  .aviso strong { color: var(--warning-text); }
+
+  .actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px; padding-bottom: 32px; }
+  button.primary, button.secondary { padding: 11px 22px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.15s; border: 1px solid transparent; font-family: inherit; }
+  button.primary { background: var(--itau-orange); color: #fff; border-color: var(--itau-orange); }
+  button.primary:hover { background: var(--itau-orange-dark); }
+  button.secondary { background: transparent; color: var(--text-muted); border-color: var(--border); }
+  button.secondary:hover { background: var(--bg); border-color: var(--text-muted); }
+
+  /* Embed mode (iframe) */
+  html.embedded header { display: none; }
+  html.embedded main { padding-top: 18px; }
+
+  /* Observações textarea */
+  .obs-area { width: 100%; min-height: 90px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-family: inherit; resize: vertical; color: var(--text); background: #fff; }
+  .obs-area:focus { outline: none; border-color: var(--itau-orange); box-shadow: 0 0 0 3px rgba(236,112,0,0.12); }
+</style>
+<script>if (new URLSearchParams(location.search).get('embed') === '1') document.documentElement.classList.add('embedded');</script>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-mark">M</div>
+    <div class="brand-text">
+      <h1>Master Prime</h1>
+      <p>Simulador de Consórcio</p>
+    </div>
+  </div>
+  <span class="tag-admin">Itaú · Integral</span>
+</header>
+
+<main>
+
+  <h2 class="section-title">Itaú · Parcela Integral</h2>
+  <p class="subtitle">Cálculo de proposta, contemplação e estratégias de lance</p>
+
+  <!-- ════════ PROPOSTA ════════ -->
+  <section class="card">
+    <div class="card-header">
+      <span class="badge-orange"></span>
+      <h3>Proposta</h3>
+      <button type="button" class="reset-btn" id="btnLimparProposta">Limpar</button>
+    </div>
+    <div class="grid grid-3">
+      <div class="field">
+        <label>Crédito contratado</label>
+        <input type="text" id="ii-credito" placeholder="R$ 0,00" data-mask="money">
+      </div>
+      <div class="field">
+        <label>Prazo total (meses)</label>
+        <input type="text" id="ii-prazo" placeholder="0" data-mask="int">
+      </div>
+      <div class="field">
+        <label>Contemplação na parcela</label>
+        <input type="text" id="ii-contempla" placeholder="0" data-mask="int">
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ TAXAS DO GRUPO ════════ -->
+  <section class="card">
+    <div class="card-header">
+      <span class="badge-orange"></span>
+      <h3>Taxas do grupo</h3>
+      <button type="button" class="reset-btn" id="btnTaxasDefault">Restaurar padrão</button>
+    </div>
+    <div class="grid grid-3">
+      <div class="field">
+        <label>Taxa administrativa</label>
+        <input type="text" id="ii-taxaAdm" data-mask="pct2" placeholder="0,00 %">
+      </div>
+      <div class="field">
+        <label>Fundo de reserva</label>
+        <input type="text" id="ii-fundo" data-mask="pct2" placeholder="0,00 %">
+      </div>
+      <div class="field">
+        <label>Seguro de vida</label>
+        <input type="text" id="ii-seguro" data-mask="pct4" placeholder="0,0000 %">
+      </div>
+    </div>
+
+    <div class="grid grid-2" style="margin-top: 16px;">
+      <div class="result"><strong>Taxa por mês</strong><span class="value" id="ii-taxaMes">—</span></div>
+      <div class="result"><strong>Taxa por ano</strong><span class="value" id="ii-taxaAno">—</span></div>
+    </div>
+  </section>
+
+  <!-- ════════ OFERTA DE LANCE ════════ -->
+  <section class="card">
+    <div class="card-header">
+      <span class="badge-orange"></span>
+      <h3>Oferta de Lance</h3>
+      <button type="button" class="reset-btn" id="btnLimparLance">Limpar</button>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="field">
+        <label>Lance embutido (% do crédito)</label>
+        <input type="text" id="ii-pctEmbutido" data-mask="pct2" placeholder="0,00 %">
+      </div>
+      <div class="field">
+        <label>Lance a pagar (% do crédito)</label>
+        <input type="text" id="ii-pctAPagar" data-mask="pct2" placeholder="0,00 %">
+      </div>
+    </div>
+
+    <div class="grid grid-2" style="margin-top: 14px;">
+      <div class="result"><strong>Lance embutido (R$)</strong><span class="value" id="ii-lanceEmbutido">—</span></div>
+      <div class="result"><strong>Lance a pagar (R$)</strong><span class="value" id="ii-lanceAPagar">—</span></div>
+    </div>
+
+    <div style="margin-top: 14px;">
+      <div class="result-orange">
+        <strong>Total do lance</strong>
+        <span class="value" id="ii-totalLance">—</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ REDUZIR APÓS CONTEMPLAÇÃO ════════ -->
+  <section class="card">
+    <div class="card-header">
+      <span class="badge-orange"></span>
+      <h3>Reduzir após contemplação</h3>
+    </div>
+    <div class="radio-group">
+      <label><input type="radio" name="ii-reduzir" value="parcela" checked> Reduzir parcela</label>
+      <label><input type="radio" name="ii-reduzir" value="prazo"> Reduzir prazo</label>
+    </div>
+  </section>
+
+  <!-- ════════ ESTIMATIVA PÓS-CONTEMPLAÇÃO ════════ -->
+  <section class="card">
+    <div class="card-header">
+      <span class="badge-orange"></span>
+      <h3>Estimativa pós-contemplação</h3>
+    </div>
+
+    <div style="margin-bottom: 16px;">
+      <div class="result-primary">
+        <strong>Crédito líquido (após embutido)</strong>
+        <span class="value" id="ii-creditoLiquido">—</span>
+      </div>
+    </div>
+
+    <div class="pos-grid">
+      <div class="pos-card" id="ii-posReduzirParcela">
+        <h4>Se reduzir a parcela</h4>
+        <div class="pos-row highlight"><span class="lbl">Nova parcela</span><span class="val" id="ii-novaParcela">—</span></div>
+        <div class="pos-row"><span class="lbl">Prazo restante</span><span class="val" id="ii-prazoRestante">—</span></div>
+        <div class="pos-row"><span class="lbl">Saldo devedor pós-contempla</span><span class="val" id="ii-saldoPos">—</span></div>
+      </div>
+
+      <div class="pos-card" id="ii-posReduzirPrazo">
+        <h4>Se reduzir o prazo</h4>
+        <div class="pos-row highlight"><span class="lbl">Novo prazo</span><span class="val" id="ii-novoPrazo">—</span></div>
+        <div class="pos-row"><span class="lbl">Parcela mantida</span><span class="val" id="ii-parcelaMantida">—</span></div>
+        <div class="pos-row"><span class="lbl">Saldo devedor pós-contempla</span><span class="val" id="ii-saldoPosPrazo">—</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ RESUMO DE PARCELAS ════════ -->
+  <section class="card">
+    <div class="card-header">
+      <span class="badge-orange"></span>
+      <h3>Resumo de parcelas</h3>
+    </div>
+
+    <div class="resumo-grid" style="margin-bottom: 12px;">
+      <div class="resumo-row"><span class="lbl">Categoria</span><span class="val" id="ii-categoria">—</span></div>
+      <div class="resumo-row"><span class="lbl">Saldo devedor</span><span class="val" id="ii-saldoDevedor">—</span></div>
+    </div>
+
+    <div class="resumo-grid">
+      <div class="resumo-row highlight"><span class="lbl">Parcela integral</span><span class="val" id="ii-parcelaIntegral">—</span></div>
+      <div class="resumo-row highlight"><span class="lbl">Seguro mensal (incluso)</span><span class="val" id="ii-seguroMensal">—</span></div>
+    </div>
+  </section>
+
+  <!-- ════════ OBSERVAÇÕES ════════ -->
+  <section class="card">
+    <div class="card-header">
+      <span class="badge-orange"></span>
+      <h3>Observações (opcional)</h3>
+      <button type="button" class="reset-btn" id="btnLimparObs">Limpar</button>
+    </div>
+    <textarea id="ii-observacoes" class="obs-area" placeholder="Adicione anotações que devem aparecer no PDF…"></textarea>
+  </section>
+
+  <!-- ════════ AVISO ════════ -->
+  <div class="aviso">
+    <strong>Atenção:</strong> Os valores da simulação são mera referência e buscam refletir o cenário mais próximo da realidade. Variáveis específicas do grupo podem alterar o resultado final.
+  </div>
+
+  <div class="actions">
+    <button type="button" id="baixarPdfItau" class="primary" style="margin-right:8px;">Baixar PDF</button>
+    <button class="secondary" id="btnLimparTudo">Limpar tudo</button>
+  </div>
+</main>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// MÁSCARAS
+// ═══════════════════════════════════════════════════════
+function maskMoney(value) {
+  const digits = String(value).replace(/\D/g, '');
+  if (!digits) return '';
+  const cents = parseInt(digits, 10);
+  const reais = Math.floor(cents / 100);
+  const cs = cents % 100;
+  return 'R$ ' + reais.toLocaleString('pt-BR') + ',' + String(cs).padStart(2, '0');
+}
+function unmaskMoney(value) {
+  const digits = String(value).replace(/\D/g, '');
+  return parseInt(digits || '0', 10) / 100;
+}
+function maskPct(value, decimals = 2) {
+  const cleaned = String(value).replace('%', '').replace(',', '.').replace(/[^\d.\-]/g, '').trim();
+  if (cleaned === '') return '';
+  const num = parseFloat(cleaned);
+  if (isNaN(num)) return '';
+  return num.toFixed(decimals).replace('.', ',') + ' %';
+}
+function unmaskPct(value) {
+  const cleaned = String(value).replace('%', '').replace(',', '.').replace(/[^\d.\-]/g, '').trim();
+  return parseFloat(cleaned || '0');
+}
+function maskInt(value) {
+  return String(value).replace(/\D/g, '');
+}
+
+document.querySelectorAll('input[data-mask]').forEach(inp => {
+  const type = inp.dataset.mask;
+  inp.addEventListener('input', e => {
+    const v = e.target.value;
+    if (type === 'money') e.target.value = maskMoney(v);
+    else if (type === 'int') e.target.value = maskInt(v);
+    recalc();
+  });
+  inp.addEventListener('blur', e => {
+    const v = e.target.value;
+    if (type === 'pct2') e.target.value = maskPct(v, 2);
+    else if (type === 'pct4') e.target.value = maskPct(v, 4);
+    recalc();
+  });
+  inp.addEventListener('focus', e => {
+    if (type === 'pct2' || type === 'pct4') {
+      const n = unmaskPct(e.target.value);
+      if (n) e.target.value = String(n).replace('.', ',');
+    }
+  });
+});
+
+document.querySelectorAll('input[name="ii-reduzir"]').forEach(el => {
+  el.addEventListener('change', recalc);
+});
+
+// ═══════════════════════════════════════════════════════
+// FORMATTERS
+// ═══════════════════════════════════════════════════════
+function formatMoney(num) {
+  if (!Number.isFinite(num) || isNaN(num)) return '—';
+  return 'R$ ' + num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function formatPct(num, decimals = 2) {
+  if (!Number.isFinite(num) || isNaN(num)) return '—';
+  return num.toFixed(decimals).replace('.', ',') + ' %';
+}
+function formatInt(num) {
+  if (!Number.isFinite(num) || isNaN(num)) return '—';
+  return Math.round(num).toString();
+}
+function get(id) { return document.getElementById(id); }
+function setOut(id, value) {
+  const el = get(id);
+  if (el) el.textContent = value;
+}
+
+// ═══════════════════════════════════════════════════════
+// LEITURA DE INPUTS
+// ═══════════════════════════════════════════════════════
+function readInputs() {
+  const reduzirEl = document.querySelector('input[name="ii-reduzir"]:checked');
+  return {
+    credito: unmaskMoney(get('ii-credito').value),
+    prazo: parseInt(get('ii-prazo').value || '0', 10),
+    contempla: parseInt(get('ii-contempla').value || '0', 10),
+    taxaAdm: unmaskPct(get('ii-taxaAdm').value) / 100,
+    fundo: unmaskPct(get('ii-fundo').value) / 100,
+    seguro: unmaskPct(get('ii-seguro').value) / 100,
+    pctEmbutido: unmaskPct(get('ii-pctEmbutido').value) / 100,
+    pctAPagar: unmaskPct(get('ii-pctAPagar').value) / 100,
+    reduzir: reduzirEl ? reduzirEl.value : 'parcela',
+  };
+}
+
+// ═══════════════════════════════════════════════════════
+// FÓRMULAS — engenharia reversa da plataforma Itaú
+// ═══════════════════════════════════════════════════════
+// Vars:
+//   t = credito; h = taxaAdm; c = fundo; l = seguro;
+//   b = redução (0 para INTEGRAL); i = prazo;
+//   e = pctEmbutido; o = pctAPagar
+// g = t * l                       (seguro mensal, valor R$)
+// SaldoDevedorTotal3 = t * (1 + h + c)               (sem seguro)
+// nt = SaldoDevedorTotal3 / i * b                    (redução por parcela)
+// SaldoDevedorTotal1 = SaldoDevedorTotal3 * (1-b) + g*i
+// VparcelaAntes = SaldoDevedorTotal1 / i
+// LanceEmbutido = t * e
+// LanceApagar   = t * o
+function calc(i) {
+  const r = {};
+  const t = i.credito;
+  const h = i.taxaAdm;
+  const c = i.fundo;
+  const l = i.seguro;
+  const b = 0; // Parcela INTEGRAL = sem redução
+  const prazo = i.prazo;
+
+  // Constantes
+  const g = t * l;                              // seguro mensal R$
+  r.saldoDevedorTotal3 = t * (1 + h + c);       // saldo sem seguro
+  r.categoria = r.saldoDevedorTotal3;           // no Itaú, categoria = SaldoTotal3
+  const nt = (prazo > 0) ? r.saldoDevedorTotal3 / prazo * b : 0;
+  r.saldoDevedor = r.saldoDevedorTotal3 * (1 - b) + g * prazo;  // saldoTotal1
+  r.parcelaIntegral = (prazo > 0) ? r.saldoDevedor / prazo : NaN;
+  r.seguroMensal = g;
+  r.lanceEmbutido = t * i.pctEmbutido;
+  r.lanceApagar   = t * i.pctAPagar;
+  r.totalLance = r.lanceEmbutido + r.lanceApagar;
+
+  // Crédito líquido (após embutido)
+  r.creditoLiquido = t - r.lanceEmbutido;
+
+  // PÓS CONTEMPLAÇÃO
+  const lanceTotal = r.totalLance;
+  const prazoRestante = Math.max(0, prazo - i.contempla);
+  // saldo pós-contempla (saldo - parcelas pagas - lance)
+  r.saldoPos = r.saldoDevedor - (r.parcelaIntegral * i.contempla) - lanceTotal;
+
+  // Reduzir parcela → nova_parcela = saldoPos / prazoRestante
+  r.novaParcela = (prazoRestante > 0) ? r.saldoPos / prazoRestante : NaN;
+
+  // Reduzir prazo → mantém parcela, calcula novo prazo
+  r.novoPrazo = (r.parcelaIntegral > 0) ? r.saldoPos / r.parcelaIntegral : NaN;
+  r.parcelaMantida = r.parcelaIntegral;
+  r.prazoRestante = prazoRestante;
+
+  // DEMONSTRATIVO TAXAS
+  r.taxaMes = (prazo > 0) ? i.taxaAdm / prazo : NaN;
+  r.taxaAno = r.taxaMes * 12;
+
+  return r;
+}
+
+// ═══════════════════════════════════════════════════════
+// PINTA OUTPUTS
+// ═══════════════════════════════════════════════════════
+function recalc() {
+  const i = readInputs();
+
+  // Mostra "—" se faltar dado básico
+  if (!(i.credito > 0) || !(i.prazo > 0)) {
+    const ids = ['ii-categoria','ii-saldoDevedor','ii-parcelaIntegral','ii-seguroMensal','ii-lanceEmbutido','ii-lanceAPagar','ii-totalLance','ii-creditoLiquido','ii-novaParcela','ii-prazoRestante','ii-saldoPos','ii-novoPrazo','ii-parcelaMantida','ii-saldoPosPrazo','ii-taxaMes','ii-taxaAno'];
+    ids.forEach(id => setOut(id, '—'));
+    return;
+  }
+
+  const r = calc(i);
+
+  // Resumo
+  setOut('ii-categoria', formatMoney(r.categoria));
+  setOut('ii-saldoDevedor', formatMoney(r.saldoDevedor));
+  setOut('ii-parcelaIntegral', formatMoney(r.parcelaIntegral));
+  setOut('ii-seguroMensal', formatMoney(r.seguroMensal));
+
+  // Lance
+  setOut('ii-lanceEmbutido', formatMoney(r.lanceEmbutido));
+  setOut('ii-lanceAPagar', formatMoney(r.lanceApagar));
+  setOut('ii-totalLance', formatMoney(r.totalLance));
+
+  // Pós contemplação
+  setOut('ii-creditoLiquido', formatMoney(r.creditoLiquido));
+  setOut('ii-novaParcela', formatMoney(r.novaParcela));
+  setOut('ii-prazoRestante', Number.isFinite(r.prazoRestante) ? formatInt(r.prazoRestante) + ' meses' : '—');
+  setOut('ii-saldoPos', formatMoney(r.saldoPos));
+  setOut('ii-novoPrazo', Number.isFinite(r.novoPrazo) ? formatInt(r.novoPrazo) + ' meses' : '—');
+  setOut('ii-parcelaMantida', formatMoney(r.parcelaMantida));
+  setOut('ii-saldoPosPrazo', formatMoney(r.saldoPos));
+
+  // Taxas
+  setOut('ii-taxaMes', Number.isFinite(r.taxaMes) ? formatPct(r.taxaMes * 100, 4) : '—');
+  setOut('ii-taxaAno', Number.isFinite(r.taxaAno) ? formatPct(r.taxaAno * 100, 2) : '—');
+
+  // Realce do card escolhido
+  document.getElementById('ii-posReduzirParcela').style.opacity = (i.reduzir === 'parcela') ? '1' : '0.5';
+  document.getElementById('ii-posReduzirPrazo').style.opacity = (i.reduzir === 'prazo') ? '1' : '0.5';
+}
+
+// ═══════════════════════════════════════════════════════
+// LIMPAR
+// ═══════════════════════════════════════════════════════
+function limparTudo() {
+  ['ii-credito','ii-prazo','ii-contempla','ii-taxaAdm','ii-fundo','ii-seguro','ii-pctEmbutido','ii-pctAPagar'].forEach(id => get(id).value = '');
+  get('ii-observacoes').value = '';
+  document.querySelector('input[name="ii-reduzir"][value="parcela"]').checked = true;
+  recalc();
+}
+
+document.getElementById('btnLimparProposta').addEventListener('click', () => {
+  ['ii-credito','ii-prazo','ii-contempla'].forEach(id => get(id).value = '');
+  recalc();
+});
+
+document.getElementById('btnLimparLance').addEventListener('click', () => {
+  ['ii-pctEmbutido','ii-pctAPagar'].forEach(id => get(id).value = '');
+  recalc();
+});
+
+document.getElementById('btnTaxasDefault').addEventListener('click', () => {
+  get('ii-taxaAdm').value = '20,00 %';
+  get('ii-fundo').value = '2,00 %';
+  get('ii-seguro').value = '0,0380 %';
+  recalc();
+});
+
+document.getElementById('btnLimparObs').addEventListener('click', () => {
+  get('ii-observacoes').value = '';
+});
+
+document.getElementById('btnLimparTudo').addEventListener('click', limparTudo);
+
+// inicial
+recalc();
+
+// ═════════════════════════════════════════════════════════════
+// PDF — usa módulo compartilhado pdf-master-prime.js
+// ═════════════════════════════════════════════════════════════
+function _coletarBlocosItauIntegral() {
+  const _v = (id) => { const el = document.getElementById(id); return (el?.value || '').trim(); };
+  const _t = (id) => { const el = document.getElementById(id); return (el?.textContent || '').trim(); };
+  const _has = (s) => s && s !== '—' && s !== '?' && s !== '';
+
+  const prazoVal = _v('ii-prazo');
+  const contemplaN = parseInt(_v('ii-contempla') || '0', 10) || 0;
+  const reduzirEl = document.querySelector('input[name="ii-reduzir"]:checked');
+  const reduzirTxt = reduzirEl?.value === 'prazo' ? 'Reduzir prazo' : 'Reduzir parcela';
+
+  // ─── BLOCO 1: PROPOSTA ───
+  const propostaLinha1 = [
+    { label: 'Crédito Contratado', value: _v('ii-credito') || 'R$ 0,00' },
+    { label: 'Prazo total', value: (prazoVal || '0') + ' meses' },
+    { label: 'Contemplação na parcela', value: String(contemplaN) }
+  ];
+  const saldoDevedor = _t('ii-saldoDevedor');
+  const propostaLinhas = [
+    { campos: propostaLinha1, destaque: { label: 'Categoria', value: _t('ii-categoria') || '—' } }
+  ];
+  if (_has(saldoDevedor)) {
+    propostaLinhas.push({ campos: [{ label: 'Saldo devedor', value: saldoDevedor }] });
+  }
+
+  // ─── BLOCO 2: TAXAS DO GRUPO ───
+  const taxaMes = _t('ii-taxaMes');
+  const taxaAno = _t('ii-taxaAno');
+  const taxaCombo = (_has(taxaMes) || _has(taxaAno))
+    ? `${taxaMes || '—'} a.m. · ${taxaAno || '—'} a.a.`
+    : '—';
+
+  const taxasLinhas = [{
+    campos: [
+      { label: 'Taxa administrativa', value: _v('ii-taxaAdm') || '0,00 %' },
+      { label: 'Fundo de reserva', value: _v('ii-fundo') || '0,00 %' },
+      { label: 'Seguro de vida', value: _v('ii-seguro') || '0,0000 %' }
+    ],
+    destaque: { label: 'Taxa por mês / ano', value: taxaCombo }
+  }];
+
+  // ─── BLOCO 3: OFERTA DE LANCE ───
+  const lanceCampos = [
+    { label: 'Embutido (%)', value: _v('ii-pctEmbutido') || '0,00 %' },
+    { label: 'A pagar (%)', value: _v('ii-pctAPagar') || '0,00 %' },
+    { label: 'Embutido (R$)', value: _t('ii-lanceEmbutido') || 'R$ 0,00' },
+    { label: 'A pagar (R$)', value: _t('ii-lanceAPagar') || 'R$ 0,00' }
+  ];
+  const lanceLinhas = [{
+    campos: lanceCampos,
+    destaque: { label: 'Total do lance', value: _t('ii-totalLance') || '—' }
+  }];
+
+  const blocos = [
+    { tipo: 'card', titulo: 'PROPOSTA', linhas: propostaLinhas },
+    { tipo: 'card', titulo: 'TAXAS DO GRUPO', linhas: taxasLinhas },
+    { tipo: 'card', titulo: 'OFERTA DE LANCE', linhas: lanceLinhas }
+  ];
+
+  // ─── BLOCO 4: ESTIMATIVA PÓS-CONTEMPLAÇÃO (só se contempla > 0) ───
+  if (contemplaN > 0) {
+    const credLiq = _t('ii-creditoLiquido');
+    const saldoPos = _t('ii-saldoPos');
+    const novaParc = _t('ii-novaParcela');
+    const prazoRest = _t('ii-prazoRestante');
+    const novoPrazo = _t('ii-novoPrazo');
+    const parcMantida = _t('ii-parcelaMantida');
+
+    const posLinhas = [
+      { campos: [
+          { label: 'Crédito líquido', value: credLiq || '—' },
+          { label: 'Saldo devedor pós-contempla', value: saldoPos || '—' },
+          { label: 'Estratégia', value: reduzirTxt }
+        ]
+      }
+    ];
+    posLinhas.push({
+      campos: [
+        { label: 'Nova parcela', value: novaParc || '—' },
+        { label: 'Prazo restante', value: prazoRest || '—' }
+      ],
+      destaque: { label: 'Se reduzir a parcela', value: novaParc || '—' }
+    });
+    posLinhas.push({
+      campos: [
+        { label: 'Novo prazo', value: novoPrazo || '—' },
+        { label: 'Parcela mantida', value: parcMantida || '—' }
+      ],
+      destaque: { label: 'Se reduzir o prazo', value: novoPrazo || '—' }
+    });
+
+    blocos.push({ tipo: 'card', titulo: 'ESTIMATIVA PÓS-CONTEMPLAÇÃO', linhas: posLinhas });
+  }
+
+  // ─── BLOCO 5: RESUMO DE PARCELAS ───
+  const resumoLinhas = [
+    { campos: [
+        { label: 'Parcela integral', value: _t('ii-parcelaIntegral') || '—' },
+        { label: 'Seguro mensal (incluso)', value: _t('ii-seguroMensal') || '—' }
+      ],
+      destaque: { label: 'Parcela integral', value: _t('ii-parcelaIntegral') || '—' }
+    }
+  ];
+  blocos.push({ tipo: 'card', titulo: 'RESUMO DE PARCELAS', linhas: resumoLinhas });
+
+  // ─── BLOCO 6: OBSERVAÇÕES (se houver) ───
+  const obs = _v('ii-observacoes');
+  if (_has(obs)) {
+    blocos.push({ tipo: 'texto', titulo: 'OBSERVAÇÕES', texto: obs });
+  }
+
+  return blocos;
+}
+
+document.getElementById('baixarPdfItau').addEventListener('click', async () => {
+  const btn = document.getElementById('baixarPdfItau');
+  const txt = btn.textContent;
+  btn.textContent = 'Gerando PDF...';
+  btn.disabled = true;
+  try {
+    await PdfMasterPrime.gerar({
+      tituloEstrategia: 'Itaú · Parcela Integral',
+      filename: 'itau-parcela-integral',
+      blocos: _coletarBlocosItauIntegral()
+    });
+  } catch (err) {
+    console.error(err);
+    alert('Erro ao gerar PDF: ' + err.message);
+  } finally {
+    btn.textContent = txt;
+    btn.disabled = false;
+  }
+});
+</script>
+
+</body>
+</html>
