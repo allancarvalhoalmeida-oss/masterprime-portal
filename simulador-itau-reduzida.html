@@ -448,13 +448,15 @@ function calc(i) {
 
   // Constantes
   const g = t * l;                                  // seguro mensal R$
-  r.saldoDevedorTotal3 = t * (1 + h + c);           // saldo sem seguro
+  r.saldoDevedorTotal3 = t * (1 + h + c);           // saldo sem seguro, sem reduz
   r.categoria = r.saldoDevedorTotal3;
-  const nt = (prazo > 0) ? r.saldoDevedorTotal3 / prazo * b : 0;
-  r.saldoDevedor = r.saldoDevedorTotal3 * (1 - b) + g * prazo;  // saldoTotal1
-  r.parcelaReduzida = (prazo > 0) ? r.saldoDevedor / prazo : NaN;
-  // Parcela integral (sem redução) — vale após contemplação
-  r.parcelaIntegral = (prazo > 0) ? (r.saldoDevedorTotal3 + g * prazo) / prazo : NaN;
+  // SaldoTotal1 = saldo COM reducao (vale enquanto está pagando reduzida)
+  r.saldoDevedorTotal1 = r.saldoDevedorTotal3 * (1 - b) + g * prazo;
+  // SaldoTotal2 = saldo SEM reducao = SaldoTotal3 + g*prazo (vale pra reduzir prazo após contempla)
+  r.saldoDevedorTotal2 = r.saldoDevedorTotal3 + g * prazo;
+  r.saldoDevedor = r.saldoDevedorTotal1;            // exibido no resumo (parcela reduzida × prazo)
+  r.parcelaReduzida = (prazo > 0) ? r.saldoDevedorTotal1 / prazo : NaN;
+  r.parcelaIntegral = (prazo > 0) ? r.saldoDevedorTotal2 / prazo : NaN;
   r.seguroMensal = g;
   r.lanceEmbutido = t * i.pctEmbutido;
   r.lanceApagar   = t * i.pctAPagar;
@@ -465,17 +467,18 @@ function calc(i) {
   r.creditoLiquido = t - r.lanceEmbutido;
 
   // PÓS CONTEMPLAÇÃO
+  // Lógica engenheiada da plataforma Itaú (cenário 2/3 validados):
+  //   Reduzir Parcela: novaParcela = (SaldoTotal1 − lance) / prazoRestante
+  //   Reduzir Prazo:   novoPrazo   = (SaldoTotal2 − lance) / parcelaReduzida
   const lanceTotal = r.totalLance;
   const prazoRestante = Math.max(0, prazo - i.contempla);
-  // saldo pós-contempla (saldo reduzido - parcelas reduzidas pagas - lance)
-  r.saldoPos = r.saldoDevedor - (r.parcelaReduzida * i.contempla) - lanceTotal;
+  r.saldoAposLance = r.saldoDevedorTotal1 - lanceTotal;
+  r.saldoAposLanceSemReduz = r.saldoDevedorTotal2 - lanceTotal;
+  r.saldoPos = r.saldoAposLance;
 
-  // Reduzir parcela → nova_parcela = saldoPos / prazoRestante
-  r.novaParcela = (prazoRestante > 0) ? r.saldoPos / prazoRestante : NaN;
-
-  // Reduzir prazo → mantém parcela INTEGRAL (após contempla volta cheia), recalcula prazo
-  r.novoPrazo = (r.parcelaIntegral > 0) ? r.saldoPos / r.parcelaIntegral : NaN;
-  r.parcelaMantida = r.parcelaIntegral;
+  r.novaParcela = (prazoRestante > 0) ? r.saldoAposLance / prazoRestante : NaN;
+  r.novoPrazo = (r.parcelaReduzida > 0) ? r.saldoAposLanceSemReduz / r.parcelaReduzida : NaN;
+  r.parcelaMantida = r.parcelaReduzida;
   r.prazoRestante = prazoRestante;
 
   // DEMONSTRATIVO TAXAS

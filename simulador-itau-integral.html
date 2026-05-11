@@ -437,9 +437,9 @@ function calc(i) {
   // Constantes
   const g = t * l;                              // seguro mensal R$
   r.saldoDevedorTotal3 = t * (1 + h + c);       // saldo sem seguro
-  r.categoria = r.saldoDevedorTotal3;           // no Itaú, categoria = SaldoTotal3
-  const nt = (prazo > 0) ? r.saldoDevedorTotal3 / prazo * b : 0;
-  r.saldoDevedor = r.saldoDevedorTotal3 * (1 - b) + g * prazo;  // saldoTotal1
+  r.categoria = r.saldoDevedorTotal3;
+  // Integral: b = 0, então SaldoTotal1 = SaldoTotal2 = SaldoTotal3 + g*prazo
+  r.saldoDevedor = r.saldoDevedorTotal3 + g * prazo;
   r.parcelaIntegral = (prazo > 0) ? r.saldoDevedor / prazo : NaN;
   r.seguroMensal = g;
   r.lanceEmbutido = t * i.pctEmbutido;
@@ -449,16 +449,14 @@ function calc(i) {
   // Crédito líquido (após embutido)
   r.creditoLiquido = t - r.lanceEmbutido;
 
-  // PÓS CONTEMPLAÇÃO
+  // PÓS CONTEMPLAÇÃO — NÃO subtrai parcelas pagas (lógica Itaú)
+  //   Reduzir Parcela: novaParcela = (saldoDevedor − lance) / prazoRestante
+  //   Reduzir Prazo:   novoPrazo   = (saldoDevedor − lance) / parcelaIntegral
   const lanceTotal = r.totalLance;
   const prazoRestante = Math.max(0, prazo - i.contempla);
-  // saldo pós-contempla (saldo - parcelas pagas - lance)
-  r.saldoPos = r.saldoDevedor - (r.parcelaIntegral * i.contempla) - lanceTotal;
+  r.saldoPos = r.saldoDevedor - lanceTotal;
 
-  // Reduzir parcela → nova_parcela = saldoPos / prazoRestante
   r.novaParcela = (prazoRestante > 0) ? r.saldoPos / prazoRestante : NaN;
-
-  // Reduzir prazo → mantém parcela, calcula novo prazo
   r.novoPrazo = (r.parcelaIntegral > 0) ? r.saldoPos / r.parcelaIntegral : NaN;
   r.parcelaMantida = r.parcelaIntegral;
   r.prazoRestante = prazoRestante;
