@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Master Prime — Solicitar Adesão</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --mp-navy:   #2D3F5E;
+  --mp-yellow: #C8C84A;
+  --mp-teal:   #4DBCC8;
+  --bg:        #F4F6FA;
+  --card:      #FFFFFF;
+  --border:    #E2E8F0;
+  --border2:   #CBD5E1;
+  --text:      #1E293B;
+  --text2:     #64748B;
+  --text3:     #94A3B8;
+  --green:     #16A34A; --green-bg: #F0FDF4;
+  --red:       #DC2626; --red-bg:   #FEF2F2;
+  --amber:     #D97706; --amber-bg: #FFFBEB;
+  --blue:      #2563EB; --blue-bg:  #EFF6FF;
+  --r: 10px;
+  --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.10);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; min-height: 100vh; }
+
+.pub-header {
+  background: linear-gradient(135deg, var(--mp-navy) 0%, #1a2a42 100%);
+  color: #fff; padding: 0 24px;
+  position: sticky; top: 0; z-index: 50;
+  box-shadow: 0 2px 12px rgba(0,0,0,.2);
+}
+.pub-header-inner {
+  max-width: 860px; margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 60px;
+}
+.pub-logo { display: flex; align-items: center; gap: 12px; }
+.pub-logo img { height: 40px; display: block; }
+.pub-badge {
+  background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15);
+  border-radius: 6px; padding: 5px 10px; font-size: 10px; color: rgba(255,255,255,.7);
+  display: flex; align-items: center; gap: 6px;
+}
+.pub-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: #22C55E; }
+
+.pub-hero {
+  background: linear-gradient(135deg, var(--mp-navy) 0%, #1a2a42 60%, #243651 100%);
+  color: #fff; padding: 48px 24px 40px; text-align: center;
+}
+.pub-hero-title { font-size: 28px; font-weight: 800; letter-spacing: -.5px; margin-bottom: 10px; }
+.pub-hero-sub { font-size: 14px; color: rgba(255,255,255,.6); max-width: 500px; margin: 0 auto 28px; line-height: 1.6; }
+
+.pub-main { max-width: 860px; margin: 0 auto; padding: 32px 24px 80px; }
+
+.adm-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+.adm-card {
+  background: var(--card); border: 2px solid var(--border);
+  border-radius: var(--r); padding: 20px; text-align: center;
+  cursor: pointer; transition: all .2s;
+}
+.adm-card:hover { border-color: var(--mp-teal); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.adm-card.selected { border-color: var(--mp-teal); box-shadow: 0 0 0 3px rgba(77,188,200,.15), var(--shadow-md); }
+.adm-icon {
+  width: 56px; height: 56px; border-radius: 50%;
+  margin: 0 auto 12px; display: flex; align-items: center; justify-content: center;
+  font-size: 22px; font-weight: 800; transition: all .2s;
+}
+.adm-bradesco .adm-icon { background: #FEE2E2; color: #DC2626; }
+.adm-itau     .adm-icon { background: #FEF3C7; color: #D97706; }
+.adm-porto    .adm-icon { background: #EFF6FF; color: #2563EB; }
+.adm-card.selected .adm-icon { transform: scale(1.1); }
+.adm-name { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.adm-desc { font-size: 11px; color: var(--text2); }
+.adm-badge {
+  display: inline-block; margin-top: 10px; padding: 3px 8px;
+  border-radius: 20px; font-size: 9px; font-weight: 700;
+  background: rgba(77,188,200,.12); color: #1A7A84; letter-spacing: .5px;
+  text-transform: uppercase; opacity: 0; transition: opacity .2s;
+}
+.adm-card.selected .adm-badge { opacity: 1; }
+
+.section-title {
+  font-size: 12px; font-weight: 700; color: var(--text2);
+  text-transform: uppercase; letter-spacing: .8px;
+  margin: 0 0 16px; padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+}
+.section-title svg { color: var(--mp-teal); }
+
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--r); box-shadow: var(--shadow);
+  margin-bottom: 16px; overflow: hidden;
+}
+.card-head {
+  padding: 16px 22px 14px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.card-title { font-size: 14px; font-weight: 700; color: var(--text); }
+.card-sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
+.card-body { padding: 22px; }
+
+.tipo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+.tipo-card {
+  border: 2px solid var(--border); border-radius: 8px;
+  padding: 16px; cursor: pointer; transition: all .2s;
+  display: flex; align-items: center; gap: 12px;
+}
+.tipo-card:hover { border-color: var(--mp-teal); background: #F8FDFE; }
+.tipo-card.selected { border-color: var(--mp-teal); background: #F0FBFC; }
+.tipo-icon {
+  width: 40px; height: 40px; border-radius: 8px;
+  background: var(--bg); display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: background .2s;
+}
+.tipo-card.selected .tipo-icon { background: rgba(77,188,200,.15); }
+.tipo-label { font-size: 13px; font-weight: 600; }
+.tipo-sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+.field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.field { display: flex; flex-direction: column; }
+.field.span-2 { grid-column: span 2; }
+.field-label {
+  font-size: 10px; font-weight: 600; color: var(--text2);
+  text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px;
+  display: flex; align-items: center; gap: 4px;
+}
+.field-label .req { color: var(--red); }
+.field-input, .field-select {
+  width: 100%; padding: 10px 12px;
+  border: 1.5px solid var(--border2); border-radius: 8px;
+  font-size: 13px; color: var(--text); font-family: 'Inter', sans-serif;
+  outline: none; background: #fff;
+  transition: border-color .15s, box-shadow .15s;
+}
+.field-input:focus, .field-select:focus {
+  border-color: var(--mp-teal);
+  box-shadow: 0 0 0 3px rgba(77,188,200,.12);
+}
+.field-input::placeholder { color: var(--text3); }
+.field-input.error { border-color: var(--red); box-shadow: 0 0 0 3px rgba(220,38,38,.08); }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 12px 22px; border: none; border-radius: 8px;
+  font-size: 13px; font-weight: 700; cursor: pointer;
+  font-family: 'Inter', sans-serif; transition: all .15s;
+}
+.btn-primary { background: var(--mp-navy); color: #fff; }
+.btn-primary:hover { background: #1E2D45; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(45,63,94,.25); }
+.btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+.btn-teal { background: var(--mp-teal); color: #fff; }
+.btn-teal:hover { background: #3AABB8; transform: translateY(-1px); }
+.btn-outline { background: transparent; color: var(--text); border: 1.5px solid var(--border2); }
+.btn-outline:hover { background: var(--bg); }
+
+.msg {
+  padding: 12px 16px; border-radius: 8px; margin-bottom: 16px;
+  font-size: 12px; font-weight: 500; display: flex; align-items: flex-start; gap: 10px;
+}
+.msg.success { background: var(--green-bg); color: var(--green); border: 1px solid #BBF7D0; }
+.msg.error   { background: var(--red-bg);   color: var(--red);   border: 1px solid #FECACA; }
+.msg.info    { background: var(--blue-bg);  color: var(--blue);  border: 1px solid #BFDBFE; }
+.msg.warn    { background: var(--amber-bg); color: var(--amber); border: 1px solid #FCD34D; }
+
+.success-screen {
+  text-align: center; padding: 60px 24px;
+  background: var(--card); border-radius: var(--r);
+  box-shadow: var(--shadow-md); margin: 0 auto;
+}
+.success-icon {
+  width: 72px; height: 72px; border-radius: 50%;
+  background: var(--green-bg); margin: 0 auto 20px;
+  display: flex; align-items: center; justify-content: center;
+  animation: popIn .4s cubic-bezier(.175,.885,.32,1.275);
+}
+@keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.success-title { font-size: 22px; font-weight: 800; color: var(--text); margin-bottom: 8px; }
+.success-sub { font-size: 13px; color: var(--text2); line-height: 1.6; margin-bottom: 24px; }
+
+.checkbox-container {
+  display: flex; align-items: flex-start; gap: 10px; margin: 20px 0;
+  background: var(--blue-bg); border: 1px solid #BFDBFE; border-radius: 8px; padding: 16px;
+}
+.checkbox-container input[type="checkbox"] {
+  width: 18px; height: 18px; accent-color: var(--mp-teal); margin-top: 2px; flex-shrink: 0;
+}
+.checkbox-container label { font-size: 12px; color: #1E40AF; line-height: 1.5; }
+
+.form-step { display: none; }
+.form-step.active { display: block; animation: fadeIn .25s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.progress-bar {
+  background: var(--border); border-radius: 4px; height: 4px;
+  margin-bottom: 28px; overflow: hidden;
+}
+.progress-fill {
+  height: 100%; background: linear-gradient(90deg, var(--mp-teal), var(--mp-yellow));
+  border-radius: 4px; transition: width .4s ease;
+}
+.form-nav {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border);
+}
+
+@media (max-width: 680px) {
+  .adm-grid { grid-template-columns: 1fr; }
+  .field-grid { grid-template-columns: 1fr !important; }
+  .field.span-2 { grid-column: span 1; }
+  .tipo-grid { grid-template-columns: 1fr; }
+  .pub-hero-title { font-size: 22px; }
+}
+</style>
+</head>
+<body>
+
+<header class="pub-header">
+  <div class="pub-header-inner">
+    <div class="pub-logo">
+      <img src="logo.png" alt="Master Prime">
+    </div>
+    <div class="pub-badge">
+      <div class="pub-badge-dot"></div>
+      Formulário seguro
+    </div>
+  </div>
+</header>
+
+<div class="pub-hero">
+  <div class="pub-hero-title">Solicitação de Adesão</div>
+  <div class="pub-hero-sub">Preencha os dados abaixo para iniciar sua adesão ao consórcio.</div>
+</div>
+
+<div class="pub-main" id="pub-main">
+  <div class="progress-bar"><div class="progress-fill" id="progress" style="width:50%"></div></div>
+
+  <!-- STEP 1 -->
+  <div class="form-step active" id="step-1">
+    <div class="card">
+      <div class="card-head"><div class="card-title">Escolha a Administradora</div></div>
+      <div class="card-body">
+        <div id="msg-step1"></div>
+        <div class="adm-grid">
+          <div class="adm-card adm-bradesco" id="adm-bradesco" onclick="selectAdm('bradesco')"><div class="adm-icon">B</div><div class="adm-name">Bradesco</div><div class="adm-desc">Consórcio Nacional Bradesco</div><div class="adm-badge">Selecionado ✓</div></div>
+          <div class="adm-card adm-itau" id="adm-itau" onclick="selectAdm('itau')"><div class="adm-icon">I</div><div class="adm-name">Itaú Consórcios</div><div class="adm-desc">Itaú Administradora de Consórcios</div><div class="adm-badge">Selecionado ✓</div></div>
+          <div class="adm-card adm-porto" id="adm-porto" onclick="selectAdm('porto')"><div class="adm-icon">P</div><div class="adm-name">Porto Seguro</div><div class="adm-desc">Porto Seguro Consórcio</div><div class="adm-badge">Selecionado ✓</div></div>
+        </div>
+        <div class="form-nav"><div></div><button class="btn btn-teal" onclick="goStep(2)">Continuar →</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="form-step" id="step-2">
+    <div class="card">
+      <div class="card-head"><div class="card-title" id="step2-title">Dados do Cliente</div><span id="adm-chip" style="padding:4px 12px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;"></span></div>
+      <div class="card-body">
+        <div id="msg-step2"></div>
+        <div class="section-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Tipo de Pessoa
+        </div>
+        <div class="tipo-grid">
+          <div class="tipo-card selected" id="tipo-pf" onclick="selectTipo('pf')">
+            <div class="tipo-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4DBCC8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <div><div class="tipo-label">Pessoa Física</div><div class="tipo-sub">CPF • Uso pessoal</div></div>
+          </div>
+          <div class="tipo-card" id="tipo-pj" onclick="selectTipo('pj')">
+            <div class="tipo-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+            </div>
+            <div><div class="tipo-label">Pessoa Jurídica</div><div class="tipo-sub">CNPJ • Empresarial</div></div>
+          </div>
+        </div>
+        <div id="form-fields-container"></div>
+        <div class="checkbox-container">
+          <input type="checkbox" id="lgpd-check" required>
+          <label for="lgpd-check">Autorizo o compartilhamento e tratamento dos meus dados pessoais pela Master Prime Corretora e pela administradora selecionada, para fins de análise, andamento e conclusão do processo de consórcio, conforme a Lei Geral de Proteção de Dados (Lei nº 13.709/2018).</label>
+        </div>
+        <div class="form-nav">
+          <button class="btn btn-outline" onclick="goStep(1)">Voltar</button>
+          <button class="btn btn-primary" id="btn-submit" onclick="submitForm()">Enviar Adesão</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUCCESS -->
+  <div class="form-step" id="step-success">
+    <div class="success-screen">
+      <div class="success-icon">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="success-title">Obrigado!</div>
+      <div class="success-sub">Seus dados foram enviados com sucesso.<br>Em breve entraremos em contato.</div>
+      <button class="btn btn-outline" onclick="resetForm()">Nova Adesão</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://jhwciwvgagnuxakukyob.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_fy-iwSFNHKRuqP1pDokFuQ_X_UCiqzx';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let STATE = { step: 1, adm: null, tipo: 'pf' };
+const UF_LIST = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
+const BANCOS = ['Banco do Brasil','Bradesco','Caixa Econômica','Itaú','Santander','Sicoob','Sicredi','Outros'];
+
+// ═══ MÁSCARAS ═══
+function maskCPF(el) { let v=el.value.replace(/\D/g,'').slice(0,11); if(v.length>9) v=v.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/,'$1.$2.$3-$4'); else if(v.length>6) v=v.replace(/(\d{3})(\d{3})(\d{1,3})/,'$1.$2.$3'); else if(v.length>3) v=v.replace(/(\d{3})(\d{1,3})/,'$1.$2'); el.value=v; }
+function maskCNPJ(el) { let v=el.value.replace(/\D/g,'').slice(0,14); if(v.length>12) v=v.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{1,2})/,'$1.$2.$3/$4-$5'); else if(v.length>8) v=v.replace(/(\d{2})(\d{3})(\d{3})(\d{1,4})/,'$1.$2.$3/$4'); else if(v.length>5) v=v.replace(/(\d{2})(\d{3})(\d{1,3})/,'$1.$2.$3'); else if(v.length>2) v=v.replace(/(\d{2})(\d{1,3})/,'$1.$2'); el.value=v; }
+function maskPhone(el) { let v=el.value.replace(/\D/g,'').slice(0,11); if(v.length===11) el.value=v.replace(/(\d{2})(\d{5})(\d{4})/,'($1) $2-$3'); else if(v.length===10) el.value=v.replace(/(\d{2})(\d{4})(\d{4})/,'($1) $2-$3'); else if(v.length>5) el.value=v.replace(/(\d{2})(\d{0,4})(\d{0,4})/,'($1) $2-$3'); else if(v.length>2) el.value=v.replace(/(\d{2})/,'($1) '); else el.value=v; }
+function maskCurrency(el) { let v=el.value.replace(/\D/g,''); if(!v){el.value='';return;} const intVal=parseInt(v,10); const formatted=(intVal/100).toFixed(2).replace('.',','); const parts=formatted.split(','); parts[0]=parts[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.'); el.value='R$ '+parts.join(','); }
+function maskCEP(el) { let v=el.value.replace(/\D/g,'').slice(0,8); if(v.length>5) v=v.replace(/(\d{5})(\d{1,3})/,'$1-$2'); el.value=v; }
+
+// ═══ PREENCHIMENTO AUTOMÁTICO DE ENDEREÇO VIA CEP ═══
+async function buscarCEP(cepValue) {
+  const cep = cepValue.replace(/\D/g, '');
+  if (cep.length !== 8) return;
+  const fields = ['logradouro', 'endereco', 'bairro', 'cidade', 'estado', 'complemento', 'tipo_logradouro'];
+  fields.forEach(id => { const el=document.getElementById('f-'+id); if(el&&!el.value) el.placeholder='Carregando...'; });
+  try {
+    const resp = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+    const data = await resp.json();
+    if (data.erro) return;
+    const setVal = (id, val) => { const el=document.getElementById('f-'+id); if(el&&!el.value) el.value=val||''; };
+    setVal('logradouro', data.logradouro); setVal('endereco', data.logradouro); setVal('bairro', data.bairro);
+    setVal('cidade', data.localidade); setVal('complemento', data.complemento||'');
+    const estadoEl = document.getElementById('f-estado');
+    if(estadoEl){ if(estadoEl.tagName==='SELECT'){ const uf=data.uf.toUpperCase(); if(UF_LIST.includes(uf)) estadoEl.value=uf; } else estadoEl.value=data.uf.toUpperCase(); }
+  } catch(e){}
+}
+
+// ═══ CONFIGURAÇÃO DAS ADMINISTRADORAS ═══
+const ADM_CONFIG = {
+  bradesco: { label:'Bradesco',     bg:'#FEE2E2', color:'#DC2626' },
+  itau:     { label:'Itaú',         bg:'#FEF3C7', color:'#D97706' },
+  porto:    { label:'Porto Seguro', bg:'#EFF6FF', color:'#2563EB' },
+};
+
+// ═══ CAMPOS POR ADMINISTRADORA + TIPO ═══
+const CAMPOS = {
+  bradesco_pf: [
+    { section: 'Dados Pessoais' },
+    { id:'cpf',               label:'CPF',                  type:'text',   placeholder:'000.000.000-00', required:true, mask:'cpf' },
+    { id:'nome_completo',     label:'Nome Completo',         type:'text',   placeholder:'Nome completo',  required:true },
+    { id:'data_nascimento',   label:'Data de Nascimento',    type:'date',   required:true },
+    { id:'nacionalidade',     label:'Nacionalidade',         type:'text',   placeholder:'Brasileira',     required:true },
+    { id:'nome_pai',          label:'Nome do Pai',           type:'text',   placeholder:'Se ausente, escreva Ausente' },
+    { id:'nome_mae',          label:'Nome da Mãe',           type:'text',   placeholder:'Nome da mãe',    required:true },
+    { section: 'Estado Civil' },
+    { id:'estado_civil',      label:'Estado Civil',          type:'select', options:['Solteiro(a)','Casado(a)','Divorciado(a)','Viúvo(a)','Outros'], required:true },
+    { conjugeBlock: true },
+    { id:'nome_conjuge',           label:'Nome do Cônjuge',        type:'text',   placeholder:'Nome completo' },
+    { id:'cpf_conjuge',            label:'CPF do Cônjuge',         type:'text',   placeholder:'000.000.000-00', mask:'cpf' },
+    { id:'rg_conjuge',             label:'RG do Cônjuge',          type:'text',   placeholder:'Número do RG' },
+    { id:'data_nascimento_conjuge',label:'Data Nasc. Cônjuge',     type:'date' },
+    { conjugeBlockEnd: true },
+    { section: 'Profissão e Renda' },
+    { id:'nome_empresa',      label:'Empresa onde Trabalha', type:'text',   placeholder:'Nome da empresa', required:true },
+    { id:'data_admissao',     label:'Data de Admissão',      type:'date',   required:true },
+    { id:'renda_mensal',      label:'Renda Mensal',          type:'text',   placeholder:'R$ 0,00',         required:true, mask:'currency' },
+    { section: 'Endereço' },
+    { id:'cep',               label:'CEP',                   type:'text',   placeholder:'00000-000',       required:true, cep:true },
+    { id:'logradouro',        label:'Logradouro',            type:'text',   placeholder:'Rua, Avenida...', required:true },
+    { id:'numero',            label:'Número',                type:'text',   placeholder:'123',             required:true },
+    { id:'complemento',       label:'Complemento',           type:'text',   placeholder:'Apto, Bloco...' },
+    { id:'bairro',            label:'Bairro',                type:'text',   placeholder:'Bairro',          required:true },
+    { id:'cidade',            label:'Cidade',                type:'text',   placeholder:'Cidade',          required:true },
+    { id:'estado',            label:'Estado',                type:'text',   placeholder:'SP',              required:true, maxlen:2 },
+    { id:'tempo_residencia',  label:'Tempo de Residência',   type:'text',   placeholder:'ex: 2 anos',      required:true },
+    { section: 'Contato e Pagamento' },
+    { id:'email',             label:'E-mail',                type:'email',  placeholder:'email@exemplo.com', required:true },
+    { id:'celular',           label:'Celular',               type:'text',   placeholder:'(11) 99999-9999',   required:true, mask:'phone' },
+    { id:'forma_pagamento',   label:'Forma de Pagamento',    type:'text',   placeholder:'Débito em conta, boleto...', required:true },
+    { id:'deseja_seguro',     label:'Deseja Seguro?',        type:'select', options:['Sim','Não'],           required:true },
+  ],
+  bradesco_pj: [
+    { section: 'Dados da Empresa' },
+    { id:'cnpj',                    label:'CNPJ',                            type:'text',   placeholder:'00.000.000/0001-00', required:true, mask:'cnpj' },
+    { id:'razao_social',            label:'Razão Social',                    type:'text',   placeholder:'Razão Social',       required:true },
+    { id:'nome_fantasia',           label:'Nome Fantasia',                   type:'text',   placeholder:'Nome Fantasia',      required:true },
+    { id:'ramo_atividade',          label:'Ramo de Atividade / O que fazem',type:'text',   placeholder:'Descreva a atividade', required:true },
+    { section: 'Sócio Administrador' },
+    { id:'socio_nome',              label:'Nome Completo do Sócio',         type:'text',   placeholder:'Nome completo',      required:true },
+    { id:'socio_cpf',               label:'CPF do Sócio',                   type:'text',   placeholder:'000.000.000-00',     required:true, mask:'cpf' },
+    { id:'socio_data_nascimento',   label:'Data de Nascimento do Sócio',   type:'date',   required:true },
+    { id:'socio_tipo_documento',    label:'Tipo de Documento',              type:'select', options:['RG','CNH'],           required:true },
+    { id:'socio_numero_documento',  label:'Número do Documento',            type:'text',   placeholder:'Número',             required:true },
+    { id:'socio_percentual_empresa',label:'Percentual na Empresa (%)',      type:'text',   placeholder:'50',                 required:true },
+    { id:'socio_estado_civil',      label:'Estado Civil do Sócio',          type:'select', options:['Solteiro(a)','Casado(a)','Divorciado(a)','Viúvo(a)','Outros'], required:true },
+    { id:'socio_nome_conjuge',      label:'Nome do Cônjuge',                type:'text',   placeholder:'Se aplicável' },
+    { id:'socio_cpf_conjuge',       label:'CPF do Cônjuge',                 type:'text',   placeholder:'000.000.000-00', mask:'cpf' },
+    { section: 'Contato' },
+    { id:'email',                   label:'E-mail',                         type:'email',  placeholder:'email@exemplo.com', required:true },
+    { id:'celular',                 label:'Celular',                        type:'text',   placeholder:'(11) 99999-9999',   required:true, mask:'phone' },
+    { section: 'Endereço' },
+    { id:'cep',                     label:'CEP',                            type:'text',   placeholder:'00000-000',          required:true, cep:true },
+    { id:'logradouro',              label:'Logradouro',                     type:'text',   placeholder:'Rua, Avenida...',    required:true },
+    { id:'numero',                  label:'Número',                         type:'text',   placeholder:'123',                required:true },
+    { id:'complemento',             label:'Complemento',                    type:'text',   placeholder:'Apto, Bloco...' },
+    { id:'bairro',                  label:'Bairro',                         type:'text',   placeholder:'Bairro',             required:true },
+    { id:'cidade',                  label:'Cidade',                         type:'text',   placeholder:'Cidade',             required:true },
+    { id:'estado',                  label:'Estado',                         type:'text',   placeholder:'SP',                 required:true, maxlen:2 },
+    { section: 'Pagamento' },
+    { id:'forma_pagamento',         label:'Forma de Pagamento',             type:'text',   placeholder:'Débito em conta, boleto...', required:true },
+    { id:'deseja_seguro',           label:'Deseja Seguro?',                 type:'select', options:['Sim','Não'],           required:true },
+  ],
+  itau_pf: [
+    { section: 'Dados Pessoais' },
+    { id:'cpf',               label:'CPF',                  type:'text',   placeholder:'000.000.000-00', required:true, mask:'cpf' },
+    { id:'nome_completo',     label:'Nome Completo',         type:'text',   placeholder:'Nome completo',  required:true },
+    { id:'data_nascimento',   label:'Data de Nascimento',    type:'date',   required:true },
+    { id:'tipo_documento',    label:'Tipo de Documento',     type:'select', options:['RG','CNH','Outros'], required:true },
+    { id:'numero_documento',  label:'Número do Documento',   type:'text',   placeholder:'Número',        required:true },
+    { id:'data_emissao',      label:'Data de Emissão',       type:'date',   required:true },
+    { id:'orgao_expedidor',   label:'Órgão Expedidor',       type:'text',   placeholder:'Ex.: SSP/SP',  required:true },
+    { id:'sexo',              label:'Sexo',                  type:'select', options:['Masculino','Feminino','Outro'], required:true },
+    { id:'nacionalidade',     label:'Nacionalidade',         type:'select', options:['Brasileiro(a)','Estrangeiro(a)'], required:true },
+    { section: 'Estado Civil' },
+    { id:'estado_civil',      label:'Estado Civil',          type:'select', options:['Solteiro(a)','Casado(a)','Divorciado(a)','Viúvo(a)','União Estável','Outros'], required:true },
+    { conjugeBlock: true },
+    { id:'nome_conjuge',           label:'Nome do Cônjuge',        type:'text',   placeholder:'Nome completo' },
+    { id:'cpf_conjuge',            label:'CPF do Cônjuge',         type:'text',   placeholder:'000.000.000-00', mask:'cpf' },
+    { id:'rg_conjuge',             label:'RG do Cônjuge',          type:'text',   placeholder:'Número do RG' },
+    { id:'data_nascimento_conjuge',label:'Data Nasc. Cônjuge',     type:'date' },
+    { conjugeBlockEnd: true },
+    { section: 'Endereço Residencial' },
+    { id:'cep',               label:'CEP',                   type:'text',   placeholder:'00000-000',       required:true, cep:true },
+    { id:'tipo_residencia',   label:'Tipo de Residência',    type:'select', options:['Própria','Alugada','Financiada','Outros'], required:true },
+    { id:'logradouro',        label:'Logradouro',            type:'text',   placeholder:'Rua, Avenida...', required:true },
+    { id:'numero',            label:'Número',                type:'text',   placeholder:'123',             required:true },
+    { id:'complemento',       label:'Complemento',           type:'text',   placeholder:'Apto, Bloco...' },
+    { id:'bairro',            label:'Bairro',                type:'text',   placeholder:'Bairro',          required:true },
+    { id:'estado',            label:'Estado',                type:'select', options:UF_LIST,               required:true },
+    { id:'cidade',            label:'Cidade',                type:'text',   placeholder:'Cidade',          required:true },
+    { section: 'Contato' },
+    { id:'ddd',               label:'DDD',                   type:'text',   placeholder:'11', maxlen:2, required:true },
+    { id:'celular',           label:'Celular',               type:'text',   placeholder:'99999-9999',     required:true, mask:'phone' },
+    { id:'email',             label:'E-mail',                type:'email',  placeholder:'email@exemplo.com', required:true },
+    { section: 'Dados Comerciais' },
+    { id:'profissao',         label:'Profissão',             type:'text',   placeholder:'Sua profissão',  required:true },
+    { id:'renda_mensal',      label:'Renda Mensal',          type:'text',   placeholder:'R$ 0,00',         required:true, mask:'currency' },
+    { id:'patrimonio',        label:'Patrimônio',            type:'text',   placeholder:'R$ 0,00',         required:true, mask:'currency' },
+    { section: '1° Pagamento' },
+    { id:'forma_pagamento_1', label:'Forma de Pagamento',    type:'select', options:['Boleto','Débito em Conta','Cartão de Crédito'], required:true },
+    { section: 'Pagamento do Plano (exceto 1°)' },
+    { id:'forma_pagamento_plano', label:'Forma de Pagamento',type:'select', options:['Boleto Bancário','Débito em Conta','Cartão de Crédito'], required:true },
+    { section: 'Resgate (Encerramento do Grupo) — Opcional' },
+    { id:'banco_resgate',     label:'Banco',                 type:'text',   placeholder:'Ex.: Itaú' },
+    { id:'agencia_resgate',   label:'Agência',               type:'text',   placeholder:'0000' },
+    { id:'conta_resgate',     label:'Conta Corrente',        type:'text',   placeholder:'00000-0' },
+    { section: 'Seguro Consórcio' },
+    { id:'aceita_seguro',     label:'Está de acordo com o seguro?', type:'select', options:['Sim','Não'], required:true },
+  ],
+  itau_pj: [
+    { section: 'Dados da Empresa' },
+    { id:'cnpj',                 label:'CNPJ',                            type:'text',   placeholder:'00.000.000/0001-00', required:true, mask:'cnpj' },
+    { id:'data_constituicao',    label:'Data de Constituição',            type:'date',   required:true },
+    { id:'ramo_atividade',       label:'Ramo de Atividade',               type:'select', options:['Comércio','Indústria','Serviços','Outros'], required:true },
+    { id:'razao_social',         label:'Razão Social',                    type:'text',   placeholder:'Razão Social',       required:true },
+    { id:'faturamento_12m',      label:'Faturamento (Últ. 12 meses)',     type:'text',   placeholder:'R$ 0,00',          required:true, mask:'currency' },
+    { id:'inscricao_estadual',   label:'Inscrição Estadual',              type:'text',   placeholder:'Inscrição Estadual' },
+    { id:'inscricao_municipal',  label:'Inscrição Municipal',             type:'text',   placeholder:'Inscrição Municipal' },
+    { id:'valor_capital',        label:'Valor Capital',                   type:'text',   placeholder:'R$ 0,00', mask:'currency' },
+    { id:'cnae_principal',       label:'Atividade Principal (CNAE)',      type:'text',   placeholder:'0000-0/00',         required:true },
+    { id:'natureza_juridica',    label:'Natureza Jurídica',               type:'text',   placeholder:'Natureza Jurídica',  required:true },
+    { section: '1° Sócio (Obrigatório)' },
+    { id:'socio1_nome',                label:'Nome do Sócio',                   type:'text',   required:true },
+    { id:'socio1_administrador',       label:'Sócio Administrador',             type:'select', options:['Sim','Não'], required:true },
+    { id:'socio1_cpf_cnpj',            label:'CPF/CNPJ',                        type:'text',   placeholder:'000.000.000-00', required:true, mask:'cpf' },
+    { id:'socio1_rg',                  label:'RG',                              type:'text',   required:true },
+    { id:'socio1_data_emissao_rg',     label:'Data de Emissão RG',              type:'date',   required:true },
+    { id:'socio1_orgao_expedidor',     label:'Órgão Expedidor',                 type:'text',   placeholder:'SSP/SP', required:true },
+    { id:'socio1_data_nascimento',     label:'Data de Nascimento',              type:'date',   required:true },
+    { id:'socio1_nome_pai',            label:'Nome do Pai',                     type:'text',   required:true },
+    { id:'socio1_nome_mae',            label:'Nome da Mãe',                     type:'text',   required:true },
+    { id:'socio1_data_entrada',        label:'Data de Entrada como Sócio',      type:'date',   required:true },
+    { id:'socio1_participacao',        label:'Participação (%)',                type:'text',   placeholder:'50', required:true },
+    { section: '2° Sócio (Opcional)' },
+    { id:'socio2_nome',                label:'Nome do Sócio',                   type:'text' },
+    { id:'socio2_administrador',       label:'Sócio Administrador',             type:'select', options:['Sim','Não'] },
+    { id:'socio2_cpf_cnpj',            label:'CPF/CNPJ',                        type:'text',   placeholder:'000.000.000-00', mask:'cpf' },
+    { id:'socio2_rg',                  label:'RG',                              type:'text' },
+    { id:'socio2_data_emissao_rg',     label:'Data de Emissão RG',              type:'date' },
+    { id:'socio2_orgao_expedidor',     label:'Órgão Expedidor',                 type:'text',   placeholder:'SSP/SP' },
+    { id:'socio2_data_nascimento',     label:'Data de Nascimento',              type:'date' },
+    { id:'socio2_nome_pai',            label:'Nome do Pai',                     type:'text' },
+    { id:'socio2_nome_mae',            label:'Nome da Mãe',                     type:'text' },
+    { id:'socio2_data_entrada',        label:'Data de Entrada como Sócio',      type:'date' },
+    { id:'socio2_participacao',        label:'Participação (%)',                type:'text',   placeholder:'50' },
+    { section: 'Dados do Endereço' },
+    { id:'cep',                         label:'CEP',                            type:'text',   placeholder:'00000-000', required:true, cep:true },
+    { id:'endereco_exterior',           label:'Possui Endereço Fiscal no Exterior?', type:'select', options:['Não','Sim'], required:true },
+    { id:'logradouro',                  label:'Logradouro',                     type:'text',   placeholder:'Rua, Avenida...', required:true },
+    { id:'numero',                      label:'Número',                         type:'text',   placeholder:'123',          required:true },
+    { id:'complemento',                 label:'Complemento',                    type:'text',   placeholder:'Apto, Bloco...' },
+    { id:'bairro',                      label:'Bairro',                         type:'text',   placeholder:'Bairro',       required:true },
+    { id:'estado',                      label:'Estado',                         type:'select', options:UF_LIST,               required:true },
+    { id:'cidade',                      label:'Cidade',                         type:'text',   placeholder:'Cidade',       required:true },
+    { section: 'Contato' },
+    { id:'ddd_telefone',                label:'DDD',                            type:'text',   placeholder:'11', maxlen:2 },
+    { id:'telefone',                    label:'Telefone',                       type:'text',   placeholder:'3333-4444', mask:'phone' },
+    { id:'ramal',                       label:'Ramal',                          type:'text',   placeholder:'1234' },
+    { id:'ddd_fax',                     label:'DDD (FAX)',                      type:'text',   placeholder:'11', maxlen:2 },
+    { id:'fax',                         label:'FAX',                            type:'text',   placeholder:'3333-4444', mask:'phone' },
+    { id:'ramal_fax',                   label:'Ramal FAX',                      type:'text',   placeholder:'1234' },
+    { id:'ddd_celular',                 label:'DDD (Celular)',                  type:'text',   placeholder:'11', maxlen:2 },
+    { id:'celular',                     label:'Celular',                        type:'text',   placeholder:'99999-9999', required:true, mask:'phone' },
+    { id:'email',                       label:'E-mail',                         type:'email',  placeholder:'email@exemplo.com', required:true },
+    { section: '1° Pagamento' },
+    { id:'forma_pagamento_1',           label:'Forma de Pagamento',             type:'select', options:['Boleto','Débito em Conta'], required:true },
+    { section: 'Pagamento do Plano (Exceto 1° Pagamento)' },
+    { id:'forma_pagamento_plano',       label:'Forma de Pagamento',             type:'select', options:['Boleto Bancário','Débito em Conta'], required:true },
+    { section: 'Resgate (Encerramento do Grupo) — Opcional' },
+    { id:'banco_resgate',               label:'Banco',                          type:'text',   placeholder:'Ex.: Itaú' },
+    { id:'agencia_resgate',             label:'Agência',                        type:'text',   placeholder:'0000' },
+    { id:'conta_resgate',               label:'Conta Corrente',                 type:'text',   placeholder:'00000-0' },
+  ],
+  porto_pf: [
+    { section: 'Ficha Cadastral' },
+    { id:'cpf',               label:'CPF',                  type:'text',   placeholder:'000.000.000-00', required:true, mask:'cpf' },
+    { id:'nome_completo',     label:'Nome Completo',         type:'text',   placeholder:'Nome completo',  required:true, pattern:'[A-Za-zÀ-ÿ ]+' },
+    { id:'data_nascimento',   label:'Data de Nascimento',    type:'date',   required:true },
+    { section: 'Estado Civil' },
+    { id:'estado_civil',      label:'Estado Civil',          type:'select', options:['Solteiro(a)','Casado(a)','Divorciado(a)','Viúvo(a)','União Estável','Outros'], required:true },
+    { conjugeBlock: true },
+    { id:'nome_conjuge',           label:'Nome do Cônjuge',        type:'text',   placeholder:'Nome completo' },
+    { id:'cpf_conjuge',            label:'CPF do Cônjuge',         type:'text',   placeholder:'000.000.000-00', mask:'cpf' },
+    { id:'rg_conjuge',             label:'RG do Cônjuge',          type:'text',   placeholder:'Número do RG' },
+    { id:'data_nascimento_conjuge',label:'Data Nasc. Cônjuge',     type:'date' },
+    { conjugeBlockEnd: true },
+    { id:'email',             label:'E-mail',                type:'email',  placeholder:'email@exemplo.com', required:true },
+    { id:'confirme_email',    label:'Confirme seu e-mail',   type:'email',  placeholder:'Confirme o e-mail', required:true },
+    { section: 'Contato (preencha ao menos o Celular)' },
+    { id:'tel_residencial',   label:'Telefone Residencial',  type:'text',   placeholder:'(11) 3333-4444', mask:'phone' },
+    { id:'tel_comercial',     label:'Telefone Comercial',    type:'text',   placeholder:'(11) 3333-4444', mask:'phone' },
+    { id:'celular',           label:'Celular',               type:'text',   placeholder:'(11) 99999-9999', required:true, mask:'phone' },
+    { id:'celular2',          label:'Celular 2',             type:'text',   placeholder:'(11) 99999-9999', mask:'phone' },
+    { section: 'Documento de Identificação' },
+    { id:'tipo_documento',    label:'Documento',             type:'select', options:['RG','CNH','Outros'], required:true },
+    { id:'numero_documento',  label:'Número do documento',   type:'text',   required:true },
+    { id:'orgao_emissor_uf',  label:'Órgão emissor/UF',      type:'text',   placeholder:'Ex.: SSP/SP', required:true },
+    { id:'data_emissao',      label:'Data de Emissão',       type:'date',   required:true },
+    { id:'nacionalidade',     label:'Nacionalidade',         type:'select', options:['Brasileiro(a)','Estrangeiro(a)'], required:true },
+    { id:'cidade_nascimento', label:'Cidade de Nascimento',  type:'text',   required:true },
+    { id:'nome_mae',          label:'Nome da Mãe',           type:'text',   required:true, pattern:'[A-Za-zÀ-ÿ ]+' },
+    { section: 'Remuneração e Profissão' },
+    { id:'remuneracao',       label:'Remuneração',           type:'text',   placeholder:'R$ 0,00', required:true, mask:'currency' },
+    { id:'profissao',         label:'Profissão',             type:'text',   required:true },
+    { section: 'Endereço Residencial' },
+    { id:'cep',               label:'CEP',                   type:'text',   placeholder:'00000-000', required:true, cep:true },
+    { id:'tipo_logradouro',   label:'Tipo Logradouro',       type:'text',   placeholder:'Ex.: Rua', required:true },
+    { id:'endereco',          label:'Endereço',              type:'text',   placeholder:'Ex.: Alves da Silva', required:true },
+    { id:'numero',            label:'Número',                type:'text',   placeholder:'123', required:true },
+    { id:'complemento',       label:'Complemento',           type:'text',   placeholder:'Apto, Bloco...' },
+    { id:'bairro',            label:'Bairro',                type:'text',   required:true },
+    { id:'cidade',            label:'Cidade',                type:'text',   required:true },
+    { id:'estado',            label:'Estado',                type:'select', options:UF_LIST, required:true },
+    { section: 'Pagamento' },
+    { id:'forma_pagamento_1', label:'Forma de Pagamento da 1° parcela', type:'select', options:['Boleto','Pix'], required:true },
+    { id:'forma_pagamento_2', label:'Forma de pagamento da 2° parcela em diante', type:'select', options:['Débito automático em conta corrente','Boleto Bancário'], required:true },
+    { section: 'Dados Bancários do 1° Titular (obrigatório)' },
+    { id:'nome_correntista',  label:'Nome Correntista',      type:'text',   required:true },
+    { id:'cpf_correntista',   label:'CPF do Correntista',    type:'text',   placeholder:'000.000.000-00', required:true, mask:'cpf' },
+    { id:'banco',             label:'Nome do Banco',         type:'select', options:BANCOS, required:true },
+    { id:'agencia',           label:'Agência (sem dígito)',  type:'text',   required:true },
+    { id:'conta_corrente',    label:'Conta Corrente',        type:'text',   required:true },
+    { section: 'Seguro' },
+    { id:'aceita_seguro',     label:'Está de acordo com o seguro?', type:'select', options:['Sim','Não'], required:true },
+  ],
+  porto_pj: [
+    { section: 'Ficha Cadastral' },
+    { id:'cnpj',               label:'CNPJ',                            type:'text',   placeholder:'00.000.000/0001-00', required:true, mask:'cnpj' },
+    { id:'razao_social',       label:'Razão Social',                    type:'text',   required:true, pattern:'[A-Za-zÀ-ÿ ]+' },
+    { id:'inscricao_estadual', label:'Inscrição Estadual (somente números)', type:'text', placeholder:'Inscrição Estadual' },
+    { id:'data_constituicao',  label:'Data Constituição',               type:'date',   required:true },
+    { id:'email',              label:'E-mail',                          type:'email',  required:true },
+    { id:'confirme_email',     label:'Confirme seu e-mail',             type:'email',  required:true },
+    { section: 'Contato' },
+    { id:'tel_comercial',      label:'Telefone Comercial',              type:'text',   placeholder:'(11) 3333-4444', mask:'phone' },
+    { id:'celular',            label:'Celular',                         type:'text',   placeholder:'(11) 99999-9999', required:true, mask:'phone' },
+    { id:'celular2',           label:'Celular 2',                       type:'text',   placeholder:'(11) 99999-9999', mask:'phone' },
+    { section: 'Atividade' },
+    { id:'ramo_atividade',     label:'Ramo de Atividade',               type:'select', options:['Consultoria','Comércio','Indústria','Serviços','Outros'], required:true },
+    { id:'receita_mensal',     label:'Receita Mensal',                  type:'text',   placeholder:'R$ 0,00', required:true, mask:'currency' },
+    { section: 'Endereço' },
+    { id:'cep',                label:'CEP',                             type:'text',   placeholder:'00000-000', required:true, cep:true },
+    { id:'tipo_logradouro',    label:'Tipo Logradouro',                 type:'text',   placeholder:'Ex.: Rua', required:true },
+    { id:'endereco',           label:'Endereço',                        type:'text',   placeholder:'Ex.: Alves da Silva', required:true },
+    { id:'numero',             label:'Número',                          type:'text',   placeholder:'123', required:true },
+    { id:'complemento',        label:'Complemento',                     type:'text',   placeholder:'Apto, Bloco...' },
+    { id:'bairro',             label:'Bairro',                          type:'text',   required:true },
+    { id:'cidade',             label:'Cidade',                          type:'text',   required:true },
+    { id:'estado',             label:'Estado',                          type:'select', options:UF_LIST, required:true },
+    { section: 'Sócio Administrador (obrigatório)' },
+    { id:'socio_nome',         label:'Nome do Sócio',                   type:'text',   required:true },
+    { id:'socio_cpf',          label:'CPF do Sócio',                    type:'text',   placeholder:'000.000.000-00', required:true, mask:'cpf' },
+    { section: 'Pagamento' },
+    { id:'forma_pagamento_1',  label:'Forma de Pagamento da 1° parcela', type:'select', options:['Boleto','Pix'], required:true },
+    { id:'forma_pagamento_2',  label:'Forma de pagamento 2° parcela em diante', type:'select', options:['Débito automático em conta corrente','Boleto bancário'], required:true },
+    { section: 'Dados Bancários do Contratante' },
+    { id:'nome_correntista',   label:'Nome Correntista',                type:'text',   required:true },
+    { id:'cnpj_correntista',   label:'CNPJ do Correntista',             type:'text',   placeholder:'00.000.000/0001-00', required:true, mask:'cnpj' },
+    { id:'banco',              label:'Nome do Banco',                   type:'select', options:BANCOS, required:true },
+    { id:'agencia',            label:'Agência',                         type:'text',   required:true },
+    { id:'conta_corrente',     label:'Conta Corrente',                  type:'text',   required:true },
+  ],
+};
+
+// ═══ FUNÇÕES DE NAVEGAÇÃO E RENDERIZAÇÃO ═══
+function showMsg(elId, text, type) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  el.innerHTML = text ? `<div class="msg ${type}">${text}</div>` : '';
+}
+function genProtocol() {
+  const d = new Date();
+  const yy = String(d.getFullYear()).slice(2);
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const dd = String(d.getDate()).padStart(2,'0');
+  const rnd = String(Math.floor(Math.random()*100000)).padStart(5,'0');
+  return `MA${yy}${mm}${dd}-${rnd}`;
+}
+
+function updateProgressUI(step) {
+  document.getElementById('progress').style.width = (step === 1 ? '50%' : '100%');
+}
+
+function goStep(n) {
+  if (n > STATE.step) {
+    if (STATE.step === 1 && !STATE.adm) { showMsg('msg-step1','Selecione uma administradora.','error'); return; }
+  }
+  document.getElementById('step-'+STATE.step).classList.remove('active');
+  STATE.step = n;
+  const target = document.getElementById('step-'+n) || document.getElementById('step-success');
+  target.classList.add('active');
+  updateProgressUI(n);
+  window.scrollTo({top:0, behavior:'smooth'});
+  if (n === 2 && STATE.adm) renderFormFields();
+}
+
+function selectAdm(adm) {
+  STATE.adm = adm;
+  document.querySelectorAll('.adm-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('adm-'+adm).classList.add('selected');
+  showMsg('msg-step1','','');
+}
+
+function selectTipo(tipo) {
+  STATE.tipo = tipo;
+  document.getElementById('tipo-pf').className = 'tipo-card' + (tipo==='pf'?' selected':'');
+  document.getElementById('tipo-pj').className = 'tipo-card' + (tipo==='pj'?' selected':'');
+  const pfIcon = document.querySelector('#tipo-pf .tipo-icon svg');
+  const pjIcon = document.querySelector('#tipo-pj .tipo-icon svg');
+  if (pfIcon) pfIcon.setAttribute('stroke', tipo==='pf'?'#4DBCC8':'var(--text3)');
+  if (pjIcon) pjIcon.setAttribute('stroke', tipo==='pj'?'#4DBCC8':'var(--text3)');
+  renderFormFields();
+}
+
+function toggleConjugeFields() {
+  const estadoCivil = document.getElementById('f-estado_civil');
+  const conjugeDiv = document.getElementById('conjuge-fields');
+  if (!estadoCivil || !conjugeDiv) return;
+  if (estadoCivil.value === 'Casado(a)') {
+    conjugeDiv.style.display = 'block';
+  } else {
+    conjugeDiv.style.display = 'none';
+    ['f-nome_conjuge','f-cpf_conjuge','f-rg_conjuge','f-data_nascimento_conjuge'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+  }
+}
+
+function renderFormFields() {
+  if (!STATE.adm) return;
+  const key = `${STATE.adm}_${STATE.tipo}`;
+  const campos = CAMPOS[key] || [];
+  const container = document.getElementById('form-fields-container');
+  const cfg = ADM_CONFIG[STATE.adm] || {};
+  const chip = document.getElementById('adm-chip');
+  if (chip) { chip.textContent=cfg.label||STATE.adm; chip.style.background=cfg.bg; chip.style.color=cfg.color; }
+
+  let html = '';
+  let inGrid = false;
+  let inConjugeBlock = false;
+
+  campos.forEach(c => {
+    // Início do bloco do cônjuge
+    if (c.conjugeBlock) {
+      if (inGrid) { html += '</div>'; inGrid = false; }
+      html += '<div id="conjuge-fields" style="display:none;"><div class="field-grid">';
+      inGrid = true;
+      inConjugeBlock = true;
+      return;
+    }
+    // Fim do bloco do cônjuge
+    if (c.conjugeBlockEnd) {
+      if (inGrid) { html += '</div>'; inGrid = false; }
+      html += '</div>'; // fecha conjuge-fields
+      inConjugeBlock = false;
+      return;
+    }
+    if (c.section) {
+      if (inGrid) { html += '</div>'; inGrid = false; }
+      html += `<div class="section-title" style="margin-top:20px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>${c.section}</div>`;
+      html += '<div class="field-grid">';
+      inGrid = true;
+      return;
+    }
+    if (!inGrid) { html += '<div class="field-grid">'; inGrid = true; }
+    const req = c.required ? '<span class="req">*</span>' : '';
+    const cls = c.span2 ? ' field span-2' : ' field';
+    let maskHandler = '';
+    if (c.mask === 'phone') maskHandler = 'oninput="maskPhone(this)"';
+    else if (c.mask === 'currency') maskHandler = 'oninput="maskCurrency(this)"';
+    else if (c.mask === 'cpf') maskHandler = 'oninput="maskCPF(this)"';
+    else if (c.mask === 'cnpj') maskHandler = 'oninput="maskCNPJ(this)"';
+    else if (c.cep) maskHandler = 'oninput="maskCEP(this)"';
+
+    if (c.type === 'select') {
+      const opts = (c.options||[]).map(o => `<option value="${o}">${o}</option>`).join('');
+      const onChange = (c.id === 'estado_civil') ? 'onchange="toggleConjugeFields()"' : '';
+      html += `<div class="${cls}"><label class="field-label" for="f-${c.id}">${c.label} ${req}</label><select class="field-select" id="f-${c.id}" ${onChange}><option value="">Selecione...</option>${opts}</select></div>`;
+    } else {
+      const maxl = c.maxlen ? `maxlength="${c.maxlen}"` : '';
+      const pattern = c.pattern ? `pattern="${c.pattern}"` : '';
+      html += `<div class="${cls}"><label class="field-label" for="f-${c.id}">${c.label} ${req}</label><input class="field-input" id="f-${c.id}" type="${c.type}" placeholder="${c.placeholder||''}" ${maskHandler} ${maxl} ${pattern}></div>`;
+    }
+  });
+  if (inGrid) html += '</div>';
+  container.innerHTML = html;
+
+  toggleConjugeFields();
+
+  campos.forEach(c => {
+    if (c.cep) {
+      const el = document.getElementById('f-' + c.id);
+      if (el) el.addEventListener('blur', function() { buscarCEP(this.value); });
+    }
+  });
+}
+
+function validateStep2() {
+  if (!STATE.adm) { showMsg('msg-step2','Selecione uma administradora.','error'); return false; }
+  const key = `${STATE.adm}_${STATE.tipo}`;
+  const campos = CAMPOS[key] || [];
+  const missing = [];
+  campos.forEach(c => {
+    if (c.section || c.conjugeBlock || c.conjugeBlockEnd || !c.required) return;
+    const el = document.getElementById('f-'+c.id);
+    if (!el || !el.value.trim()) missing.push(c.label);
+  });
+  if (missing.length) {
+    showMsg('msg-step2',`Preencha os campos obrigatórios: <strong>${missing.slice(0,4).join(', ')}${missing.length>4?'...':''}</strong>`,'error');
+    return false;
+  }
+  const emailEl = document.getElementById('f-email');
+  const confEmailEl = document.getElementById('f-confirme_email');
+  if (emailEl && confEmailEl && emailEl.value.trim() !== confEmailEl.value.trim()) {
+    showMsg('msg-step2','Os e-mails não conferem.','error');
+    return false;
+  }
+  if (!document.getElementById('lgpd-check').checked) {
+    showMsg('msg-step2','Você precisa autorizar o tratamento dos dados (LGPD) para continuar.','error');
+    return false;
+  }
+  showMsg('msg-step2','','');
+  return true;
+}
+
+async function submitForm() {
+  const btn = document.getElementById('btn-submit');
+  if (!validateStep2()) return;
+  btn.disabled = true; btn.textContent = 'Enviando...';
+  showMsg('msg-step2','Enviando sua adesão...','info');
+  try {
+    const key = `${STATE.adm}_${STATE.tipo}`;
+    const campos = CAMPOS[key] || [];
+    const dados = {};
+    campos.forEach(c => {
+      if (c.section || c.conjugeBlock || c.conjugeBlockEnd) return;
+      const el = document.getElementById('f-'+c.id);
+      dados[c.id] = el ? el.value.trim() : '';
+    });
+    const protocolo = genProtocol();
+    const payload = {
+      protocolo,
+      administradora: STATE.adm,
+      tipo_pessoa: STATE.tipo,
+      dados,
+      status: 'recebido',
+      criado_em: new Date().toISOString(),
+      nome_cliente: dados.nome_completo || dados.razao_social || '',
+      cpf_cnpj: dados.cpf || dados.cnpj || '',
+    };
+    const { error } = await sb.from('portal_adesoes').insert(payload);
+    if (error) throw error;
+    document.getElementById('step-2').classList.remove('active');
+    document.getElementById('step-success').classList.add('active');
+    updateProgressUI(3);
+    window.scrollTo({top:0, behavior:'smooth'});
+  } catch(e) {
+    showMsg('msg-step2','Erro ao enviar: '+(e.message||'tente novamente')+'.<br>Se o problema persistir, entre em contato com nossa equipe.','error');
+    btn.disabled = false; btn.textContent = 'Enviar Adesão';
+  }
+}
+
+function resetForm() {
+  STATE = { step:1, adm:null, tipo:'pf' };
+  document.querySelectorAll('.form-step').forEach(s=>s.classList.remove('active'));
+  document.getElementById('step-1').classList.add('active');
+  document.querySelectorAll('.adm-card').forEach(c=>c.classList.remove('selected'));
+  document.getElementById('form-fields-container').innerHTML = '';
+  document.getElementById('lgpd-check').checked = false;
+  showMsg('msg-step1','',''); showMsg('msg-step2','','');
+  updateProgressUI(1);
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+</script>
+</body>
+</html>
