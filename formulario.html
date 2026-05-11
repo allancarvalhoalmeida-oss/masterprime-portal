@@ -760,7 +760,7 @@ const CAMPOS = {
     { section: 'Pagamento do Plano (exceto 1°)' },
     { id:'forma_pagamento_plano', label:'Forma de Pagamento',type:'select', options:['Boleto Bancário','Débito em Conta','Cartão de Crédito'], required:true },
     { section: 'Resgate (Encerramento do Grupo) — Opcional' },
-    { id:'banco_resgate',     label:'Código do Banco',       type:'text',   placeholder:'000', maxlen:1, autocompleteBanco: true },
+    { id:'banco_resgate',     label:'Código do Banco',       type:'text',   placeholder:'000', maxlen:3, autocompleteBanco: true },
     { id:'agencia_resgate',   label:'Agência',               type:'text',   placeholder:'0000' },
     { id:'conta_resgate',     label:'Conta Corrente',        type:'text',   placeholder:'00000-0' },
     { section: 'Seguro Consórcio' },
@@ -876,7 +876,7 @@ const CAMPOS = {
     { section: 'Dados Bancários do 1° Titular (obrigatório)' },
     { id:'nome_correntista',  label:'Nome Correntista',      type:'text',   required:true },
     { id:'cpf_correntista',   label:'CPF do Correntista',    type:'text',   placeholder:'000.000.000-00', required:true, mask:'cpf' },
-    { id:'banco_codigo',      label:'Banco (código)',         type:'banco_codigo', placeholder:'000', required:true },
+    { id:'banco_codigo',      label:'Banco (código)',         type:'banco_codigo', placeholder:'000', maxlen:3, required:true },
     { id:'agencia',           label:'Agência (sem dígito)',  type:'text',   required:true },
     { id:'conta_corrente',    label:'Conta Corrente',        type:'text',   required:true },
     { section: 'Seguro' },
@@ -915,7 +915,7 @@ const CAMPOS = {
     { section: 'Dados Bancários do Contratante' },
     { id:'nome_correntista',   label:'Nome Correntista',                type:'text',   required:true },
     { id:'cnpj_correntista',   label:'CNPJ do Correntista',             type:'text',   placeholder:'00.000.000/0001-00', required:true, mask:'cnpj' },
-    { id:'banco_codigo',       label:'Banco (código)',                   type:'banco_codigo', placeholder:'000', required:true },
+    { id:'banco_codigo',       label:'Banco (código)',                   type:'banco_codigo', placeholder:'000', maxlen:3, required:true },
     { id:'agencia',            label:'Agência',                         type:'text',   required:true },
     { id:'conta_corrente',     label:'Conta Corrente',                  type:'text',   required:true },
   ],
@@ -1024,19 +1024,19 @@ function renderFormFields() {
     const req = c.required ? '<span class="req">*</span>' : '';
     const cls = c.span2 ? ' field span-2' : ' field';
     
-    // Caso especial: campo de banco com código
+    // Caso especial: campo de banco com código (Porto Seguro)
     if (c.type === 'banco_codigo') {
       html += `<div class="${cls}">
         <label class="field-label" for="f-${c.id}">${c.label} ${req}</label>
         <div class="banco-auto-fill">
-          <input class="field-input" id="f-${c.id}" type="text" placeholder="${c.placeholder||'000'}" maxlength="1" oninput="this.value=this.value.replace(/\\D/g,''); handleBancoCodigo(this)" onblur="handleBancoCodigo(this)">
+          <input class="field-input" id="f-${c.id}" type="text" placeholder="${c.placeholder||'000'}" maxlength="${c.maxlen||3}" oninput="this.value=this.value.replace(/\\D/g,''); handleBancoCodigo(this)" onblur="handleBancoCodigo(this)">
           <span class="banco-nome" id="banco-nome-${c.id}"></span>
         </div>
       </div>`;
       return;
     }
 
-    // Campo com autocompleteBanco (ex: banco_resgate)
+    // Campo com autocompleteBanco (ex: banco_resgate) - Itaú
     if (c.autocompleteBanco) {
       html += `<div class="${cls}">
         <label class="field-label" for="f-${c.id}">${c.label} ${req}</label>
