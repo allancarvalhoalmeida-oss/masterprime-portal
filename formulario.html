@@ -210,6 +210,25 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-ser
   margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border);
 }
 
+/* ═══ CAMPO DE BANCO COM CÓDIGO + NOME ABAIXO ═══ */
+.banco-auto-fill {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.banco-auto-fill .field-input {
+  width: 100%;
+}
+.banco-nome {
+  font-size: 13px;
+  color: var(--text);
+  background: var(--bg);
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  word-break: break-word;
+}
+
 @media (max-width: 680px) {
   .adm-grid { grid-template-columns: 1fr; }
   .field-grid { grid-template-columns: 1fr !important; }
@@ -314,7 +333,269 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let STATE = { step: 1, adm: null, tipo: 'pf' };
 const UF_LIST = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
-const BANCOS = ['Banco do Brasil','Bradesco','Caixa Econômica','Itaú','Santander','Sicoob','Sicredi','Outros'];
+
+// ═══ LISTA DE BANCOS (CÓDIGO → NOME) ═══
+const BANCOS_CODIGOS = {
+  '001': 'Banco do Brasil',
+  '003': 'Banco da Amazônia',
+  '004': 'Banco do Nordeste',
+  '012': 'Banco Inbursa',
+  '014': 'Natixis Brasil',
+  '019': 'Banco Azteca',
+  '021': 'BANESTES',
+  '024': 'Banco Bandepe',
+  '025': 'Banco Alfa',
+  '029': 'Banco Banerj',
+  '031': 'Banco Beg',
+  '033': 'Santander',
+  '036': 'Banco Bradesco BBI',
+  '037': 'Banco do Est. do Pará',
+  '040': 'Banco Cargill',
+  '041': 'Banrisul',
+  '044': 'Banco BVA',
+  '045': 'Banco Opportunity',
+  '047': 'Banco do Est. de Sergipe',
+  '062': 'Hipercard',
+  '063': 'Banco Ibi',
+  '065': 'Banco Lemon',
+  '066': 'Banco Morgan Stanley',
+  '069': 'Banco Cacique',
+  '070': 'BRB - Banco de Brasília',
+  '072': 'Banco Rural',
+  '073': 'Banco do Nordeste (BNB)',
+  '074': 'Banco J. Safra',
+  '075': 'Banco ABN AMRO',
+  '076': 'Banco KDB',
+  '077': 'Banco Inter',
+  '078': 'Banco Bonsucesso',
+  '079': 'Banco Original',
+  '080': 'Banco Modal',
+  '081': 'Banco BBM',
+  '082': 'Banco Topázio',
+  '083': 'Banco da China Brasil',
+  '084': 'Unicred',
+  '085': 'Cooperativa Central',
+  '087': 'Banco Cooperativo Sicredi',
+  '088': 'Banco Randon',
+  '089': 'Banco Renner',
+  '091': 'Central das Cooperativas',
+  '092': 'Banco BRJ',
+  '093': 'Banco Pólo',
+  '094': 'Banco Petra',
+  '095': 'Banco Confidence',
+  '096': 'Banco BM&F',
+  '097': 'Banco Cooperativo do Brasil',
+  '098': 'BancoCalJohn',
+  '099': 'Banco Original',
+  '100': 'Planner Corretora',
+  '101': 'Banco Renner',
+  '102': 'Banco Sogeral',
+  '104': 'Caixa Econômica Federal',
+  '107': 'Banco BBM',
+  '109': 'Banco Credibel',
+  '111': 'Banco Fibra',
+  '114': 'Banco Central do Brasil',
+  '117': 'Banco do Nordeste',
+  '119': 'Banco Western Union',
+  '120': 'Banco Rodobens',
+  '122': 'Banco AgriInvest',
+  '125': 'Banco Genial',
+  '127': 'Banco Codepe',
+  '128': 'Banco MS',
+  '129': 'Banco Itaucard',
+  '130': 'Banco Caruana',
+  '133': 'Banco Cresol',
+  '134': 'Banco Bradesco BBI',
+  '136': 'Banco Mutti',
+  '137': 'Banco Multisafra',
+  '139': 'Banco Intesa Sanpaolo',
+  '140': 'Banco Credit Suisse',
+  '141': 'Banco Nossa Caixa',
+  '142': 'Banco Alfa',
+  '143': 'Banco Treviso',
+  '144': 'Banco Bradesco BBI',
+  '145': 'Banco Sumitomo Mitsui',
+  '146': 'Banco de Crédito Brasil',
+  '147': 'Banco Fibra',
+  '148': 'Banco MultiStock',
+  '149': 'Banco Factual',
+  '150': 'Banco Indusval',
+  '151': 'Banco Nossa Caixa',
+  '152': 'Banco J. P. Morgan',
+  '153': 'Banco Investcorp',
+  '154': 'Banco BVA',
+  '157': 'Banco Capital',
+  '159': 'Banco Cifra',
+  '163': 'Banco Commerzbank',
+  '166': 'Banco Industrial do Brasil',
+  '168': 'Banco HSBC Brasil',
+  '169': 'Banco Ole',
+  '170': 'Banco Intercap',
+  '171': 'Banco Cooperativo Sicoob',
+  '172': 'Banco Alfa Invest',
+  '173': 'Banco Bradesco Private',
+  '174': 'Banco Bradesco Seguros',
+  '175': 'Banco Banrisul',
+  '177': 'Banco Guide',
+  '179': 'Banco Indusval',
+  '180': 'Banco Société Générale',
+  '183': 'Banco Intermedium',
+  '184': 'Banco BBM',
+  '188': 'Banco AT&T',
+  '190': 'Banco Servinvest',
+  '191': 'Banco Banrisul',
+  '193': 'Banco BTG Pactual',
+  '195': 'Banco Intercap',
+  '196': 'Banco Fair',
+  '197': 'Banco Fator',
+  '200': 'Banco Ficsa',
+  '201': 'Banco Intercap',
+  '204': 'Banco Western Union',
+  '205': 'Banco Bankpar',
+  '208': 'Banco Pactual',
+  '209': 'Banco Qualibank',
+  '213': 'Banco Arbi',
+  '214': 'Banco Ambev',
+  '215': 'Banco BBM',
+  '216': 'Banco Holandês',
+  '217': 'Banco John Deere',
+  '219': 'Banco BBM',
+  '220': 'Banco MultiStock',
+  '222': 'Banco Petrobas',
+  '223': 'Banco Rodobens',
+  '233': 'Banco Pine',
+  '237': 'Bradesco',
+  '241': 'Banco Clássico',
+  '243': 'Banco Mercantil do Brasil',
+  '246': 'Banco ABC Brasil',
+  '249': 'Banco Investcred',
+  '250': 'Banco Schahin',
+  '254': 'Banco Paraná',
+  '263': 'Banco Fator',
+  '265': 'Banco Inter-Atlântico',
+  '266': 'Banco Fibra',
+  '318': 'Banco BMG',
+  '320': 'Banco Industrial e Comercial',
+  '341': 'Itaú Unibanco',
+  '356': 'Banco ABN AMRO Real',
+  '366': 'Banco Société Générale',
+  '370': 'Banco WestLB',
+  '376': 'Banco J. P. Morgan',
+  '389': 'Banco Mercantil do Brasil',
+  '394': 'Banco BMG',
+  '399': 'Banco HSBC',
+  '409': 'Unibanco',
+  '412': 'Banco Capital',
+  '422': 'Banco Safra',
+  '453': 'Banco Rural',
+  '456': 'Banco Tokyo-Mitsubishi',
+  '464': 'Banco Sumitomo',
+  '477': 'Citibank',
+  '479': 'Banco Itaú BBA',
+  '487': 'Deutsche Bank',
+  '488': 'Banco Morgan Stanley',
+  '492': 'Banco ING',
+  '494': 'Banco de La Nación Argentina',
+  '495': 'Banco de La Provincia de Bs As',
+  '505': 'Banco Crédit Suisse',
+  '600': 'Banco Luso Brasileiro',
+  '604': 'Banco Industrial do Brasil',
+  '610': 'Banco VR',
+  '611': 'Banco Paulista',
+  '612': 'Banco Guanabara',
+  '613': 'Banco Pecúnia',
+  '623': 'Banco Pan',
+  '626': 'Banco Ficsa',
+  '630': 'Banco Intercap',
+  '633': 'Banco Rendimento',
+  '634': 'Banco Triângulo',
+  '637': 'Banco Sofisa',
+  '641': 'Banco Alvorada',
+  '643': 'Banco Pine',
+  '652': 'Banco BBM',
+  '653': 'Banco Indusval',
+  '654': 'Banco A. J. Renner',
+  '655': 'Banco Votorantim',
+  '707': 'Banco Daycoval',
+  '712': 'Banco Ourinvest',
+  '719': 'Banco Banif',
+  '720': 'Banco Maxinvest',
+  '721': 'Banco Credibel',
+  '724': 'Banco Porto Seguro',
+  '725': 'Banco Finansinos',
+  '726': 'Banco Santander Meridional',
+  '727': 'Banco United',
+  '728': 'Banco Kit Finance',
+  '729': 'Banco Fonte',
+  '730': 'Banco Comercial Uruguai',
+  '731': 'Banco Itapema',
+  '733': 'Banco das Nações',
+  '734': 'Banco Gerdau',
+  '735': 'Banco Pottencial',
+  '736': 'Banco Cooperforte',
+  '737': 'Banco Bonsucesso',
+  '738': 'Banco Morada',
+  '739': 'Banco BGN',
+  '740': 'Banco Barclays',
+  '741': 'Banco Ribeirão Preto',
+  '742': 'Banco Semear',
+  '743': 'Banco Sigma',
+  '744': 'Banco Itaú',
+  '745': 'Banco Citibank',
+  '746': 'Banco Modal',
+  '747': 'Banco Rabobank',
+  '748': 'Banco Cooperativo Sicredi',
+  '749': 'Banco La Nación Argentina',
+  '751': 'Scotiabank Brasil',
+  '752': 'Banco BNP Paribas',
+  '753': 'Banco Commerzbank',
+  '754': 'Banco BHD',
+  '755': 'Banco Merrill Lynch',
+  '756': 'Banco Cooperativo do Brasil',
+  '757': 'Banco KEB',
+  '758': 'Banco Safra',
+  '759': 'Banco Banif',
+  '760': 'Banco VR',
+  '761': 'Banco Bonsucesso',
+  '762': 'Banco do Japão',
+  '763': 'Banco Banrisul',
+  '764': 'Banco Morada',
+  '765': 'Banco Daycoval',
+  '766': 'Banco Triângulo',
+  '767': 'Banco Ourinvest',
+  '768': 'Banco Bradesco BBI',
+  '769': 'Banco Interunion',
+  '770': 'Banco BBM',
+  '771': 'Banco Rendimento',
+  '772': 'Banco Indusval',
+  '773': 'Banco Pecúnia',
+  '774': 'Banco Alfa',
+  '775': 'Banco Fibra',
+  '776': 'Banco Western Union',
+  '777': 'Banco Intercap',
+  '778': 'Banco Semear',
+  '779': 'Banco Cargill',
+  '780': 'Banco Topázio',
+  '781': 'Banco DaimlerChrysler',
+  '782': 'Banco BVA',
+  '783': 'Banco Petra',
+  '784': 'Banco Bradesco BBI',
+  '785': 'Banco BGN',
+  '786': 'Banco PSA Finance',
+  '787': 'Banco Pactual',
+  '788': 'Banco Modell',
+  '789': 'Banco Ceres',
+  '790': 'Banco BRJ',
+  '791': 'Banco BM&F',
+  '792': 'Banco Original',
+  '793': 'Banco Triunfo',
+  '794': 'Banco BVA',
+  '795': 'Banco Emblema',
+  '796': 'Banco John Deere',
+  '797': 'Banco Mercantil do Brasil',
+  '798': 'Banco Inter-Atlântico',
+  '799': 'Banco HSBC Brasil'
+};
 
 // ═══ MÁSCARAS ═══
 function maskCPF(el) { let v=el.value.replace(/\D/g,'').slice(0,11); if(v.length>9) v=v.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/,'$1.$2.$3-$4'); else if(v.length>6) v=v.replace(/(\d{3})(\d{3})(\d{1,3})/,'$1.$2.$3'); else if(v.length>3) v=v.replace(/(\d{3})(\d{1,3})/,'$1.$2'); el.value=v; }
@@ -322,6 +603,28 @@ function maskCNPJ(el) { let v=el.value.replace(/\D/g,'').slice(0,14); if(v.lengt
 function maskPhone(el) { let v=el.value.replace(/\D/g,'').slice(0,11); if(v.length===11) el.value=v.replace(/(\d{2})(\d{5})(\d{4})/,'($1) $2-$3'); else if(v.length===10) el.value=v.replace(/(\d{2})(\d{4})(\d{4})/,'($1) $2-$3'); else if(v.length>5) el.value=v.replace(/(\d{2})(\d{0,4})(\d{0,4})/,'($1) $2-$3'); else if(v.length>2) el.value=v.replace(/(\d{2})/,'($1) '); else el.value=v; }
 function maskCurrency(el) { let v=el.value.replace(/\D/g,''); if(!v){el.value='';return;} const intVal=parseInt(v,10); const formatted=(intVal/100).toFixed(2).replace('.',','); const parts=formatted.split(','); parts[0]=parts[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.'); el.value='R$ '+parts.join(','); }
 function maskCEP(el) { let v=el.value.replace(/\D/g,'').slice(0,8); if(v.length>5) v=v.replace(/(\d{5})(\d{1,3})/,'$1-$2'); el.value=v; }
+
+// ═══ BUSCAR BANCO POR CÓDIGO ═══
+function buscarBancoPorCodigo(codigo) {
+  if (!codigo) return null;
+  const nome = BANCOS_CODIGOS[codigo];
+  return nome || null;
+}
+
+function handleBancoCodigo(input) {
+  const codigo = input.value.replace(/\D/g,'');
+  const spanNome = input.parentNode.querySelector('.banco-nome');
+  if (spanNome) {
+    const nome = buscarBancoPorCodigo(codigo);
+    if (nome) {
+      spanNome.textContent = nome;
+      spanNome.style.color = 'var(--text)';
+    } else {
+      spanNome.textContent = codigo ? 'Banco não encontrado (código salvo)' : '';
+      spanNome.style.color = 'var(--text3)';
+    }
+  }
+}
 
 // ═══ PREENCHIMENTO AUTOMÁTICO DE ENDEREÇO VIA CEP ═══
 async function buscarCEP(cepValue) {
@@ -457,7 +760,7 @@ const CAMPOS = {
     { section: 'Pagamento do Plano (exceto 1°)' },
     { id:'forma_pagamento_plano', label:'Forma de Pagamento',type:'select', options:['Boleto Bancário','Débito em Conta','Cartão de Crédito'], required:true },
     { section: 'Resgate (Encerramento do Grupo) — Opcional' },
-    { id:'banco_resgate',     label:'Banco',                 type:'text',   placeholder:'Ex.: Itaú' },
+    { id:'banco_resgate',     label:'Código do Banco',       type:'text',   placeholder:'000', maxlen:1, autocompleteBanco: true },
     { id:'agencia_resgate',   label:'Agência',               type:'text',   placeholder:'0000' },
     { id:'conta_resgate',     label:'Conta Corrente',        type:'text',   placeholder:'00000-0' },
     { section: 'Seguro Consórcio' },
@@ -523,7 +826,7 @@ const CAMPOS = {
     { section: 'Pagamento do Plano (Exceto 1° Pagamento)' },
     { id:'forma_pagamento_plano',       label:'Forma de Pagamento',             type:'select', options:['Boleto Bancário','Débito em Conta'], required:true },
     { section: 'Resgate (Encerramento do Grupo) — Opcional' },
-    { id:'banco_resgate',               label:'Banco',                          type:'text',   placeholder:'Ex.: Itaú' },
+    { id:'banco_resgate',               label:'Código do Banco',                type:'text',   placeholder:'000', maxlen:3, autocompleteBanco: true },
     { id:'agencia_resgate',             label:'Agência',                        type:'text',   placeholder:'0000' },
     { id:'conta_resgate',               label:'Conta Corrente',                 type:'text',   placeholder:'00000-0' },
   ],
@@ -573,7 +876,7 @@ const CAMPOS = {
     { section: 'Dados Bancários do 1° Titular (obrigatório)' },
     { id:'nome_correntista',  label:'Nome Correntista',      type:'text',   required:true },
     { id:'cpf_correntista',   label:'CPF do Correntista',    type:'text',   placeholder:'000.000.000-00', required:true, mask:'cpf' },
-    { id:'banco',             label:'Nome do Banco',         type:'select', options:BANCOS, required:true },
+    { id:'banco_codigo',      label:'Banco (código)',         type:'banco_codigo', placeholder:'000', required:true },
     { id:'agencia',           label:'Agência (sem dígito)',  type:'text',   required:true },
     { id:'conta_corrente',    label:'Conta Corrente',        type:'text',   required:true },
     { section: 'Seguro' },
@@ -612,7 +915,7 @@ const CAMPOS = {
     { section: 'Dados Bancários do Contratante' },
     { id:'nome_correntista',   label:'Nome Correntista',                type:'text',   required:true },
     { id:'cnpj_correntista',   label:'CNPJ do Correntista',             type:'text',   placeholder:'00.000.000/0001-00', required:true, mask:'cnpj' },
-    { id:'banco',              label:'Nome do Banco',                   type:'select', options:BANCOS, required:true },
+    { id:'banco_codigo',       label:'Banco (código)',                   type:'banco_codigo', placeholder:'000', required:true },
     { id:'agencia',            label:'Agência',                         type:'text',   required:true },
     { id:'conta_corrente',     label:'Conta Corrente',                  type:'text',   required:true },
   ],
@@ -697,7 +1000,6 @@ function renderFormFields() {
   let inConjugeBlock = false;
 
   campos.forEach(c => {
-    // Início do bloco do cônjuge
     if (c.conjugeBlock) {
       if (inGrid) { html += '</div>'; inGrid = false; }
       html += '<div id="conjuge-fields" style="display:none;"><div class="field-grid">';
@@ -705,10 +1007,9 @@ function renderFormFields() {
       inConjugeBlock = true;
       return;
     }
-    // Fim do bloco do cônjuge
     if (c.conjugeBlockEnd) {
       if (inGrid) { html += '</div>'; inGrid = false; }
-      html += '</div>'; // fecha conjuge-fields
+      html += '</div>';
       inConjugeBlock = false;
       return;
     }
@@ -722,6 +1023,31 @@ function renderFormFields() {
     if (!inGrid) { html += '<div class="field-grid">'; inGrid = true; }
     const req = c.required ? '<span class="req">*</span>' : '';
     const cls = c.span2 ? ' field span-2' : ' field';
+    
+    // Caso especial: campo de banco com código
+    if (c.type === 'banco_codigo') {
+      html += `<div class="${cls}">
+        <label class="field-label" for="f-${c.id}">${c.label} ${req}</label>
+        <div class="banco-auto-fill">
+          <input class="field-input" id="f-${c.id}" type="text" placeholder="${c.placeholder||'000'}" maxlength="1" oninput="this.value=this.value.replace(/\\D/g,''); handleBancoCodigo(this)" onblur="handleBancoCodigo(this)">
+          <span class="banco-nome" id="banco-nome-${c.id}"></span>
+        </div>
+      </div>`;
+      return;
+    }
+
+    // Campo com autocompleteBanco (ex: banco_resgate)
+    if (c.autocompleteBanco) {
+      html += `<div class="${cls}">
+        <label class="field-label" for="f-${c.id}">${c.label} ${req}</label>
+        <div class="banco-auto-fill">
+          <input class="field-input" id="f-${c.id}" type="text" placeholder="${c.placeholder||'000'}" maxlength="${c.maxlen||3}" oninput="this.value=this.value.replace(/\\D/g,''); handleBancoCodigo(this)" onblur="handleBancoCodigo(this)">
+          <span class="banco-nome" id="banco-nome-${c.id}"></span>
+        </div>
+      </div>`;
+      return;
+    }
+
     let maskHandler = '';
     if (c.mask === 'phone') maskHandler = 'oninput="maskPhone(this)"';
     else if (c.mask === 'currency') maskHandler = 'oninput="maskCurrency(this)"';
@@ -792,8 +1118,10 @@ async function submitForm() {
     campos.forEach(c => {
       if (c.section || c.conjugeBlock || c.conjugeBlockEnd) return;
       const el = document.getElementById('f-'+c.id);
-      dados[c.id] = el ? el.value.trim() : '';
+      let valor = el ? el.value.trim() : '';
+      dados[c.id] = valor;
     });
+    if (dados.banco_codigo) dados.banco = dados.banco_codigo;
     const protocolo = genProtocol();
     const payload = {
       protocolo,
