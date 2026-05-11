@@ -466,19 +466,17 @@ function calc(i) {
   // Crédito líquido (após embutido)
   r.creditoLiquido = t - r.lanceEmbutido;
 
-  // PÓS CONTEMPLAÇÃO
-  // Lógica engenheiada da plataforma Itaú (cenário 2/3 validados):
-  //   Reduzir Parcela: novaParcela = (SaldoTotal1 − lance) / prazoRestante
-  //   Reduzir Prazo:   novoPrazo   = (SaldoTotal2 − lance) / parcelaReduzida
+  // PÓS CONTEMPLAÇÃO — fórmula da plataforma Itaú validada lado a lado:
+  //   saldoPos = SaldoTotal2 − parcelaReduzida × contempla − lance
+  //   Reduzir Parcela: novaParcela = saldoPos / prazoRestante  (parcela cai, prazo mantém)
+  //   Reduzir Prazo:   novoPrazo   = saldoPos / parcelaIntegral (parcela volta cheia, prazo encurta)
   const lanceTotal = r.totalLance;
   const prazoRestante = Math.max(0, prazo - i.contempla);
-  r.saldoAposLance = r.saldoDevedorTotal1 - lanceTotal;
-  r.saldoAposLanceSemReduz = r.saldoDevedorTotal2 - lanceTotal;
-  r.saldoPos = r.saldoAposLance;
+  r.saldoPos = r.saldoDevedorTotal2 - (r.parcelaReduzida * i.contempla) - lanceTotal;
 
-  r.novaParcela = (prazoRestante > 0) ? r.saldoAposLance / prazoRestante : NaN;
-  r.novoPrazo = (r.parcelaReduzida > 0) ? r.saldoAposLanceSemReduz / r.parcelaReduzida : NaN;
-  r.parcelaMantida = r.parcelaReduzida;
+  r.novaParcela = (prazoRestante > 0) ? r.saldoPos / prazoRestante : NaN;
+  r.novoPrazo = (r.parcelaIntegral > 0) ? r.saldoPos / r.parcelaIntegral : NaN;
+  r.parcelaMantida = r.parcelaIntegral;
   r.prazoRestante = prazoRestante;
 
   // DEMONSTRATIVO TAXAS

@@ -449,12 +449,13 @@ function calc(i) {
   // Crédito líquido (após embutido)
   r.creditoLiquido = t - r.lanceEmbutido;
 
-  // PÓS CONTEMPLAÇÃO — NÃO subtrai parcelas pagas (lógica Itaú)
-  //   Reduzir Parcela: novaParcela = (saldoDevedor − lance) / prazoRestante
-  //   Reduzir Prazo:   novoPrazo   = (saldoDevedor − lance) / parcelaIntegral
+  // PÓS CONTEMPLAÇÃO — fórmula da plataforma Itaú validada lado a lado:
+  //   saldoPos       = saldoDevedor − parcelaIntegral × contempla − lance
+  //   Reduzir Parcela: novaParcela = saldoPos / prazoRestante
+  //   Reduzir Prazo:   novoPrazo   = saldoPos / parcelaIntegral
   const lanceTotal = r.totalLance;
   const prazoRestante = Math.max(0, prazo - i.contempla);
-  r.saldoPos = r.saldoDevedor - lanceTotal;
+  r.saldoPos = r.saldoDevedor - (r.parcelaIntegral * i.contempla) - lanceTotal;
 
   r.novaParcela = (prazoRestante > 0) ? r.saldoPos / prazoRestante : NaN;
   r.novoPrazo = (r.parcelaIntegral > 0) ? r.saldoPos / r.parcelaIntegral : NaN;
