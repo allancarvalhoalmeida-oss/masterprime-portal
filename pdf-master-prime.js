@@ -41,9 +41,9 @@
 
   // ─── Disclaimer padrão ───
   const DISCLAIMER_PADRAO = [
-    'Os resultados apresentados nesta simulação possuem caráter meramente informativo e indicativo, sendo elaborados com base em informações fornecidas pelo usuário, as quais podem ser estimadas, hipotéticas ou não refletir condições reais de mercado, não constituindo promessa, garantia ou obrigação de resultado, tampouco vinculando a administradora ou quaisquer terceiros.',
-    'A efetiva contratação do consórcio está condicionada à disponibilidade de vagas nos respectivos grupos, à análise e aprovação da administradora, bem como ao integral atendimento dos requisitos, regras e condições estabelecidos no contrato de adesão e na regulamentação aplicável.',
-    'O usuário declara estar ciente de que o contrato de adesão, o regulamento do consórcio e os demais documentos aplicáveis constituem os instrumentos que regem a relação contratual, recomendando-se sua leitura integral, sendo o aceite manifestação inequívoca de ciência e concordância com todos os seus termos.'
+    'Esta simulação tem finalidade exclusivamente referencial e foi montada a partir dos dados informados pelo cliente — que podem ser projeções, suposições ou divergir das condições atuais de mercado. Os valores aqui apresentados não representam compromisso, garantia ou obrigação de resultado, nem geram qualquer vínculo com a administradora ou com terceiros.',
+    'O ingresso no consórcio depende da existência de vagas no grupo escolhido, da análise e aprovação por parte da administradora e do cumprimento integral das exigências previstas no contrato de adesão e na regulamentação vigente.',
+    'Antes da contratação, recomenda-se ao cliente a leitura atenta do contrato de adesão, do regulamento do grupo e dos demais documentos relacionados — são esses instrumentos que disciplinam toda a operação. A assinatura confirma o entendimento e a aceitação integral desses termos.'
   ];
 
   // ─── Logo Master Prime (PNG oficial em base64) ───
