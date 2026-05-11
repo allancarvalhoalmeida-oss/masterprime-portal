@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Adesões</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --mp-navy:   #2D3F5E;
+  --mp-yellow: #C8C84A;
+  --mp-teal:   #4DBCC8;
+  --bg:        #F4F6FA;
+  --card:      #FFFFFF;
+  --border:    #E2E8F0;
+  --border2:   #CBD5E1;
+  --text:      #1E293B;
+  --text2:     #64748B;
+  --text3:     #94A3B8;
+  --green:     #16A34A; --green-bg: #F0FDF4;
+  --red:       #DC2626; --red-bg:   #FEF2F2;
+  --amber:     #D97706; --amber-bg: #FFFBEB;
+  --blue:      #2563EB; --blue-bg:  #EFF6FF;
+  --r: 10px;
+  --shadow: 0 1px 3px rgba(0,0,0,.06);
+  --shadow-md: 0 4px 12px rgba(0,0,0,.08);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; min-height: 100vh; }
+.mono { font-family: 'DM Mono', monospace; }
+
+/* Cabeçalho */
+.page-header {
+  background: var(--mp-navy);
+  color: #fff;
+  padding: 20px 24px;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 12px;
+  position: sticky; top: 0; z-index: 10;
+  box-shadow: 0 2px 8px rgba(0,0,0,.15);
+}
+.page-header .logo {
+  display: flex; align-items: center; gap: 12px;
+}
+.page-header .logo img { height: 36px; }
+.page-header h1 { font-size: 20px; font-weight: 700; letter-spacing: -.3px; }
+.page-header .sub { font-size: 12px; color: rgba(255,255,255,.6); margin-top: 2px; }
+.page-header .btn { white-space: nowrap; }
+
+.container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+
+/* Caixa de link do formulário */
+.link-card {
+  background: linear-gradient(135deg, var(--mp-navy) 0%, #1a2a42 100%);
+  color: #fff;
+  border-radius: var(--r);
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  display: flex; align-items: center; gap: 12px;
+  flex-wrap: wrap;
+  box-shadow: var(--shadow-md);
+}
+.link-card .link-icon {
+  background: var(--mp-yellow);
+  width: 42px; height: 42px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.link-card .link-info {
+  flex: 1; min-width: 200px;
+}
+.link-card .link-label {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
+  color: rgba(255,255,255,.6); margin-bottom: 4px;
+}
+.link-card .link-url {
+  font-size: 13px; font-family: 'DM Mono', monospace;
+  background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2);
+  padding: 8px 12px; border-radius: 6px;
+  word-break: break-all;
+}
+.link-card .btn-copy-link {
+  background: var(--mp-teal);
+  color: #fff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
+  transition: background .2s, transform .1s;
+  white-space: nowrap;
+}
+.link-card .btn-copy-link:hover {
+  background: #3AABB8;
+  transform: translateY(-1px);
+}
+
+/* Barra de busca */
+.search-box {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+  box-shadow: var(--shadow);
+}
+.search-input {
+  flex: 1; min-width: 250px;
+  padding: 10px 14px;
+  border: 1.5px solid var(--border2);
+  border-radius: var(--r);
+  font-size: 13px; font-family: 'Inter', sans-serif; outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+.search-input:focus {
+  border-color: var(--mp-teal);
+  box-shadow: 0 0 0 3px rgba(77,188,200,.12);
+}
+.search-info { font-size: 11px; color: var(--text2); white-space: nowrap; }
+
+/* Cards de adesão */
+.ad-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--shadow);
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.ad-card-header {
+  padding: 14px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+  cursor: pointer; user-select: none;
+  transition: background .1s;
+  border-left: 4px solid transparent;
+}
+.ad-card.open .ad-card-header {
+  border-left-color: var(--mp-teal);
+  background: #F8FDFE;
+}
+.ad-card-header:hover { background: #F8FAFC; }
+.ad-card-header-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.ad-card-header-right { display: flex; align-items: center; gap: 8px; }
+.ad-card-body { padding: 0 20px 20px; display: none; }
+.ad-card.open .ad-card-body { display: block; }
+
+.tag {
+  display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 20px;
+  font-size: 9.5px; font-weight: 600; font-family: 'DM Mono', monospace;
+}
+.tag-bradesco { background: #FEE2E2; color: #DC2626; }
+.tag-itau     { background: #FEF3C7; color: #D97706; }
+.tag-porto    { background: #EFF6FF; color: #2563EB; }
+.tag-pf       { background: #F0F9FF; color: #0369A1; }
+.tag-pj       { background: #FDF4FF; color: #7E22CE; }
+.tag-status   { background: #F1F5F9; color: #475569; }
+
+.detail-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.detail-item {
+  background: var(--bg); border-radius: 6px; padding: 10px 14px;
+  position: relative; transition: box-shadow .15s;
+}
+.detail-item:hover { box-shadow: 0 0 0 2px var(--mp-teal); }
+.detail-item-label { font-size: 9.5px; color: var(--text3); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; font-weight: 600; }
+.detail-item-value { font-size: 13px; font-weight: 500; color: var(--text); word-break: break-word; }
+.copy-btn {
+  position: absolute; top: 6px; right: 8px;
+  background: none; border: none; cursor: pointer; color: var(--text3); padding: 4px;
+  border-radius: 4px; display: flex; align-items: center; transition: all .15s;
+}
+.copy-btn:hover { background: #fff; color: var(--mp-navy); }
+.copy-all-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; background: var(--mp-navy); color: #fff;
+  border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;
+  font-family: 'Inter', sans-serif; transition: all .15s;
+}
+.copy-all-btn:hover { background: #1E2D45; }
+
+.section-label {
+  font-size: 10px; font-weight: 700; color: var(--text2);
+  text-transform: uppercase; letter-spacing: .7px;
+  margin: 20px 0 10px; padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border: none; border-radius: 6px;
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  font-family: 'Inter', sans-serif; transition: all .15s;
+}
+.btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border2); }
+.btn-outline:hover { background: var(--bg); }
+.btn-teal { background: var(--mp-teal); color: #fff; }
+.btn-teal:hover { background: #3AABB8; }
+
+.empty-state { text-align: center; padding: 60px 24px; color: var(--text2); }
+.spinner {
+  display: inline-block; width: 20px; height: 20px; border: 2px solid var(--border);
+  border-top-color: var(--mp-teal); border-radius: 50%; animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.unauth-box {
+  max-width: 400px; margin: 80px auto; text-align: center;
+  background: #fff; padding: 40px; border-radius: 12px; box-shadow: var(--shadow-md);
+}
+
+/* Toast */
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateY(10px); }
+  20% { opacity: 1; transform: translateY(0); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-10px); }
+}
+.toast {
+  position: fixed; bottom: 30px; right: 30px;
+  background: var(--mp-navy); color: #fff; padding: 12px 24px;
+  border-radius: 8px; font-weight: 600; font-size: 13px;
+  z-index: 9999; animation: fadeInOut 2s ease forwards;
+  box-shadow: 0 4px 12px rgba(0,0,0,.2);
+}
+
+@media (max-width: 600px) {
+  .detail-grid { grid-template-columns: 1fr; }
+  .ad-card-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Estado: carregando -->
+<div id="loading-state" style="display:flex; align-items:center; justify-content:center; min-height:100vh;">
+  <div class="spinner"></div>
+  <span style="margin-left:12px;color:var(--text2);">Verificando acesso...</span>
+</div>
+
+<!-- Estado: não autenticado -->
+<div id="unauth-state" style="display:none;">
+  <div class="unauth-box">
+    <div style="font-size:48px;margin-bottom:16px;">🔒</div>
+    <h2 style="color:var(--mp-navy);margin-bottom:8px;">Acesso Restrito</h2>
+    <p style="color:var(--text2);margin-bottom:24px;">Faça login no portal do consultor para acessar esta página.</p>
+    <button class="btn btn-outline" onclick="window.location.href='index.html'">Ir para o Portal</button>
+  </div>
+</div>
+
+<!-- Estado: conteúdo principal -->
+<div id="main-state" style="display:none;">
+  <header class="page-header">
+    <div class="logo">
+      <img src="logo.png" alt="Master Prime">
+      <div>
+        <h1>Formulários cadastrados</h1>
+    </div>
+    <button class="btn btn-outline" onclick="loadAdesoes()" style="color:#fff;border-color:rgba(255,255,255,.3);background:rgba(255,255,255,.1);">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+      Atualizar
+    </button>
+  </header>
+
+  <div class="container">
+    <!-- LINK DO FORMULÁRIO -->
+    <div class="link-card">
+      <div class="link-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--mp-navy)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+      </div>
+      <div class="link-info">
+        <div class="link-label">Link do formulário para clientes</div>
+        <div class="link-url" id="form-link">Carregando...</div>
+      </div>
+      <button class="btn-copy-link" id="btn-copy-link" onclick="copyFormLink()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        Copiar link
+      </button>
+    </div>
+
+    <!-- BUSCA -->
+    <div class="search-box">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input class="search-input" id="search-input" placeholder="Buscar por nome, CPF/CNPJ ou protocolo..." oninput="applyFilter()">
+      <span class="search-info" id="search-info"></span>
+    </div>
+
+    <div id="adesoes-list"></div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://jhwciwvgagnuxakukyob.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_fy-iwSFNHKRuqP1pDokFuQ_X_UCiqzx';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let allAdesoes = [];
+let filteredAdesoes = [];
+
+// ═══ VERIFICA SESSÃO ═══
+async function checkSession() {
+  document.getElementById('loading-state').style.display = 'flex';
+  document.getElementById('unauth-state').style.display = 'none';
+  document.getElementById('main-state').style.display = 'none';
+
+  const { data: { session } } = await sb.auth.getSession();
+  if (session && session.user) {
+    const { data: profile } = await sb.from('portal_users').select('tipo').eq('auth_id', session.user.id).single();
+    if (profile && profile.tipo === 'admin') {
+      document.getElementById('loading-state').style.display = 'none';
+      document.getElementById('main-state').style.display = 'block';
+      // Define o link do formulário
+      document.getElementById('form-link').textContent = window.location.origin + '/formulario.html';
+      loadAdesoes();
+      return;
+    }
+  }
+  document.getElementById('loading-state').style.display = 'none';
+  document.getElementById('unauth-state').style.display = 'block';
+}
+
+// ═══ COPIAR LINK DO FORMULÁRIO ═══
+function copyFormLink() {
+  const linkEl = document.getElementById('form-link');
+  const btn = document.getElementById('btn-copy-link');
+  if (!linkEl || !btn) return;
+
+  const url = linkEl.textContent.trim();
+
+  navigator.clipboard.writeText(url).then(() => {
+    const originalHTML = btn.innerHTML;
+    btn.innerHTML = '✓ Link copiado!';
+    btn.style.background = '#16A34A';
+    setTimeout(() => {
+      btn.innerHTML = originalHTML;
+      btn.style.background = '';
+    }, 2000);
+    showToast('Link do formulário copiado!');
+  }).catch(() => {
+    showToast('Erro ao copiar. Tente novamente.', 'error');
+  });
+}
+
+// ═══ TOAST ═══
+function showToast(message, type = 'success') {
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = message;
+  if (type === 'error') toast.style.background = '#DC2626';
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 2200);
+}
+
+// ═══ CARREGAR ADESÕES ═══
+async function loadAdesoes() {
+  const listEl = document.getElementById('adesoes-list');
+  listEl.innerHTML = '<div style="text-align:center;padding:40px;"><div class="spinner"></div></div>';
+  try {
+    const { data, error } = await sb.from('portal_adesoes').select('*').order('criado_em', { ascending: false });
+    if (error) throw error;
+    allAdesoes = data || [];
+    applyFilter();
+  } catch(e) {
+    listEl.innerHTML = `<div class="empty-state"><p>Erro ao carregar: ${e.message}</p></div>`;
+  }
+}
+
+// ═══ FILTRO ═══
+function applyFilter() {
+  const query = (document.getElementById('search-input').value || '').toLowerCase().trim();
+  if (!query) {
+    filteredAdesoes = [...allAdesoes];
+  } else {
+    filteredAdesoes = allAdesoes.filter(a => {
+      const nome = (a.nome_cliente || '').toLowerCase();
+      const cpfCnpj = (a.cpf_cnpj || '').replace(/\D/g, '');
+      const proto = (a.protocolo || '').toLowerCase();
+      const q = query.replace(/\D/g, '');
+      return nome.includes(query) || cpfCnpj.includes(q) || proto.includes(query);
+    });
+  }
+  document.getElementById('search-info').textContent = `${filteredAdesoes.length} de ${allAdesoes.length} adesões`;
+  renderList();
+}
+
+// ═══ RENDERIZAR LISTA ═══
+function renderList() {
+  const listEl = document.getElementById('adesoes-list');
+  if (!filteredAdesoes.length) {
+    listEl.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><p>Nenhuma adesão encontrada.</p></div>';
+    return;
+  }
+
+  listEl.innerHTML = filteredAdesoes.map(a => {
+    const dados = a.dados || {};
+    const admTag = `tag-${a.administradora}`;
+    const tipoTag = a.tipo_pessoa === 'pf' ? 'tag-pf' : 'tag-pj';
+    const tipoLabel = a.tipo_pessoa === 'pf' ? 'PF' : 'PJ';
+
+    let detailHtml = '';
+    const campos = getCamposPorAdmTipo(a.administradora, a.tipo_pessoa);
+    let currentSection = '';
+    campos.forEach(c => {
+      if (c.section) {
+        if (currentSection) detailHtml += '</div>';
+        detailHtml += `<div class="section-label">${c.section}</div><div class="detail-grid">`;
+        currentSection = c.section;
+        return;
+      }
+      if (!currentSection) {
+        detailHtml += '<div class="detail-grid">';
+        currentSection = 'default';
+      }
+      const val = dados[c.id] || '—';
+      detailHtml += `
+        <div class="detail-item">
+          <button class="copy-btn" title="Copiar ${c.label}" onclick="copyText('${val.replace(/'/g, "\\'")}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+          <div class="detail-item-label">${c.label}</div>
+          <div class="detail-item-value">${val}</div>
+        </div>`;
+    });
+    if (currentSection) detailHtml += '</div>';
+
+    const jsonStr = JSON.stringify(dados, null, 2);
+
+    return `
+    <div class="ad-card" id="card-${a.id}">
+      <div class="ad-card-header" onclick="toggleCard('${a.id}')">
+        <div class="ad-card-header-left">
+          <strong style="font-size:14px;color:var(--mp-navy);">${a.nome_cliente || 'Sem nome'}</strong>
+          <span class="tag ${admTag}">${a.administradora}</span>
+          <span class="tag ${tipoTag}">${tipoLabel}</span>
+          <span class="tag tag-status">${a.status || 'recebido'}</span>
+        </div>
+        <div class="ad-card-header-right">
+          <span class="mono" style="font-size:11px;color:var(--text2);">${a.protocolo || ''}</span>
+          <span style="color:var(--text3);">${new Date(a.criado_em).toLocaleDateString('pt-BR')}</span>
+        </div>
+      </div>
+      <div class="ad-card-body">
+        ${detailHtml}
+        <div style="margin-top:16px; display:flex; gap:12px; flex-wrap:wrap;">
+          <button class="copy-all-btn" onclick="copyText(\`${jsonStr.replace(/`/g,'\\`')}\`)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copiar todos os dados (JSON)
+          </button>
+          <button class="copy-all-btn" style="background:var(--mp-teal);" onclick="copyTextAsPlain('${a.id}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copiar como texto (WhatsApp)
+          </button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══ TOGGLE CARD ═══
+function toggleCard(id) {
+  const card = document.getElementById('card-' + id);
+  if (card) card.classList.toggle('open');
+}
+
+// ═══ COPIAR TEXTO ═══
+function copyText(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('Copiado!');
+  }).catch(() => {
+    alert('Erro ao copiar. Por favor, copie manualmente.');
+  });
+}
+
+function copyTextAsPlain(id) {
+  const adesao = allAdesoes.find(a => a.id === id);
+  if (!adesao) return;
+  const dados = adesao.dados || {};
+  const campos = getCamposPorAdmTipo(adesao.administradora, adesao.tipo_pessoa);
+  let text = `*Protocolo:* ${adesao.protocolo}\n`;
+  text += `*Nome:* ${adesao.nome_cliente}\n`;
+  text += `*CPF/CNPJ:* ${adesao.cpf_cnpj}\n`;
+  text += `*Administradora:* ${adesao.administradora}\n`;
+  text += `*Tipo:* ${adesao.tipo_pessoa}\n\n`;
+  campos.forEach(c => {
+    if (c.section) {
+      text += `\n--- ${c.section} ---\n`;
+      return;
+    }
+    text += `*${c.label}:* ${dados[c.id] || ''}\n`;
+  });
+  copyText(text);
+}
+
+function getCamposPorAdmTipo(adm, tipo) {
+  const map = {
+    bradesco_pf: [
+      { section: 'Dados Pessoais' },
+      { id:'cpf', label:'CPF' }, { id:'nome_completo', label:'Nome Completo' }, { id:'data_nascimento', label:'Data Nasc.' },
+      { id:'nacionalidade', label:'Nacionalidade' }, { id:'nome_pai', label:'Nome do Pai' }, { id:'nome_mae', label:'Nome da Mãe' },
+      { section: 'Estado Civil' },
+      { id:'estado_civil', label:'Estado Civil' }, { id:'nome_conjuge', label:'Nome do Cônjuge' }, { id:'cpf_conjuge', label:'CPF do Cônjuge' }, { id:'data_nascimento_conjuge', label:'Data Nasc. Cônjuge' },
+      { section: 'Profissão e Renda' },
+      { id:'nome_empresa', label:'Empresa' }, { id:'data_admissao', label:'Data Admissão' }, { id:'renda_mensal', label:'Renda Mensal' },
+      { section: 'Endereço' },
+      { id:'cep', label:'CEP' }, { id:'logradouro', label:'Logradouro' }, { id:'numero', label:'Número' }, { id:'complemento', label:'Complemento' },
+      { id:'bairro', label:'Bairro' }, { id:'cidade', label:'Cidade' }, { id:'estado', label:'Estado' }, { id:'tempo_residencia', label:'Tempo Residência' },
+      { section: 'Contato e Pagamento' },
+      { id:'email', label:'E-mail' }, { id:'celular', label:'Celular' }, { id:'forma_pagamento', label:'Forma Pagamento' }, { id:'deseja_seguro', label:'Deseja Seguro?' },
+    ],
+    bradesco_pj: [
+      { section: 'Dados da Empresa' },
+      { id:'cnpj', label:'CNPJ' }, { id:'razao_social', label:'Razão Social' }, { id:'nome_fantasia', label:'Nome Fantasia' }, { id:'ramo_atividade', label:'Ramo Atividade' },
+      { section: 'Sócio Administrador' },
+      { id:'socio_nome', label:'Nome do Sócio' }, { id:'socio_cpf', label:'CPF do Sócio' }, { id:'socio_data_nascimento', label:'Data Nasc. Sócio' },
+      { id:'socio_tipo_documento', label:'Tipo Documento' }, { id:'socio_numero_documento', label:'Nº Documento' }, { id:'socio_percentual_empresa', label:'% Empresa' },
+      { id:'socio_estado_civil', label:'Estado Civil' }, { id:'socio_nome_conjuge', label:'Cônjuge' }, { id:'socio_cpf_conjuge', label:'CPF Cônjuge' },
+      { section: 'Contato' },
+      { id:'email', label:'E-mail' }, { id:'celular', label:'Celular' },
+      { section: 'Endereço' },
+      { id:'cep', label:'CEP' }, { id:'logradouro', label:'Logradouro' }, { id:'numero', label:'Número' }, { id:'complemento', label:'Complemento' },
+      { id:'bairro', label:'Bairro' }, { id:'cidade', label:'Cidade' }, { id:'estado', label:'Estado' },
+      { section: 'Pagamento' },
+      { id:'forma_pagamento', label:'Forma Pagamento' }, { id:'deseja_seguro', label:'Deseja Seguro?' },
+    ],
+    itau_pf: [
+      { section: 'Dados Pessoais' },
+      { id:'cpf', label:'CPF' }, { id:'nome_completo', label:'Nome Completo' }, { id:'data_nascimento', label:'Data Nasc.' },
+      { id:'tipo_documento', label:'Tipo Documento' }, { id:'numero_documento', label:'Nº Documento' }, { id:'data_emissao', label:'Data Emissão' },
+      { id:'orgao_expedidor', label:'Órgão Expedidor' }, { id:'sexo', label:'Sexo' }, { id:'nacionalidade', label:'Nacionalidade' }, { id:'estado_civil', label:'Estado Civil' },
+      { section: 'Endereço Residencial' },
+      { id:'cep', label:'CEP' }, { id:'tipo_residencia', label:'Tipo Residência' }, { id:'logradouro', label:'Logradouro' }, { id:'numero', label:'Número' },
+      { id:'complemento', label:'Complemento' }, { id:'bairro', label:'Bairro' }, { id:'estado', label:'Estado' }, { id:'cidade', label:'Cidade' },
+      { section: 'Contato' },
+      { id:'ddd', label:'DDD' }, { id:'celular', label:'Celular' }, { id:'email', label:'E-mail' },
+      { section: 'Dados Comerciais' },
+      { id:'profissao', label:'Profissão' }, { id:'renda_mensal', label:'Renda Mensal' }, { id:'patrimonio', label:'Patrimônio' },
+      { section: 'Pagamento' },
+      { id:'forma_pagamento_1', label:'Forma Pagamento 1ª' }, { id:'forma_pagamento_plano', label:'Forma Pagamento Plano' },
+      { section: 'Resgate' },
+      { id:'banco_resgate', label:'Banco' }, { id:'agencia_resgate', label:'Agência' }, { id:'conta_resgate', label:'Conta' },
+      { section: 'Seguro' },
+      { id:'aceita_seguro', label:'Aceita Seguro?' },
+    ],
+    itau_pj: [
+      { section: 'Dados da Empresa' },
+      { id:'cnpj', label:'CNPJ' }, { id:'data_constituicao', label:'Data Constituição' }, { id:'ramo_atividade', label:'Ramo Atividade' },
+      { id:'razao_social', label:'Razão Social' }, { id:'faturamento_12m', label:'Faturamento 12m' }, { id:'inscricao_estadual', label:'Inscrição Estadual' },
+      { id:'inscricao_municipal', label:'Inscrição Municipal' }, { id:'valor_capital', label:'Valor Capital' }, { id:'cnae_principal', label:'CNAE' }, { id:'natureza_juridica', label:'Natureza Jurídica' },
+      { section: '1º Sócio' },
+      { id:'socio1_nome', label:'Nome' }, { id:'socio1_administrador', label:'Administrador' }, { id:'socio1_cpf_cnpj', label:'CPF/CNPJ' },
+      { id:'socio1_rg', label:'RG' }, { id:'socio1_data_emissao_rg', label:'Data Emissão RG' }, { id:'socio1_orgao_expedidor', label:'Órgão Expedidor' },
+      { id:'socio1_data_nascimento', label:'Data Nasc.' }, { id:'socio1_nome_pai', label:'Pai' }, { id:'socio1_nome_mae', label:'Mãe' },
+      { id:'socio1_data_entrada', label:'Data Entrada' }, { id:'socio1_participacao', label:'Participação %' },
+      { section: '2º Sócio' },
+      { id:'socio2_nome', label:'Nome' }, { id:'socio2_administrador', label:'Administrador' }, { id:'socio2_cpf_cnpj', label:'CPF/CNPJ' },
+      { id:'socio2_rg', label:'RG' }, { id:'socio2_data_emissao_rg', label:'Data Emissão RG' }, { id:'socio2_orgao_expedidor', label:'Órgão Expedidor' },
+      { id:'socio2_data_nascimento', label:'Data Nasc.' }, { id:'socio2_nome_pai', label:'Pai' }, { id:'socio2_nome_mae', label:'Mãe' },
+      { id:'socio2_data_entrada', label:'Data Entrada' }, { id:'socio2_participacao', label:'Participação %' },
+      { section: 'Endereço' },
+      { id:'cep', label:'CEP' }, { id:'endereco_exterior', label:'Endereço Exterior?' }, { id:'logradouro', label:'Logradouro' },
+      { id:'numero', label:'Número' }, { id:'complemento', label:'Complemento' }, { id:'bairro', label:'Bairro' }, { id:'estado', label:'Estado' }, { id:'cidade', label:'Cidade' },
+      { section: 'Contato' },
+      { id:'ddd_telefone', label:'DDD Tel' }, { id:'telefone', label:'Telefone' }, { id:'ramal', label:'Ramal' },
+      { id:'ddd_fax', label:'DDD Fax' }, { id:'fax', label:'Fax' }, { id:'ramal_fax', label:'Ramal Fax' },
+      { id:'ddd_celular', label:'DDD Cel' }, { id:'celular', label:'Celular' }, { id:'email', label:'E-mail' },
+      { section: 'Pagamento' },
+      { id:'forma_pagamento_1', label:'Forma Pagamento 1ª' }, { id:'forma_pagamento_plano', label:'Forma Pagamento Plano' },
+      { section: 'Resgate' },
+      { id:'banco_resgate', label:'Banco' }, { id:'agencia_resgate', label:'Agência' }, { id:'conta_resgate', label:'Conta' },
+    ],
+    porto_pf: [
+      { section: 'Ficha Cadastral' },
+      { id:'cpf', label:'CPF' }, { id:'nome_completo', label:'Nome Completo' }, { id:'data_nascimento', label:'Data Nasc.' }, { id:'estado_civil', label:'Estado Civil' },
+      { id:'email', label:'E-mail' }, { id:'confirme_email', label:'Confirme E-mail' },
+      { section: 'Contato' },
+      { id:'tel_residencial', label:'Tel Residencial' }, { id:'tel_comercial', label:'Tel Comercial' }, { id:'celular', label:'Celular' }, { id:'celular2', label:'Celular 2' },
+      { section: 'Documento' },
+      { id:'tipo_documento', label:'Tipo Documento' }, { id:'numero_documento', label:'Nº Documento' }, { id:'orgao_emissor_uf', label:'Órgão Emissor/UF' },
+      { id:'data_emissao', label:'Data Emissão' }, { id:'nacionalidade', label:'Nacionalidade' }, { id:'cidade_nascimento', label:'Cidade Nasc.' }, { id:'nome_mae', label:'Nome da Mãe' },
+      { section: 'Remuneração e Profissão' },
+      { id:'remuneracao', label:'Remuneração' }, { id:'profissao', label:'Profissão' },
+      { section: 'Endereço' },
+      { id:'cep', label:'CEP' }, { id:'tipo_logradouro', label:'Tipo Logradouro' }, { id:'endereco', label:'Endereço' }, { id:'numero', label:'Número' },
+      { id:'complemento', label:'Complemento' }, { id:'bairro', label:'Bairro' }, { id:'cidade', label:'Cidade' }, { id:'estado', label:'Estado' },
+      { section: 'Pagamento' },
+      { id:'forma_pagamento_1', label:'Forma Pagamento 1ª' }, { id:'forma_pagamento_2', label:'Forma Pagamento 2ª em diante' },
+      { section: 'Dados Bancários' },
+      { id:'nome_correntista', label:'Correntista' }, { id:'cpf_correntista', label:'CPF Correntista' }, { id:'banco', label:'Banco' }, { id:'agencia', label:'Agência' }, { id:'conta_corrente', label:'Conta Corrente' },
+      { section: 'Seguro' },
+      { id:'aceita_seguro', label:'Aceita Seguro?' },
+    ],
+    porto_pj: [
+      { section: 'Ficha Cadastral' },
+      { id:'cnpj', label:'CNPJ' }, { id:'razao_social', label:'Razão Social' }, { id:'inscricao_estadual', label:'Inscrição Estadual' },
+      { id:'data_constituicao', label:'Data Constituição' }, { id:'email', label:'E-mail' }, { id:'confirme_email', label:'Confirme E-mail' },
+      { section: 'Contato' },
+      { id:'tel_comercial', label:'Tel Comercial' }, { id:'celular', label:'Celular' }, { id:'celular2', label:'Celular 2' },
+      { section: 'Atividade' },
+      { id:'ramo_atividade', label:'Ramo Atividade' }, { id:'receita_mensal', label:'Receita Mensal' },
+      { section: 'Endereço' },
+      { id:'cep', label:'CEP' }, { id:'tipo_logradouro', label:'Tipo Logradouro' }, { id:'endereco', label:'Endereço' }, { id:'numero', label:'Número' },
+      { id:'complemento', label:'Complemento' }, { id:'bairro', label:'Bairro' }, { id:'cidade', label:'Cidade' }, { id:'estado', label:'Estado' },
+      { section: 'Sócio' },
+      { id:'socio_nome', label:'Nome do Sócio' }, { id:'socio_cpf', label:'CPF do Sócio' },
+      { section: 'Pagamento' },
+      { id:'forma_pagamento_1', label:'Forma Pagamento 1ª' }, { id:'forma_pagamento_2', label:'Forma Pagamento 2ª em diante' },
+      { section: 'Dados Bancários' },
+      { id:'nome_correntista', label:'Correntista' }, { id:'cnpj_correntista', label:'CNPJ Correntista' }, { id:'banco', label:'Banco' }, { id:'agencia', label:'Agência' }, { id:'conta_corrente', label:'Conta Corrente' },
+    ],
+  };
+  return map[`${adm}_${tipo}`] || [];
+}
+
+// ═══ INICIAR ═══
+checkSession();
+</script>
+</body>
+</html>
