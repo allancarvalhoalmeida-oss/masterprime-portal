@@ -154,8 +154,7 @@
         <select id="br-redutor">
           <option value="" selected>Selecione…</option>
           <option value="0">0% (sem redutor)</option>
-          <option value="0.25">25%</option>
-          <option value="0.50">50%</option>
+          <option value="0.30">30%</option>
         </select>
       </div>
       <div class="field">
@@ -195,6 +194,21 @@
       <div class="field">
         <label>Seguro de vida</label>
         <input type="text" id="br-seguro" data-mask="pct4" placeholder="0,0000 %">
+      </div>
+    </div>
+
+    <div class="grid grid-2" style="margin-top: 16px;">
+      <div class="field">
+        <label>Tipo de Reajuste</label>
+        <select id="br-tipoReajuste">
+          <option value="Mensal" selected>Mensal</option>
+          <option value="Anual">Anual</option>
+          <option value="Sem">Sem reajuste</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>% Anual médio</label>
+        <input type="text" id="br-anualMedio" data-mask="pct2" placeholder="0,00 %" value="0,00 %">
       </div>
     </div>
 
@@ -467,9 +481,13 @@ function calc(i) {
   r.saldoPos = r.saldoDevedor - totalParcsPagas - r.lanceTotal;
 
   // Diluir nas Parcelas
-  const prazoRestanteDiluir = Math.max(0, prazo - parcsAteCont);
-  r.parcDiluir = (prazoRestanteDiluir > 0) ? (r.saldoPos / prazoRestanteDiluir) : NaN;
-  r.prazoDiluir = prazoRestanteDiluir;
+  // Internamente, parcDiluir é calculada dividindo o saldoPos pelo nº de parcelas com o
+  // valor novo (178 = prazo − 2 parcelas iniciais pagas).
+  // Mas o "Prazo Restante" exibido ao cliente é o total ainda a pagar = prazo − contempla (179),
+  // que é mais intuitivo ("quantos meses faltam até quitar").
+  const prazoNovaParcela = Math.max(0, prazo - parcsAteCont);
+  r.parcDiluir = (prazoNovaParcela > 0) ? (r.saldoPos / prazoNovaParcela) : NaN;
+  r.prazoDiluir = Math.max(0, prazo - cont);
 
   // Antecipar Parcelas: lance amortiza N parcelas iguais à ParcInicial
   //   novoPrazo = (prazo − contempla) − Lance/ParcInicial
@@ -688,6 +706,7 @@ function _montarPdfComercialBradesco() {
       { label: 'Taxa Antecipação', value: _v('br-taxaAntecipacao') || '0,00 %' },
       { label: 'Valor do crédito', value: _v('br-credito') || 'R$ 0,00' },
       { label: 'Prazo do Grupo', value: (_v('br-prazo') || '0') + ' Meses' },
+      { label: 'Tipo de Reajuste', value: (document.getElementById('br-tipoReajuste')?.value || 'Mensal') + (parseFloat((_v('br-anualMedio')||'0').replace(',','.')) > 0 ? ' (' + _v('br-anualMedio') + ' a.m.)' : '') },
     ],
     lance: {
       modo: 'simples',
