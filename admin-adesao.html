@@ -43,7 +43,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-ser
 .page-header .logo {
   display: flex; align-items: center; gap: 12px;
 }
-.page-header .logo img { height: 36px; }
+.page-header .logo img { height: 50px; }
 .page-header h1 { font-size: 20px; font-weight: 700; letter-spacing: -.3px; }
 .page-header .sub { font-size: 12px; color: rgba(255,255,255,.6); margin-top: 2px; }
 .page-header .btn { white-space: nowrap; }
@@ -75,11 +75,24 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-ser
   color: rgba(255,255,255,.6); margin-bottom: 4px;
 }
 .link-card .link-url {
-  font-size: 13px; font-family: 'DM Mono', monospace;
-  background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2);
-  padding: 8px 12px; border-radius: 6px;
+  font-size: 13px;
+  font-family: 'DM Mono', monospace;
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.2);
+  padding: 8px 12px;
+  border-radius: 6px;
   word-break: break-all;
+  display: block;
+  color: #fff;
+  text-decoration: none;
+  transition: all .2s;
 }
+
+.link-card .link-url:hover {
+  background: rgba(255,255,255,.18);
+  border-color: rgba(255,255,255,.35);
+}
+
 .link-card .btn-copy-link {
   background: var(--mp-teal);
   color: #fff;
@@ -254,7 +267,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-ser
 <div id="main-state" style="display:none;">
   <header class="page-header">
     <div class="logo">
-      <img src="logo.png" alt="Master Prime">
+  
       <div>
         <h1>Formulários cadastrados</h1>
     </div>
@@ -267,18 +280,41 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-ser
   <div class="container">
     <!-- LINK DO FORMULÁRIO -->
     <div class="link-card">
-      <div class="link-icon">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--mp-navy)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-      </div>
-      <div class="link-info">
-        <div class="link-label">Link do formulário para clientes</div>
-        <div class="link-url" id="form-link">Carregando...</div>
-      </div>
-      <button class="btn-copy-link" id="btn-copy-link" onclick="copyFormLink()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-        Copiar link
-      </button>
+  <div class="link-icon">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--mp-navy)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+    </svg>
+  </div>
+
+  <div class="link-info">
+    <div class="link-label">
+      Link do formulário para clientes
     </div>
+
+    <a
+      class="link-url"
+      id="form-link"
+      href="#"
+      target="_blank"
+    >
+      Carregando...
+    </a>
+  </div>
+
+  <button
+    class="btn-copy-link"
+    id="btn-copy-link"
+    onclick="copyFormLink()"
+  >
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <rect x="9" y="9" width="13" height="13" rx="2"/>
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+    </svg>
+
+    Copiar link
+  </button>
+</div>
 
     <!-- BUSCA -->
     <div class="search-box">
@@ -312,7 +348,15 @@ async function checkSession() {
       document.getElementById('loading-state').style.display = 'none';
       document.getElementById('main-state').style.display = 'block';
       // Define o link do formulário
-      document.getElementById('form-link').textContent = window.location.origin + '/formulario.html';
+      const formUrl = new URL(
+  'formulario.html',
+  window.location.href
+).href;
+
+const formLink = document.getElementById('form-link');
+
+formLink.textContent = formUrl;
+formLink.href = formUrl;
       loadAdesoes();
       return;
     }
@@ -322,25 +366,41 @@ async function checkSession() {
 }
 
 // ═══ COPIAR LINK DO FORMULÁRIO ═══
-function copyFormLink() {
+async function copyFormLink() {
   const linkEl = document.getElementById('form-link');
   const btn = document.getElementById('btn-copy-link');
-  if (!linkEl || !btn) return;
 
-  const url = linkEl.textContent.trim();
+  if (!linkEl || !btn) {
+    showToast('Link não encontrado', 'error');
+    return;
+  }
 
-  navigator.clipboard.writeText(url).then(() => {
+  const url = linkEl.href;
+
+  if (!url || url === '#') {
+    showToast('URL inválida', 'error');
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(url);
+
     const originalHTML = btn.innerHTML;
+
     btn.innerHTML = '✓ Link copiado!';
     btn.style.background = '#16A34A';
+
     setTimeout(() => {
       btn.innerHTML = originalHTML;
       btn.style.background = '';
     }, 2000);
-    showToast('Link do formulário copiado!');
-  }).catch(() => {
-    showToast('Erro ao copiar. Tente novamente.', 'error');
-  });
+
+    showToast('Link copiado com sucesso!');
+
+  } catch (error) {
+    console.error(error);
+    showToast('Erro ao copiar link', 'error');
+  }
 }
 
 // ═══ TOAST ═══
@@ -381,7 +441,7 @@ function applyFilter() {
       return nome.includes(query) || cpfCnpj.includes(q) || proto.includes(query);
     });
   }
-  document.getElementById('search-info').textContent = `${filteredAdesoes.length} de ${allAdesoes.length} adesões`;
+  document.getElementById('search-info').textContent = `${filteredAdesoes.length} de ${allAdesoes.length} Cadastros`;
   renderList();
 }
 
