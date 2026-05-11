@@ -223,7 +223,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-ser
       </div>
       <div class="link-info">
         <div class="link-label">Link do formulário para clientes</div>
-        <div class="link-url" id="form-link">Carregando...</div>
+        <div class="share-link-url" id="form-link">https://grupomasterprime.github.io/masterprime-portal/formulario.html</div>
       </div>
       <button class="btn-copy-link" id="btn-copy-link" onclick="copyFormLink()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
@@ -268,7 +268,7 @@ async function checkSession() {
       document.getElementById('loading-state').style.display = 'none';
       document.getElementById('main-state').style.display = 'block';
       // Define o link do formulário (FIXO)
-      document.getElementById('form-link').textContent = FORMULARIO_URL;
+      document.getElementById('form-link').textContent = window.location.origin + '/formulario.html';
       loadAdesoes();
       return;
     }
@@ -279,19 +279,22 @@ async function checkSession() {
 
 // ═══ COPIAR LINK DO FORMULÁRIO ═══
 function copyFormLink() {
-  const btn = document.getElementById('btn-copy-link');
-  if (!btn) return;
-  navigator.clipboard.writeText(FORMULARIO_URL).then(() => {
-    const originalHTML = btn.innerHTML;
-    btn.innerHTML = '✓ Link copiado!';
-    btn.style.background = '#16A34A';
-    setTimeout(() => {
-      btn.innerHTML = originalHTML;
-      btn.style.background = '';
-    }, 2000);
-    showToast('Link do formulário copiado!');
-  }).catch(() => {
-    showToast('Erro ao copiar. Tente novamente.', 'error');
+  const linkEl = document.getElementById('form-link');
+  const btn = document.querySelector('#s-admin-adesao .btn-white');
+  if (!linkEl) return;
+  const url = linkEl.textContent.trim();
+  navigator.clipboard.writeText(url).then(() => {
+    if (btn) {
+      const orig = btn.innerHTML;
+      btn.innerHTML = '✓ Copiado!';
+      setTimeout(() => btn.innerHTML = orig, 2000);
+    }
+    // Toast de confirmação
+    const toast = document.createElement('div');
+    toast.textContent = 'Link copiado!';
+    toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:var(--mp-navy);color:#fff;padding:10px 20px;border-radius:8px;font-weight:600;z-index:999;';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2000);
   });
 }
 
