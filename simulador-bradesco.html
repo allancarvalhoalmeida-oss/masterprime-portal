@@ -703,10 +703,8 @@ function _montarPdfComercialBradesco() {
     inputs: [
       { label: 'Taxa Administrativa', value: _v('br-taxaAdm') || '0,00 %' },
       { label: 'Fundo de Reserva', value: _v('br-fundo') || '0,00 %' },
-      { label: 'Taxa Antecipação', value: _v('br-taxaAntecipacao') || '0,00 %' },
       { label: 'Valor do crédito', value: _v('br-credito') || 'R$ 0,00' },
       { label: 'Prazo do Grupo', value: (_v('br-prazo') || '0') + ' Meses' },
-      { label: 'Tipo de Reajuste', value: (document.getElementById('br-tipoReajuste')?.value || 'Mensal') + (parseFloat((_v('br-anualMedio')||'0').replace(',','.')) > 0 ? ' (' + _v('br-anualMedio') + ' a.m.)' : '') },
     ],
     lance: {
       modo: 'simples',
