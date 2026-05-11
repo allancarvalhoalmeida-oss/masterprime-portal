@@ -284,19 +284,19 @@
     <div class="grid grid-4">
       <div class="field">
         <label>Taxa antecipada (adesão)</label>
-        <input type="text" id="pi-adesao" data-mask="pct2" value="2,00 %">
+        <input type="text" id="pi-adesao" data-mask="pct2" placeholder="0,00 %">
       </div>
       <div class="field">
         <label>Taxa administrativa</label>
-        <input type="text" id="pi-taxaAdm" data-mask="pct2" value="17,00 %">
+        <input type="text" id="pi-taxaAdm" data-mask="pct2" placeholder="0,00 %">
       </div>
       <div class="field">
         <label>Fundo de reserva</label>
-        <input type="text" id="pi-fundo" data-mask="pct2" value="2,00 %">
+        <input type="text" id="pi-fundo" data-mask="pct2" placeholder="0,00 %">
       </div>
       <div class="field">
         <label>Seguro de vida (PF)</label>
-        <input type="text" id="pi-seguro" data-mask="pct4" value="0,0380 %">
+        <input type="text" id="pi-seguro" data-mask="pct4" placeholder="0,0000 %">
       </div>
     </div>
 
@@ -705,7 +705,7 @@ function fecharModalLance() {
 // LIMPAR
 // ═══════════════════════════════════════════════════════
 function limparTudo() {
-  ['pi-credito','pi-prazo','pi-qtdAdesao','pi-contempla','pi-recProp','pi-fgts','pi-embutido'].forEach(id => get(id).value = '');
+  ['pi-credito','pi-prazo','pi-qtdAdesao','pi-contempla','pi-recProp','pi-fgts','pi-embutido','pi-adesao','pi-taxaAdm','pi-fundo','pi-seguro'].forEach(id => get(id).value = '');
   get('pi-tipo').value = '';
   get('pi-redutor').value = '';
   recalc();

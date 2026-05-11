@@ -237,7 +237,7 @@
       </div>
       <div class="field">
         <label>Embutido (% máx. do crédito)</label>
-        <input type="text" id="pp-pctEmbutido" data-mask="pct2" value="30,00 %">
+        <input type="text" id="pp-pctEmbutido" data-mask="pct2" placeholder="0,00 %">
         <span class="field-suffix">do crédito</span>
       </div>
       <div class="field">
@@ -295,15 +295,15 @@
     <div class="grid grid-3">
       <div class="field">
         <label>Taxa administrativa</label>
-        <input type="text" id="pp-taxaAdm" data-mask="pct2" value="14,00 %">
+        <input type="text" id="pp-taxaAdm" data-mask="pct2" placeholder="0,00 %">
       </div>
       <div class="field">
         <label>Fundo de reserva</label>
-        <input type="text" id="pp-fundo" data-mask="pct2" value="2,00 %">
+        <input type="text" id="pp-fundo" data-mask="pct2" placeholder="0,00 %">
       </div>
       <div class="field">
         <label>Seguro de vida (PF)</label>
-        <input type="text" id="pp-seguro" data-mask="pct4" value="0,0380 %">
+        <input type="text" id="pp-seguro" data-mask="pct4" placeholder="0,0000 %">
       </div>
     </div>
 
@@ -691,7 +691,7 @@ function fecharModalLance() {
 // LIMPAR
 // ═══════════════════════════════════════════════════════
 function limparTudo() {
-  ['pp-credito','pp-prazo','pp-contempla','pp-recProp','pp-embutido','pp-pctEmbutido'].forEach(id => { const el = get(id); if (el) el.value = ''; });
+  ['pp-credito','pp-prazo','pp-contempla','pp-recProp','pp-embutido','pp-pctEmbutido','pp-taxaAdm','pp-fundo','pp-seguro'].forEach(id => { const el = get(id); if (el) el.value = ''; });
   get('pp-tipo').value = '';
   get('pp-redutor').value = '';
   recalc();
