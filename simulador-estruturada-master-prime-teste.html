@@ -135,6 +135,8 @@
 <style>html.embedded header { display: none; } html.embedded main { padding-top: 16px; }</style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="simulacao-store.js"></script>
 <script src="pdf-master-prime.js"></script>
 <script src="analitico-cet.js"></script>
 
@@ -153,6 +155,9 @@
 
   <h2 class="section-title">Operação Estruturada</h2>
   <div class="subtitle">Empilhe múltiplas operações e veja o portfólio consolidado</div>
+
+  <!-- ════ BARRA DE SIMULAÇÕES SALVAS (injetada por simulacao-store.js) ════ -->
+  <div id="simStoreMount"></div>
 
   <!-- ════ TABELA PRINCIPAL ════ -->
   <div class="ops-table-wrapper">
@@ -1129,6 +1134,28 @@ document.getElementById('btnPdf').addEventListener('click', async () => {
 
 // Inicialização
 renderOps();
+
+// ═══════════════════════════════════════════════════════
+// SIMULAÇÕES SALVAS (48h) — integra com Supabase
+// ═══════════════════════════════════════════════════════
+(function initSimStore() {
+  if (!window.SimulacaoStore) return;
+  window.SimulacaoStore.init({
+    supabaseUrl: 'https://jhwciwvgagnuxakukyob.supabase.co',
+    supabaseKey: 'sb_publishable_fy-iwSFNHKRuqP1pDokFuQ_X_UCiqzx',
+    simulador:   'estruturada',
+    mountPoint:  document.getElementById('simStoreMount'),
+    serialize:   () => ({ operacoes, nextId }),
+    restore:     (dados) => {
+      if (!dados || typeof dados !== 'object') { operacoes = []; nextId = 1; renderOps(); return; }
+      operacoes = Array.isArray(dados.operacoes) ? dados.operacoes : [];
+      nextId = (typeof dados.nextId === 'number' && dados.nextId > 0)
+                ? dados.nextId
+                : (operacoes.reduce((m, o) => Math.max(m, o.id || 0), 0) + 1);
+      renderOps();
+    }
+  });
+})();
 </script>
 
 </body>
