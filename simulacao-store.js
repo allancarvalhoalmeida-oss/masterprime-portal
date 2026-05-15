@@ -1,7 +1,7 @@
 /*
  * Master Prime — Simulação Store (compartilhado pelos simuladores)
  * --------------------------------------------------------------
- * Permite que cada simulador salve / restaure simulações por 48h
+ * Permite que cada simulador salve / restaure simulações por 7 dias
  * usando a tabela portal_simulacoes_salvas no Supabase.
  *
  * Como usar dentro de um simulador:
@@ -22,7 +22,7 @@
 (function (global) {
   'use strict';
 
-  const FORTY_EIGHT_HOURS_MS = 48 * 60 * 60 * 1000;
+  const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
   let cfg = null;
   let sb  = null;
@@ -44,8 +44,10 @@
     if (!iso) return '';
     const diffMs = new Date(iso).getTime() - Date.now();
     if (diffMs <= 0) return 'expirada';
-    const h = Math.floor(diffMs / (60*60*1000));
+    const d = Math.floor(diffMs / (24*60*60*1000));
+    const h = Math.floor((diffMs % (24*60*60*1000)) / (60*60*1000));
     const m = Math.floor((diffMs % (60*60*1000)) / (60*1000));
+    if (d >= 1) return `expira em ${d}d${h ? ' '+h+'h' : ''}`;
     if (h >= 1) return `expira em ${h}h${m ? ' '+m+'min' : ''}`;
     return `expira em ${m} min`;
   }
@@ -64,7 +66,7 @@
   // ── CRUD ───────────────────────────────────────────────────────
   async function salvar(titulo, dados, extras = {}) {
     if (!user) throw new Error('Usuário não logado');
-    const expira = new Date(Date.now() + FORTY_EIGHT_HOURS_MS).toISOString();
+    const expira = new Date(Date.now() + SEVEN_DAYS_MS).toISOString();
     const payload = {
       consultor_auth_id: user.id,
       consultor_nome:    extras.consultor_nome || null,
@@ -197,7 +199,7 @@
     bar.className = 'ss-bar hidden';
     bar.id = 'simStoreBar';
     bar.innerHTML = `
-      <span class="ss-icon" title="Simulações salvas (48h)" aria-label="Simulações salvas">
+      <span class="ss-icon" title="Simulações salvas (7 dias)" aria-label="Simulações salvas">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
              stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
@@ -314,7 +316,7 @@
         titulo = await promptTitulo();
         if (titulo === null) return; // cancelado
         await salvar(titulo, dados);
-        toast('Simulação salva (48h)');
+        toast('Simulação salva (7 dias)');
       }
       await refreshSelect();
     } catch (err) {
