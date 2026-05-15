@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Master Prime - Bradesco Imóvel</title>
+<title>Master Prime - Bradesco Auto</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -133,7 +133,7 @@
 <main>
   <div id="simStoreMount" style="max-width:1400px; margin:16px auto 0; padding:0 32px;"></div>
 
-  <h2 class="section-title">Bradesco · Imóvel</h2>
+  <h2 class="section-title">Bradesco · Auto</h2>
   <p class="subtitle">Cálculo de proposta, contemplação e estratégias de lance</p>
 
   <!-- ════════ PROPOSTA ════════ -->
@@ -177,11 +177,11 @@
     <div class="grid grid-2">
       <div class="field">
         <label>Taxa antecipação</label>
-        <input type="text" id="br-taxaAntecipacao" data-mask="pct2" value="4,25 %">
+        <input type="text" id="br-taxaAntecipacao" data-mask="pct2" value="5,25 %">
       </div>
       <div class="field">
         <label>Decomposição parcelas antecipação</label>
-        <input type="text" id="br-qtdAntecipacao" value="8" data-mask="int">
+        <input type="text" id="br-qtdAntecipacao" value="6" data-mask="int">
         <span class="field-suffix">primeiras parcelas</span>
       </div>
     </div>
@@ -581,8 +581,8 @@ document.getElementById('btnLimparLance').addEventListener('click', () => {
 });
 
 document.getElementById('btnTaxasDefault').addEventListener('click', () => {
-  get('br-taxaAntecipacao').value = '4,25 %';
-  get('br-qtdAntecipacao').value = '8';
+  get('br-taxaAntecipacao').value = '5,25 %';
+  get('br-qtdAntecipacao').value = '6';
   get('br-taxaAdm').value = '20,00 %';
   get('br-fundo').value = '3,00 %';
   get('br-seguro').value = '0,0000 %';
@@ -706,16 +706,16 @@ function _montarPdfComercialBradesco() {
 
   const redutorTxt = _selTxt('br-redutor') || 'Sem redutor';
   const redutorPct = redutorTxt.replace(/[^\d%]/g, '');
-  const qtdAntec = _v('br-qtdAntecipacao') || '8';
+  const qtdAntec = _v('br-qtdAntecipacao') || '6';
 
   // Crédito Líquido no Bradesco = Crédito Contratado (lance abate no saldo devedor, não reduz o crédito recebido)
   const creditoLiquido = _v('br-credito') || 'R$ 0,00';
 
   return {
-    filename: 'bradesco-imovel',
+    filename: 'bradesco-auto',
     logoAdmin: 'bradesco',
     titulo: 'Simulador de Crédito',
-    subtitulo: 'Bradesco Imóvel',
+    subtitulo: 'Bradesco Auto',
     representanteTexto: 'Consórcio Bradesco',
     inputs: [
       { label: 'Taxa Administrativa', value: _v('br-taxaAdm') || '0,00 %' },
@@ -760,7 +760,7 @@ document.getElementById('baixarPdfBradesco').addEventListener('click', async () 
   window.SimulacaoStore.init({
     supabaseUrl: 'https://jhwciwvgagnuxakukyob.supabase.co',
     supabaseKey: 'sb_publishable_fy-iwSFNHKRuqP1pDokFuQ_X_UCiqzx',
-    simulador:   'bradesco-imovel',
+    simulador:   'bradesco-auto',
     mountPoint:  document.getElementById('simStoreMount'),
     serialize:   () => window.SimulacaoStore.snapshotForm(),
     restore:     (dados) => window.SimulacaoStore.restoreForm(dados, { recalc: recalc })

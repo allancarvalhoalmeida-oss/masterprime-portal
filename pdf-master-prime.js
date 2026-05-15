@@ -105,26 +105,35 @@
   //   ]
   // }
   function renderCard(bloco) {
-    const linhasHtml = (bloco.linhas || []).map((linha, idxLinha) => {
+    const linhas = bloco.linhas || [];
+
+    // Maior número de fields entre todas as linhas → grid consistente entre linhas
+    const maxCols = Math.max(1, ...linhas.map(l => (l.campos || []).filter(c => c && c.value !== undefined && c.value !== null && c.value !== '').length));
+    // Há destaque em qualquer linha do card? Então o grid reserva uma coluna "auto" à direita
+    const anyDestaque = linhas.some(l => !!l.destaque);
+    const gridCols = anyDestaque ? `repeat(${maxCols},1fr) auto` : `repeat(${maxCols},1fr)`;
+
+    const linhasHtml = linhas.map((linha, idxLinha) => {
       const campos = (linha.campos || []).filter(c => c && c.value !== undefined && c.value !== null && c.value !== '');
       if (campos.length === 0 && !linha.destaque) return '';
 
-      // Quantas colunas?
-      let nCols = campos.length;
       const hasDestaque = !!linha.destaque;
 
-      // Linha 1 normalmente tem destaque (parcela inicial / crédito disponível) à direita
       const cellsHtml = campos.map(c => `
         <div>
           <div style="font-size:13px; color:${TEXT_MUTED}; margin-bottom:6px;">${c.label}</div>
           <div style="font-size:18px; font-weight:600;">${c.value}</div>
         </div>`).join('');
 
+      // Padding: se essa linha tem menos fields que maxCols, preenche com divs vazios
+      // pra forçar o destaque a ficar na última coluna (alinhado com a linha que tem destaque).
+      const padCount = Math.max(0, maxCols - campos.length);
+      const padHtml = padCount > 0 ? Array.from({length: padCount}).map(() => '<div></div>').join('') : '';
+
       let destaqueHtml = '';
       if (hasDestaque) {
         const d = linha.destaque;
         if (d.multi && Array.isArray(d.multi)) {
-          // multiplas badges (ex: "3 parcelas" + "Demais parcelas")
           destaqueHtml = `
             <div style="text-align:right;">
               <div style="display:flex; gap:14px; align-items:flex-end; justify-content:flex-end;">
@@ -142,16 +151,17 @@
               <div style="background:${NAVY}; color:#fff; font-weight:700; font-size:18px; padding:10px 18px; border-radius:7px; display:inline-block;">${d.value}</div>
             </div>`;
         }
+      } else if (anyDestaque) {
+        // ocupa a coluna do destaque vazia pra manter alinhamento
+        destaqueHtml = '<div></div>';
       }
 
-      const gridCols = hasDestaque
-        ? `repeat(${Math.max(nCols, 1)},1fr) auto`
-        : `repeat(${Math.max(nCols, 1)},1fr)`;
-      const marginTop = idxLinha === 0 ? '' : 'margin-top:18px;';
+      const marginTop = idxLinha === 0 ? '' : 'margin-top:20px;';
 
       return `
-        <div style="display:grid; grid-template-columns:${gridCols}; gap:32px; align-items:center; ${marginTop}">
+        <div style="display:grid; grid-template-columns:${gridCols}; gap:28px; align-items:center; ${marginTop}">
           ${cellsHtml}
+          ${padHtml}
           ${destaqueHtml}
         </div>`;
     }).filter(Boolean).join('');
