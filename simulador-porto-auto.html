@@ -80,9 +80,12 @@
   .result-teal .value { font-size: 19px; font-weight: 700; color: var(--mp-navy); font-family: 'DM Mono', ui-monospace, monospace; }
 
   /* Lance buttons */
-  .lance-buttons { display: grid; grid-template-columns: repeat(4, 1fr) auto; gap: 8px; margin-bottom: 18px; }
-  @media (max-width: 1024px) { .lance-buttons { grid-template-columns: repeat(2, 1fr); } .lance-buttons .clear-btn { grid-column: 1 / -1; } }
-  @media (max-width: 600px) { .lance-buttons { grid-template-columns: 1fr; } }
+  .lance-buttons { display: grid; grid-template-columns: repeat(5, 1fr) auto; gap: 8px; margin-bottom: 18px; }
+  @media (max-width: 1280px) { .lance-buttons { grid-template-columns: repeat(3, 1fr); } .lance-buttons .clear-btn { grid-column: 1 / -1; } }
+  @media (max-width: 800px) { .lance-buttons { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 500px) { .lance-buttons { grid-template-columns: 1fr; } }
+  .lance-pct-mirror { width: 100%; padding: 8px 12px; border: 1px solid #E5E7EB; border-radius: 6px; font-size: 12px; font-family: inherit; background: #F8FAFC; color: var(--mp-teal-dark); margin-top: 6px; outline: none; transition: border-color 0.15s; }
+  .lance-pct-mirror:focus { border-color: var(--mp-teal); box-shadow: 0 0 0 2px rgba(77,188,200,0.12); background: #fff; }
   .lance-btn { padding: 12px 14px; background: #fff; border: 1px solid var(--mp-teal); color: var(--mp-teal-dark); border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; transition: 0.15s; letter-spacing: 0.3px; line-height: 1.3; }
   .lance-btn:hover { background: var(--mp-teal); color: #fff; }
   .lance-btn:active { transform: translateY(1px); }
@@ -247,10 +250,11 @@
     </div>
 
     <div class="lance-buttons">
-      <button type="button" class="lance-btn" data-strat="livre-bolso">Lance Livre · Total Bolso</button>
+      <button type="button" class="lance-btn" data-strat="livre-bolso">Lance Livre + recursos próprios</button>
       <button type="button" class="lance-btn" data-strat="livre-embutido">Lance Livre + Embutido</button>
-      <button type="button" class="lance-btn" data-strat="fixo-bolso">Lance Fixo · Total Bolso</button>
+      <button type="button" class="lance-btn" data-strat="fixo-bolso">Lance Fixo + recursos próprios</button>
       <button type="button" class="lance-btn" data-strat="fixo-embutido">Lance Fixo + Embutido</button>
+      <button type="button" class="lance-btn" data-strat="so-embutido">Só embutido</button>
       <button type="button" class="clear-btn" data-strat="limpar">Limpar dados</button>
     </div>
 
@@ -258,6 +262,7 @@
       <div class="field">
         <label>Recurso próprio</label>
         <input type="text" id="pa-recProp" placeholder="R$ 0,00" data-mask="money">
+        <input type="text" id="pa-recProp-pct" class="lance-pct-mirror" placeholder="0,00 % do crédito">
       </div>
       <div class="field">
         <label>Embutido (% máx. do crédito)</label>
@@ -267,6 +272,7 @@
       <div class="field">
         <label>Embutido</label>
         <input type="text" id="pa-embutido" placeholder="R$ 0,00" data-mask="money">
+        <input type="text" id="pa-embutido-pct" class="lance-pct-mirror" placeholder="0,00 % do crédito">
       </div>
       <div class="field">
         <label>% Lance Fixo</label>
@@ -643,13 +649,88 @@ function aplicaEstrategia(strat, pctLivre = null) {
       if (recProp < 0) recProp = 0;
       break;
     }
+    case 'so-embutido': {
+      embutido = maxEmb;
+      recProp = 0;
+      break;
+    }
   }
 
   if (recProp < 0) recProp = 0;
   get('pa-recProp').value = recProp > 0 ? maskMoney(String(Math.round(recProp * 100))) : '';
   get('pa-embutido').value = embutido > 0 ? maskMoney(String(Math.round(embutido * 100))) : '';
+  syncAllPctFromRs();
   recalc();
 }
+
+// ═══════════════════════════════════════════════════════
+// SYNC R$ ↔ % DO CRÉDITO (campos de lance)
+// ═══════════════════════════════════════════════════════
+const LANCE_FIELDS = [
+  { rs: 'pa-recProp',  pct: 'pa-recProp-pct'  },
+  { rs: 'pa-embutido', pct: 'pa-embutido-pct' }
+];
+let _syncingPct = false;
+
+function fmtPct(n) {
+  if (!isFinite(n) || n === 0) return '';
+  return n.toFixed(2).replace('.', ',') + ' %';
+}
+
+function syncPctFromRs(rsId, pctId) {
+  const credito = unmaskMoney(get('pa-credito').value || '');
+  const rs = unmaskMoney(get(rsId).value || '');
+  const pctEl = get(pctId);
+  if (!pctEl) return;
+  if (credito > 0 && rs > 0) pctEl.value = fmtPct((rs / credito) * 100);
+  else pctEl.value = '';
+}
+
+function syncRsFromPct(rsId, pctId) {
+  const credito = unmaskMoney(get('pa-credito').value || '');
+  const pctRaw = (get(pctId).value || '').replace('%','').replace(',','.').trim();
+  const pct = parseFloat(pctRaw);
+  const rsEl = get(rsId);
+  if (!rsEl) return;
+  if (credito > 0 && isFinite(pct) && pct > 0) {
+    rsEl.value = maskMoney(String(Math.round(credito * (pct / 100) * 100)));
+  } else if (!isFinite(pct) || pct <= 0) {
+    rsEl.value = '';
+  }
+}
+
+function syncAllPctFromRs() {
+  _syncingPct = true;
+  LANCE_FIELDS.forEach(f => syncPctFromRs(f.rs, f.pct));
+  _syncingPct = false;
+}
+
+LANCE_FIELDS.forEach(f => {
+  const rsEl = get(f.rs), pctEl = get(f.pct);
+  if (!rsEl || !pctEl) return;
+  rsEl.addEventListener('input', () => {
+    if (_syncingPct) return;
+    _syncingPct = true;
+    syncPctFromRs(f.rs, f.pct);
+    _syncingPct = false;
+  });
+  pctEl.addEventListener('input', () => {
+    if (_syncingPct) return;
+    _syncingPct = true;
+    syncRsFromPct(f.rs, f.pct);
+    _syncingPct = false;
+    recalc();
+  });
+  pctEl.addEventListener('blur', () => {
+    const v = pctEl.value;
+    if (v) pctEl.value = fmtPct(parseFloat(v.replace('%','').replace(',','.').trim()) || 0);
+  });
+});
+
+get('pa-credito').addEventListener('input', () => {
+  if (_syncingPct) return;
+  setTimeout(syncAllPctFromRs, 0);
+});
 
 document.querySelectorAll('.lance-btn, .clear-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -689,7 +770,7 @@ function fecharModalLance() {
 // LIMPAR
 // ═══════════════════════════════════════════════════════
 function limparTudo() {
-  ['pa-credito','pa-prazo','pa-contempla','pa-recProp','pa-embutido','pa-pctEmbutido','pa-pctLanceFixo','pa-taxaAdm','pa-fundo','pa-seguro'].forEach(id => { const el = get(id); if (el) el.value = ''; });
+  ['pa-credito','pa-prazo','pa-contempla','pa-recProp','pa-embutido','pa-recProp-pct','pa-embutido-pct','pa-pctEmbutido','pa-pctLanceFixo','pa-taxaAdm','pa-fundo','pa-seguro'].forEach(id => { const el = get(id); if (el) el.value = ''; });
   get('pa-tipo').value = '';
   get('pa-redutor').value = '';
   recalc();
@@ -703,7 +784,7 @@ document.getElementById('btnLimparProposta').addEventListener('click', () => {
 });
 
 document.getElementById('btnLimparLance').addEventListener('click', () => {
-  ['pa-recProp','pa-embutido'].forEach(id => get(id).value = '');
+  ['pa-recProp','pa-embutido','pa-recProp-pct','pa-embutido-pct'].forEach(id => { const el = get(id); if (el) el.value = ''; });
   recalc();
 });
 
