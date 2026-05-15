@@ -81,6 +81,7 @@
 
   /* Lance buttons - 6 estratégias + limpar */
   .lance-buttons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 18px; }
+  .lance-buttons .lance-btn[data-strat="so-embutido"] { grid-column: 1 / -1; }
   .lance-pct-mirror { width: 100%; padding: 8px 12px; border: 1px solid #E5E7EB; border-radius: 6px; font-size: 12px; font-family: inherit; background: #F8FAFC; color: var(--mp-teal-dark); margin-top: 6px; outline: none; transition: border-color 0.15s; }
   .lance-pct-mirror:focus { border-color: var(--mp-teal); box-shadow: 0 0 0 2px rgba(77,188,200,0.12); background: #fff; }
   .lance-buttons .clear-btn-row { grid-column: 1 / -1; display: flex; justify-content: flex-end; }
