@@ -81,8 +81,6 @@
 
   /* Lance buttons - 6 estratégias + limpar */
   .lance-buttons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 18px; }
-  .lance-pct-mirror { width: 100%; padding: 8px 12px; border: 1px solid #E5E7EB; border-radius: 6px; font-size: 12px; font-family: inherit; background: #F8FAFC; color: var(--mp-teal-dark); margin-top: 6px; outline: none; transition: border-color 0.15s; }
-  .lance-pct-mirror:focus { border-color: var(--mp-teal); box-shadow: 0 0 0 2px rgba(77,188,200,0.12); background: #fff; }
   .lance-max-hint { font-size: 11px; color: var(--text-muted); margin-top: 6px; padding-left: 4px; letter-spacing: 0.2px; font-style: italic; }
   .lance-max-hint strong { color: var(--mp-teal-dark); font-weight: 600; font-style: normal; }
   .lance-buttons .clear-btn-row { grid-column: 1 / -1; display: flex; justify-content: flex-end; }
@@ -262,11 +260,11 @@
     </div>
 
     <div class="lance-buttons">
-      <button type="button" class="lance-btn" data-strat="livre-bolso">Lance Livre + recursos próprios</button>
+      <button type="button" class="lance-btn" data-strat="livre-bolso">Lance Livre · Recursos próprios</button>
       <button type="button" class="lance-btn" data-strat="livre-embutido">Lance Livre + Embutido</button>
-      <button type="button" class="lance-btn fixo30" data-strat="fixo30-bolso">Lance Fixo 30% + recursos próprios</button>
+      <button type="button" class="lance-btn fixo30" data-strat="fixo30-bolso">Lance Fixo 30% · Recursos próprios</button>
       <button type="button" class="lance-btn fixo30" data-strat="fixo30-embutido">Lance Fixo 30% + Embutido</button>
-      <button type="button" class="lance-btn fixo40" data-strat="fixo40-bolso">Lance Fixo 40% + recursos próprios</button>
+      <button type="button" class="lance-btn fixo40" data-strat="fixo40-bolso">Lance Fixo 40% · Recursos próprios</button>
       <button type="button" class="lance-btn fixo40" data-strat="fixo40-embutido">Lance Fixo 40% + Embutido</button>
       <div class="clear-btn-row">
         <button type="button" class="clear-btn" data-strat="limpar">Limpar dados</button>
@@ -277,7 +275,6 @@
       <div class="field">
         <label>Recurso próprio</label>
         <input type="text" id="pp-recProp" placeholder="R$ 0,00" data-mask="money">
-        <input type="text" id="pp-recProp-pct" class="lance-pct-mirror" placeholder="0,00 % do crédito">
       </div>
       <div class="field">
         <label>Embutido (% máx. do crédito)</label>
@@ -287,7 +284,6 @@
       <div class="field">
         <label>Embutido</label>
         <input type="text" id="pp-embutido" placeholder="R$ 0,00" data-mask="money">
-        <input type="text" id="pp-embutido-pct" class="lance-pct-mirror" placeholder="0,00 % do crédito">
         <div class="lance-max-hint" id="pp-embutidoMaxHint">Máx. R$ 0,00 · verificar característica do grupo</div>
       </div>
     </div>
@@ -675,78 +671,8 @@ function aplicaEstrategia(strat, pctLivre = null) {
   if (recProp < 0) recProp = 0;
   get('pp-recProp').value = recProp > 0 ? maskMoney(String(Math.round(recProp * 100))) : '';
   get('pp-embutido').value = embutido > 0 ? maskMoney(String(Math.round(embutido * 100))) : '';
-  syncAllPctFromRs();
   recalc();
 }
-
-// ═══════════════════════════════════════════════════════
-// SYNC R$ ↔ % DO CRÉDITO (campos de lance)
-// ═══════════════════════════════════════════════════════
-const LANCE_FIELDS = [
-  { rs: 'pp-recProp',  pct: 'pp-recProp-pct'  },
-  { rs: 'pp-embutido', pct: 'pp-embutido-pct' }
-];
-let _syncingPct = false;
-
-function fmtPct(n) {
-  if (!isFinite(n) || n === 0) return '';
-  return n.toFixed(2).replace('.', ',') + ' %';
-}
-
-function syncPctFromRs(rsId, pctId) {
-  const credito = unmaskMoney(get('pp-credito').value || '');
-  const rs = unmaskMoney(get(rsId).value || '');
-  const pctEl = get(pctId);
-  if (!pctEl) return;
-  if (credito > 0 && rs > 0) pctEl.value = fmtPct((rs / credito) * 100);
-  else pctEl.value = '';
-}
-
-function syncRsFromPct(rsId, pctId) {
-  const credito = unmaskMoney(get('pp-credito').value || '');
-  const pctRaw = (get(pctId).value || '').replace('%','').replace(',','.').trim();
-  const pct = parseFloat(pctRaw);
-  const rsEl = get(rsId);
-  if (!rsEl) return;
-  if (credito > 0 && isFinite(pct) && pct > 0) {
-    rsEl.value = maskMoney(String(Math.round(credito * (pct / 100) * 100)));
-  } else if (!isFinite(pct) || pct <= 0) {
-    rsEl.value = '';
-  }
-}
-
-function syncAllPctFromRs() {
-  _syncingPct = true;
-  LANCE_FIELDS.forEach(f => syncPctFromRs(f.rs, f.pct));
-  _syncingPct = false;
-}
-
-LANCE_FIELDS.forEach(f => {
-  const rsEl = get(f.rs), pctEl = get(f.pct);
-  if (!rsEl || !pctEl) return;
-  rsEl.addEventListener('input', () => {
-    if (_syncingPct) return;
-    _syncingPct = true;
-    syncPctFromRs(f.rs, f.pct);
-    _syncingPct = false;
-  });
-  pctEl.addEventListener('input', () => {
-    if (_syncingPct) return;
-    _syncingPct = true;
-    syncRsFromPct(f.rs, f.pct);
-    _syncingPct = false;
-    recalc();
-  });
-  pctEl.addEventListener('blur', () => {
-    const v = pctEl.value;
-    if (v) pctEl.value = fmtPct(parseFloat(v.replace('%','').replace(',','.').trim()) || 0);
-  });
-});
-
-get('pp-credito').addEventListener('input', () => {
-  if (_syncingPct) return;
-  setTimeout(syncAllPctFromRs, 0);
-});
 
 document.querySelectorAll('.lance-btn, .clear-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -786,7 +712,7 @@ function fecharModalLance() {
 // LIMPAR
 // ═══════════════════════════════════════════════════════
 function limparTudo() {
-  ['pp-credito','pp-prazo','pp-contempla','pp-recProp','pp-embutido','pp-recProp-pct','pp-embutido-pct','pp-pctEmbutido','pp-taxaAdm','pp-fundo','pp-seguro'].forEach(id => { const el = get(id); if (el) el.value = ''; });
+  ['pp-credito','pp-prazo','pp-contempla','pp-recProp','pp-embutido','pp-pctEmbutido','pp-taxaAdm','pp-fundo','pp-seguro'].forEach(id => { const el = get(id); if (el) el.value = ''; });
   get('pp-tipo').value = '';
   get('pp-redutor').value = '';
   recalc();
@@ -800,7 +726,7 @@ document.getElementById('btnLimparProposta').addEventListener('click', () => {
 });
 
 document.getElementById('btnLimparLance').addEventListener('click', () => {
-  ['pp-recProp','pp-embutido','pp-recProp-pct','pp-embutido-pct'].forEach(id => { const el = get(id); if (el) el.value = ''; });
+  ['pp-recProp','pp-embutido'].forEach(id => get(id).value = '');
   recalc();
 });
 
