@@ -184,7 +184,7 @@ tbody td:nth-child(4){font-weight:700;color:#16A34A}
     <div class="tbl-card">
       <div class="chart-title"><span>Ranking de Consultores</span><div style="font-size:10px;color:#94A3B8;font-weight:500;letter-spacing:.3px;text-transform:none;margin-top:2px">Performance por volume de crédito no período</div></div>
       <table>
-        <thead><tr><th>#</th><th onclick="sortRanking('nome')" style="cursor:pointer">Consultor</th><th onclick="sortRanking('cotas')" style="cursor:pointer">Cotas ▾</th><th onclick="sortRanking('credito')" style="cursor:pointer">Crédito Total ▾</th><th onclick="sortRanking('ticket')" style="cursor:pointer">Ticket Médio ▾</th><th>Participação</th><th>Var.</th></tr></thead>
+        <thead><tr><th>#</th><th onclick="sortRanking('nome')" style="cursor:pointer">Consultor</th><th onclick="sortRanking('cotas')" style="cursor:pointer">Cotas ▾</th><th onclick="sortRanking('credito')" style="cursor:pointer">Crédito Total ▾</th><th onclick="sortRanking('ticket')" style="cursor:pointer">Ticket Médio ▾</th><th>Participação</th><th onclick="sortRanking('var')" style="cursor:pointer">Var. ▾</th></tr></thead>
         <tbody id="rankingBody"></tbody>
       </table>
     </div>
@@ -788,8 +788,10 @@ function renderRanking(data) {
   let prevData = rawData;
   if (fAdm.length) prevData = prevData.filter(d => fAdm.includes(d.adm));
   if (fSit.length) prevData = prevData.filter(d => { const s = normS(d.status); if (fSit.includes('CONTEMPLADO') && s.startsWith('CONTEMPL')) return true; if (fSit.includes('NORMAL') && s === 'NORMAL') return true; return false; });
-  if (fMes.length === 1 && fa.length === 1) { const curMes = normMes(fMes[0]); const idx = mesesOrd.indexOf(curMes); const curYear = parseInt(fa[0]); if (idx === 0) prevData = prevData.filter(d => normMes(d.mes) === 'DEZEMBRO' && d.ano === String(curYear-1)); else prevData = prevData.filter(d => normMes(d.mes) === mesesOrd[idx-1] && d.ano === String(curYear)); }
-  else if (fa.length === 1) { const curYear = parseInt(fa[0]); prevData = prevData.filter(d => d.ano === String(curYear-1)); if (fMes.length) { const targets = fMes.map(normMes); prevData = prevData.filter(d => targets.includes(normMes(d.mes))); } }
+  // Var. = comparação YoY (mesmo período do ano anterior).
+  //  - 1 mês + 1 ano: mesmo mês do ano-1
+  //  - só 1 ano:      ano-1 inteiro (com filtro de meses, se houver)
+  if (fa.length === 1) { const curYear = parseInt(fa[0]); prevData = prevData.filter(d => d.ano === String(curYear-1)); if (fMes.length) { const targets = fMes.map(normMes); prevData = prevData.filter(d => targets.includes(normMes(d.mes))); } }
   else { prevData = []; }
   const prevGroups = {};
   prevData.forEach(d => { if (!d.consultor) return; if (!prevGroups[d.consultor]) prevGroups[d.consultor] = 0; prevGroups[d.consultor] += d.credito; });
@@ -800,11 +802,25 @@ function drawRanking() {
   const { groups, prevGroups } = window.__rankingRaw || { groups: {}, prevGroups: {} };
   const col = rankingState.sortCol;
   const dir = rankingState.sortDir === 'asc' ? 1 : -1;
+  const getVarPct = (nome, credito) => {
+    const prev = prevGroups[nome] || 0;
+    if (prev <= 0) return null;
+    return ((credito - prev) / prev) * 100;
+  };
   const sorted = Object.entries(groups).sort((a,b) => {
     if (col === 'cotas') return (a[1].cotas - b[1].cotas) * dir;
     if (col === 'credito') return (a[1].credito - b[1].credito) * dir;
     if (col === 'ticket') return ((a[1].credito/a[1].cotas) - (b[1].credito/b[1].cotas)) * dir;
     if (col === 'nome') return a[0].localeCompare(b[0]) * dir;
+    if (col === 'var') {
+      const aPct = getVarPct(a[0], a[1].credito);
+      const bPct = getVarPct(b[0], b[1].credito);
+      // consultores sem dados do ano anterior vão sempre pro fim
+      if (aPct === null && bPct === null) return 0;
+      if (aPct === null) return 1;
+      if (bPct === null) return -1;
+      return (aPct - bPct) * dir;
+    }
     return (a[1].credito - b[1].credito) * dir;
   });
   const totalCredito = sorted.reduce((s,[,v]) => s + v.credito, 0) || 1;
