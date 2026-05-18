@@ -299,6 +299,31 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-ser
 
     <div id="adesoes-list"></div>
   </div>
+
+  <!-- MODAL: ATRIBUIR VENDEDOR -->
+  <div id="modal-atribuir" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center;padding:20px">
+    <div style="background:#fff;border-radius:12px;max-width:520px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+      <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:16px;font-weight:700;color:var(--mp-navy)">Atribuir Vendedor</div>
+          <div id="atrib-protocolo" style="font-size:11px;color:var(--text2);margin-top:2px;font-family:'DM Mono',monospace"></div>
+        </div>
+        <button onclick="fecharAtribuir()" style="background:none;border:0;padding:4px;cursor:pointer;color:var(--text2);font-size:22px;line-height:1">&times;</button>
+      </div>
+      <div style="padding:20px 24px">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:8px">Vendedor atual: <strong id="atrib-atual" style="color:var(--mp-navy)">—</strong></div>
+        <label style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin:14px 0 5px">Selecionar novo vendedor</label>
+        <select id="atrib-select" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:7px;font-size:13.5px;font-family:inherit">
+          <option value="">— Carregando...</option>
+        </select>
+        <button onclick="desatribuir()" style="margin-top:10px;background:#fff;color:var(--red);border:1px solid var(--red);padding:6px 12px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:600">Remover vendedor (deixar sem atribuição)</button>
+      </div>
+      <div style="padding:14px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px">
+        <button onclick="fecharAtribuir()" style="background:#fff;border:1px solid var(--border);color:var(--text);padding:8px 16px;border-radius:7px;cursor:pointer;font-weight:600;font-size:12.5px">Cancelar</button>
+        <button onclick="salvarAtribuicao()" style="background:var(--mp-navy);color:#fff;border:0;padding:8px 18px;border-radius:7px;cursor:pointer;font-weight:700;font-size:12.5px">Salvar</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -383,14 +408,47 @@ function showToast(message, type = 'success') {
   setTimeout(() => toast.remove(), 2200);
 }
 
-// ═══ CARREGAR ADESÕES ═══
+// ═══ CARREGAR ADESÕES (das DUAS tabelas: portal_adesoes legacy + portal_propostas nova) ═══
 async function loadAdesoes() {
   const listEl = document.getElementById('adesoes-list');
   listEl.innerHTML = '<div style="text-align:center;padding:40px;"><div class="spinner"></div></div>';
   try {
-    const { data, error } = await sb.from('portal_adesoes').select('*').order('criado_em', { ascending: false });
-    if (error) throw error;
-    allAdesoes = data || [];
+    // 1) Tabela LEGACY (portal_adesoes — 6 fichas antigas dos meninos)
+    const { data: legacy, error: e1 } = await sb.from('portal_adesoes').select('*').order('criado_em', { ascending: false });
+    if (e1) throw e1;
+    // 2) Tabela NOVA (portal_propostas — formulário Master Prime v2)
+    const { data: novas, error: e2 } = await sb.from('portal_propostas').select('*').order('criado_em', { ascending: false });
+    if (e2 && e2.code !== 'PGRST116') throw e2; // ignora se tabela não existe
+    // Normaliza ambas pra estrutura comum
+    const legacyNorm = (legacy || []).map(a => ({
+      id: a.id,
+      _source: 'legacy',
+      protocolo: a.protocolo,
+      nome_cliente: a.nome_cliente,
+      cpf_cnpj: a.cpf_cnpj,
+      administradora: a.administradora,
+      tipo_pessoa: a.tipo_pessoa,
+      status: a.status,
+      criado_em: a.criado_em,
+      consultor_nome: a.consultor_nome,
+      consultor_auth_id: a.consultor_auth_id,
+      dados: a.dados || {}
+    }));
+    const novasNorm = (novas || []).map(p => ({
+      id: p.id,
+      _source: 'nova',
+      protocolo: p.protocolo,
+      nome_cliente: p.nome,
+      cpf_cnpj: p.tipo === 'pf' ? p.cpf : p.cnpj,
+      administradora: p.administradora || 'pendente',
+      tipo_pessoa: p.tipo,
+      status: p.status,
+      criado_em: p.criado_em,
+      consultor_nome: p.consultor_nome,
+      consultor_auth_id: p.consultor_auth_id,
+      dados: p  // toda a linha completa
+    }));
+    allAdesoes = [...novasNorm, ...legacyNorm].sort((a,b) => new Date(b.criado_em) - new Date(a.criado_em));
     applyFilter();
   } catch(e) {
     listEl.innerHTML = `<div class="empty-state"><p>Erro ao carregar: ${e.message}</p></div>`;
@@ -486,6 +544,10 @@ function renderList() {
         <div class="ad-card-header-right">
           <span class="mono" style="font-size:11px;color:var(--text2);">${a.protocolo || ''}</span>
           <span style="color:var(--text3);font-size:11px;" title="Recebido em ${fmtDataHora(a.criado_em)}">${fmtDataHora(a.criado_em)}</span>
+          ${(currentUserTipo === 'master' || currentUserTipo === 'admin') && a._source === 'nova' ? `
+            <button onclick="event.stopPropagation();abrirAtribuir('${a.id}','${(a.consultor_nome||'').replace(/'/g,'\\\'')}')" style="background:var(--mp-teal);color:#fff;border:0;padding:4px 9px;border-radius:6px;font-size:10.5px;font-weight:600;cursor:pointer;margin-left:4px">${a.consultor_nome ? 'Reatribuir' : 'Atribuir'}</button>
+          ` : ''}
+          <span style="background:#F1F5F9;color:var(--text2);padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600">${a.consultor_nome || 'Sem vendedor'}</span>
         </div>
       </div>
       <div class="ad-card-body">
@@ -658,6 +720,56 @@ function getCamposPorAdmTipo(adm, tipo) {
     ],
   };
   return map[`${adm}_${tipo}`] || [];
+}
+
+// ═══ ATRIBUIR VENDEDOR (Master/Admin only) ═══
+let _atribPropostaId = null;
+let _consultoresCache = null;
+
+async function abrirAtribuir(propostaId, consultorAtual) {
+  _atribPropostaId = propostaId;
+  document.getElementById('atrib-protocolo').textContent = 'Proposta ' + propostaId.substring(0,8);
+  document.getElementById('atrib-atual').textContent = consultorAtual || 'Sem vendedor';
+  // Carrega lista de consultores (cache)
+  if (!_consultoresCache) {
+    const { data, error } = await sb.from('portal_users')
+      .select('auth_id, nome, tipo')
+      .order('nome');
+    if (error) { alert('Erro carregando consultores: '+error.message); return; }
+    _consultoresCache = (data||[]).filter(u => u.auth_id);
+  }
+  const sel = document.getElementById('atrib-select');
+  sel.innerHTML = '<option value="">— Selecione um vendedor —</option>' +
+    _consultoresCache.map(u => `<option value="${u.auth_id}">${u.nome} (${u.tipo})</option>`).join('');
+  document.getElementById('modal-atribuir').style.display = 'flex';
+}
+
+function fecharAtribuir() {
+  document.getElementById('modal-atribuir').style.display = 'none';
+  _atribPropostaId = null;
+}
+
+async function salvarAtribuicao() {
+  const novoId = document.getElementById('atrib-select').value;
+  if (!novoId) { alert('Selecione um vendedor'); return; }
+  try {
+    const { error } = await sb.rpc('reatribuir_proposta', { proposta_id: _atribPropostaId, novo_consultor_id: novoId });
+    if (error) throw error;
+    showToast('Vendedor atribuído com sucesso');
+    fecharAtribuir();
+    loadAdesoes();
+  } catch(e) { alert('Erro: '+e.message); }
+}
+
+async function desatribuir() {
+  if (!confirm('Remover vendedor desta proposta? Ficará sem atribuição.')) return;
+  try {
+    const { error } = await sb.rpc('reatribuir_proposta', { proposta_id: _atribPropostaId, novo_consultor_id: null });
+    if (error) throw error;
+    showToast('Vendedor removido');
+    fecharAtribuir();
+    loadAdesoes();
+  } catch(e) { alert('Erro: '+e.message); }
 }
 
 // ═══ INICIAR ═══
