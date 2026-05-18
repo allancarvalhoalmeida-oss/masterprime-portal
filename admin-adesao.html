@@ -72,6 +72,78 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-ser
 }
 .link-card .btn-copy-link:hover { background: #3AABB8; transform: translateY(-1px); }
 
+/* Links Grid — 4 cards (Master Prime, Porto, Itaú, Bradesco) */
+.links-section { margin-bottom: 24px; }
+.links-title {
+  font-size: 11px; font-weight: 700; color: var(--text2);
+  text-transform: uppercase; letter-spacing: .8px;
+  margin-bottom: 10px; padding-left: 4px;
+}
+.links-grid {
+  display: grid; gap: 12px;
+  grid-template-columns: 1fr 1fr;
+}
+@media (max-width: 800px) { .links-grid { grid-template-columns: 1fr; } }
+.link-mini {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 14px 16px;
+  box-shadow: var(--shadow);
+  display: flex; align-items: center; gap: 14px;
+  transition: transform .12s, box-shadow .12s, border-color .12s;
+  border-left-width: 4px;
+}
+.link-mini.mp { border-left-color: #2D3F5E; }
+.link-mini.po { border-left-color: #003D7C; }
+.link-mini.it { border-left-color: #EC7000; }
+.link-mini.br { border-left-color: #CC092F; }
+.link-mini:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.link-mini-badge {
+  width: 56px; height: 44px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  padding: 4px;
+  background: #fff;
+  border: 1px solid var(--border);
+}
+.link-mini-badge img {
+  max-width: 100%; max-height: 100%;
+  object-fit: contain;
+  display: block;
+}
+.link-mini.mp .link-mini-badge { background: #2D3F5E; border-color: #2D3F5E; }
+.link-mini.mp .link-mini-badge img { filter: brightness(0) invert(1); }
+.link-mini.po .link-mini-badge { background: #fff; }
+.link-mini.it .link-mini-badge { background: #fff; }
+.link-mini.br .link-mini-badge { background: #fff; }
+.link-mini-info { flex: 1; min-width: 0; }
+.link-mini-label {
+  font-size: 10px; font-weight: 700; color: var(--text2);
+  text-transform: uppercase; letter-spacing: .4px;
+  margin-bottom: 2px;
+}
+.link-mini-url {
+  font-size: 11px; font-family: 'DM Mono', monospace;
+  color: var(--text2);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.link-mini-copy {
+  background: var(--mp-navy); color: #fff;
+  border: 0; padding: 8px 14px; border-radius: 7px;
+  font-weight: 600; font-size: 11.5px; cursor: pointer;
+  display: flex; align-items: center; gap: 5px;
+  transition: background .12s, transform .08s;
+}
+.link-mini-copy:hover { background: #1F2D45; transform: translateY(-1px); }
+.link-mini-copy.ok { background: var(--green); }
+/* botão de copiar com a cor da admin */
+.link-mini.po .link-mini-copy { background: #003D7C; }
+.link-mini.po .link-mini-copy:hover { background: #002B57; }
+.link-mini.it .link-mini-copy { background: #EC7000; }
+.link-mini.it .link-mini-copy:hover { background: #C45F00; }
+.link-mini.br .link-mini-copy { background: #CC092F; }
+.link-mini.br .link-mini-copy:hover { background: #A50723; }
+
 .search-box {
   background: var(--card); border: 1px solid var(--border);
   border-radius: var(--r); padding: 16px 20px; margin-bottom: 20px;
@@ -217,25 +289,18 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-ser
   </header>
 
   <div class="container">
-    <!-- LINK DO FORMULÁRIO -->
-    <div class="link-card">
-      <div class="link-icon">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--mp-navy)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+    <!-- LINKS DE ADESÃO — 4 cards (Master Prime / Porto / Itaú / Bradesco) -->
+    <div class="links-section">
+      <div class="links-title">Links de Adesão · clique em "Copiar" e envie ao cliente</div>
+      <div class="links-grid" id="links-grid">
+        <!-- gerado dinamicamente em renderLinks() com o código do consultor logado -->
       </div>
-      <div class="link-info">
-        <div class="link-label">Link do formulário para clientes</div>
-        <div class="link-url" id="form-link">https://grupomasterprime.github.io/masterprime-portal/formulario.html</div>
-      </div>
-      <button class="btn-copy-link" id="btn-copy-link" onclick="copyFormLink()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-        Copiar link
-      </button>
     </div>
 
     <!-- BUSCA -->
     <div class="search-box">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-      <input class="search-input" id="search-input" placeholder="Buscar por nome, CPF/CNPJ ou protocolo..." oninput="applyFilter()">
+      <input class="search-input" id="search-input" placeholder="Buscar por nome, CPF/CNPJ, protocolo, e-mail, telefone..." oninput="applyFilter()">
       <span class="search-info" id="search-info"></span>
     </div>
 
@@ -250,6 +315,8 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let allAdesoes = [];
 let filteredAdesoes = [];
+let currentUserCodigo = '';
+let currentUserTipo = '';
 
 // ═══ VERIFICA SESSÃO ═══
 async function checkSession() {
@@ -259,11 +326,14 @@ async function checkSession() {
 
   const { data: { session } } = await sb.auth.getSession();
   if (session && session.user) {
-    const { data: profile } = await sb.from('portal_users').select('tipo').eq('auth_id', session.user.id).single();
-    if (profile && profile.tipo === 'admin') {
+    const { data: profile } = await sb.from('portal_users').select('tipo, codigo_link').eq('auth_id', session.user.id).single();
+    // Admin, master, ou consultor (todos podem ver e enviar links)
+    if (profile && ['admin','master','consultor','socio','parceiro'].includes(profile.tipo)) {
+      currentUserCodigo = profile.codigo_link || '';
+      currentUserTipo = profile.tipo;
       document.getElementById('loading-state').style.display = 'none';
       document.getElementById('main-state').style.display = 'block';
-      // Não modifica o link do formulário – usa o que está fixo no HTML
+      renderLinks();
       loadAdesoes();
       return;
     }
@@ -272,31 +342,43 @@ async function checkSession() {
   document.getElementById('unauth-state').style.display = 'block';
 }
 
-// ═══ COPIAR LINK DO FORMULÁRIO ═══
-function copyFormLink() {
-  const linkEl = document.getElementById('form-link');
-  const btn = document.getElementById('btn-copy-link');
-  if (!linkEl) return;
-  const url = linkEl.textContent.trim();
-  navigator.clipboard.writeText(url).then(() => {
-    if (btn) {
-      const originalHTML = btn.innerHTML;
-      btn.innerHTML = '✓ Link copiado!';
-      btn.style.background = '#16A34A';
-      setTimeout(() => {
-        btn.innerHTML = originalHTML;
-        btn.style.background = '';
-      }, 2000);
-    }
-    const toast = document.createElement('div');
-    toast.textContent = 'Link do formulário copiado!';
-    toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:var(--mp-navy);color:#fff;padding:10px 20px;border-radius:8px;font-weight:600;z-index:999;';
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 2200);
-  }).catch(() => {
-    alert('Erro ao copiar. Tente novamente.');
-  });
+// ═══ RENDERIZA OS 4 CARDS DE LINK ═══
+function renderLinks() {
+  const base = 'https://grupomasterprime.github.io/masterprime-portal/formulario.html';
+  const c = currentUserCodigo ? '?c=' + currentUserCodigo : '';
+  const sep = c ? '&' : '?';
+  const links = [
+    { key: 'mp', label: 'Master Prime · Geral',       url: base + c,                            logo: 'logo.png' },
+    { key: 'po', label: 'Consórcio Porto Seguro',     url: base + c + sep + 'admin=porto',     logo: 'logo-porto.png' },
+    { key: 'it', label: 'Consórcio Itaú',             url: base + c + sep + 'admin=itau',      logo: 'logo-itau.png' },
+    { key: 'br', label: 'Consórcio Bradesco',         url: base + c + sep + 'admin=bradesco',  logo: 'logo-bradesco.png' }
+  ];
+  document.getElementById('links-grid').innerHTML = links.map(l => `
+    <div class="link-mini ${l.key}">
+      <div class="link-mini-badge"><img src="${l.logo}" alt="${l.label}"></div>
+      <div class="link-mini-info">
+        <div class="link-mini-label">${l.label}</div>
+        <div class="link-mini-url" title="${l.url}">${l.url}</div>
+      </div>
+      <button class="link-mini-copy" onclick="copyLinkMini(this, '${l.url}', '${l.label.replace(/'/g, "\\'")}')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        Copiar
+      </button>
+    </div>
+  `).join('');
 }
+
+function copyLinkMini(btn, url, label) {
+  navigator.clipboard.writeText(url).then(() => {
+    const txt = btn.innerHTML;
+    btn.classList.add('ok');
+    btn.innerHTML = '✓ Copiado';
+    setTimeout(() => { btn.classList.remove('ok'); btn.innerHTML = txt; }, 1800);
+    showToast('Link "' + label + '" copiado!');
+  }).catch(() => alert('Erro ao copiar'));
+}
+
+// (link único antigo removido — agora usa 4 cards via renderLinks/copyLinkMini)
 
 // ═══ TOAST ═══
 function showToast(message, type = 'success') {
@@ -322,22 +404,39 @@ async function loadAdesoes() {
   }
 }
 
-// ═══ FILTRO ═══
+// ═══ FILTRO — busca em TODOS os campos (nome, CPF, e-mail, telefone, cidade, etc.) ═══
 function applyFilter() {
-  const query = (document.getElementById('search-input').value || '').toLowerCase().trim();
+  const queryRaw = (document.getElementById('search-input').value || '').trim();
+  const query = queryRaw.toLowerCase();
+  const qOnlyDigits = queryRaw.replace(/\D/g, '');
   if (!query) {
     filteredAdesoes = [...allAdesoes];
   } else {
     filteredAdesoes = allAdesoes.filter(a => {
-      const nome = (a.nome_cliente || '').toLowerCase();
-      const cpfCnpj = (a.cpf_cnpj || '').replace(/\D/g, '');
-      const proto = (a.protocolo || '').toLowerCase();
-      const q = query.replace(/\D/g, '');
-      return nome.includes(query) || cpfCnpj.includes(q) || proto.includes(query);
+      // Junta TUDO em uma string só (campos topo + dados JSON)
+      const topo = [a.nome_cliente, a.cpf_cnpj, a.protocolo, a.administradora, a.tipo_pessoa, a.status, a.consultor_nome].filter(Boolean).join(' ').toLowerCase();
+      const dadosStr = JSON.stringify(a.dados || {}).toLowerCase();
+      const haystack = topo + ' ' + dadosStr;
+      // Se busca for só dígitos (CPF, CNPJ, celular), compara só números
+      if (qOnlyDigits && qOnlyDigits.length >= 4) {
+        const hayDigits = haystack.replace(/\D/g, '');
+        if (hayDigits.includes(qOnlyDigits)) return true;
+      }
+      return haystack.includes(query);
     });
   }
   document.getElementById('search-info').textContent = `${filteredAdesoes.length} de ${allAdesoes.length} adesões`;
   renderList();
+}
+
+// Formata data/hora pt-BR
+function fmtDataHora(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (isNaN(d)) return iso;
+  const data = d.toLocaleDateString('pt-BR');
+  const hora = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  return data + ' · ' + hora;
 }
 
 // ═══ RENDERIZAR LISTA ═══
@@ -393,7 +492,7 @@ function renderList() {
         </div>
         <div class="ad-card-header-right">
           <span class="mono" style="font-size:11px;color:var(--text2);">${a.protocolo || ''}</span>
-          <span style="color:var(--text3);">${new Date(a.criado_em).toLocaleDateString('pt-BR')}</span>
+          <span style="color:var(--text3);font-size:11px;" title="Recebido em ${fmtDataHora(a.criado_em)}">${fmtDataHora(a.criado_em)}</span>
         </div>
       </div>
       <div class="ad-card-body">
