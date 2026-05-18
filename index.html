@@ -469,7 +469,7 @@ body.embedded-mode .portal-menu-fab { display:flex; }
             <button onclick="fecharPermissoes()" style="background:none;border:0;padding:4px;cursor:pointer;color:var(--text3,#6b7280);font-size:24px;line-height:1">&times;</button>
           </div>
           <div style="padding:20px 24px">
-            <div style="font-size:12px;color:var(--text3,#6b7280);margin-bottom:14px">Marque os módulos do menu lateral que este usuário pode acessar. Itens desmarcados ficam escondidos.</div>
+            <div style="font-size:12px;color:var(--text3,#6b7280);margin-bottom:14px">Marque os módulos do menu lateral que este usuário pode acessar. Itens de <strong>Menu</strong> ficam visíveis por padrão; itens de <strong>Administração</strong> ficam escondidos por padrão (libera explicitamente).</div>
             <div id="perm-checklist" style="display:flex;flex-direction:column;gap:10px"></div>
             <div style="margin-top:14px;padding-top:14px;border-top:1px dashed var(--border,#e5e7eb);font-size:11px;color:var(--text3,#6b7280)">
               <strong>Meu Perfil</strong> e <strong>Gerenciar Usuários</strong> não aparecem aqui — perfil é sempre visível e Gerenciar Usuários é exclusivo do Master. Itens de Administração só fazem efeito para usuários do tipo Admin.
@@ -1458,7 +1458,10 @@ async function abrirPermissoes(cpf) {
       header = `<div style="font-size:10px;font-weight:700;letter-spacing:.06em;color:var(--text3,#6b7280);text-transform:uppercase;margin:${lastSecao ? '12px' : '0'} 0 4px">${titulo}</div>`;
       lastSecao = m.secao;
     }
-    const checked = semConfig || perms[m.key] !== false;
+    // Menu: default visível (semConfig → checked). Administração: default oculto (semConfig → unchecked).
+    const checked = m.secao === 'admin'
+      ? perms[m.key] === true
+      : (semConfig || perms[m.key] !== false);
     return header + `<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border,#e5e7eb);border-radius:8px;cursor:pointer;font-size:13px;color:var(--text,#111)">
       <input type="checkbox" data-perm-key="${m.key}" ${checked ? 'checked' : ''} style="width:16px;height:16px;cursor:pointer">
       <span>${m.label}</span>
@@ -1494,17 +1497,35 @@ async function salvarPermissoes() {
 // Chamar após login e após qualquer refresh do usuário corrente.
 function aplicarPermissoesUI() {
   if (!currentUser) return;
-  // Master sempre vê tudo. Admin pode ser restrito (se permissoes definidas).
+  // Master sempre vê tudo.
   if (currentUser.tipo === 'master') return;
-  const perms = currentUser.permissoes;
-  // Sem config → vê tudo (compat retroativa)
-  if (!perms || typeof perms !== 'object') return;
+  const perms = currentUser.permissoes || {};
+  const semConfig = !currentUser.permissoes || typeof currentUser.permissoes !== 'object';
   MODULOS_MENU.forEach(m => {
     const el = document.getElementById(m.navId);
     if (!el) return;
-    if (perms[m.key] === false) el.classList.add('hidden');
-    else el.classList.remove('hidden');
+    let visible;
+    if (m.secao === 'admin') {
+      // Administração: default oculto, só visível se permissoes[key] === true
+      visible = perms[m.key] === true;
+    } else {
+      // Menu: default visível, oculto só se permissoes[key] === false
+      visible = semConfig || perms[m.key] !== false;
+    }
+    if (visible) el.classList.remove('hidden');
+    else el.classList.add('hidden');
   });
+  // Se nenhum item de Administração está visível, esconde o bloco admin-nav inteiro
+  const adminNav = document.getElementById('admin-nav');
+  if (adminNav) {
+    const algumAdminVisivel = MODULOS_MENU.some(m =>
+      m.secao === 'admin' && perms[m.key] === true
+    );
+    // Master vê admin-nav sempre; admin só se tiver algum item liberado
+    if (currentUser.tipo === 'admin' && !algumAdminVisivel) {
+      adminNav.classList.add('hidden');
+    }
+  }
 }
 
 // Bloqueia navegação direta a um módulo que o usuário não pode acessar.
@@ -1512,11 +1533,16 @@ function aplicarPermissoesUI() {
 function podeAcessarScreen(screenId) {
   if (!currentUser) return true;
   if (currentUser.tipo === 'master') return true;
-  const perms = currentUser.permissoes;
-  if (!perms || typeof perms !== 'object') return true;
   const m = MODULOS_MENU.find(x => x.screen === screenId);
-  if (!m) return true; // screens não-gateáveis (perfil, admin-*) liberadas
-  return perms[m.key] !== false;
+  if (!m) return true; // screens não-gateáveis (perfil etc) liberadas
+  const perms = currentUser.permissoes || {};
+  const semConfig = !currentUser.permissoes || typeof currentUser.permissoes !== 'object';
+  if (m.secao === 'admin') {
+    // Administração: default negado, só libera se permissoes[key] === true
+    return perms[m.key] === true;
+  }
+  // Menu: default permitido, só nega se permissoes[key] === false
+  return semConfig || perms[m.key] !== false;
 }
 
 async function delUser(cpf) {
