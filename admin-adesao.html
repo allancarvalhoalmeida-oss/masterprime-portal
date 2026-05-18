@@ -1,8 +1,4 @@
-O problema está na linha que **sobrescreve** o link dentro da função `checkSession()`. Mesmo com o HTML tendo o link correto, o JavaScript substitui por `window.location.origin + '/formulario.html'`, que gera `https://grupomasterprime.github.io/formulario.html` (faltando o `/masterprime-portal`).
 
-Aqui está o **código completo corrigido** – removi a linha problemática e a duplicação da função `copyFormLink`. Agora o link exibido e copiado será sempre o que está fixo no HTML.
-
-```html
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
