@@ -819,14 +819,18 @@ async function enterPortal() {
   document.getElementById('portal-screen').style.display='block';
   document.getElementById('sb-avatar').textContent=getInitials(currentUser.nome);
   document.getElementById('sb-user-name').textContent=currentUser.nome;
-  const role = currentUser.tipo==='admin'?'Administrador':currentUser.tipo==='socio'?'Socio':'Consultor';
+  const role = currentUser.tipo==='master'?'Master':currentUser.tipo==='admin'?'Administrador':currentUser.tipo==='socio'?'Socio':currentUser.tipo==='parceiro'?'Parceiro':'Consultor';
   document.getElementById('sb-user-role').textContent=role;
-  document.getElementById('admin-nav').classList.toggle('hidden', currentUser.tipo!=='admin');
+  const _isAdminLike = (currentUser.tipo==='admin' || currentUser.tipo==='master');
+  document.getElementById('admin-nav').classList.toggle('hidden', !_isAdminLike);
   // Visão Geral: acesso restrito aos donos da corretora
   const _OVERVIEW_ALLOWED = ['ALLAN ALMEIDA', 'ADMINISTRADOR'];
   const _isOverviewAllowed = _OVERVIEW_ALLOWED.includes((currentUser.nome||'').trim().toUpperCase());
   const _ovItem = document.getElementById('ni-admin-overview');
   if (_ovItem) _ovItem.style.display = _isOverviewAllowed ? '' : 'none';
+  // Gerenciar Usuários: somente Master (admin comum não vê)
+  const _usrItem = document.getElementById('ni-admin-users');
+  if (_usrItem) _usrItem.style.display = (currentUser.tipo === 'master') ? '' : 'none';
   // Restrição: Claudia Barreto não vê Demonstrativo nem Histórico
   const _restrictedDemo = ['CLAUDIA BARRETO'];
   const _isDemoBlocked = _restrictedDemo.includes((currentUser.nome||'').trim().toUpperCase());
@@ -838,7 +842,8 @@ async function enterPortal() {
   aplicarPermissoesUI();
   document.getElementById('perfil-nome').textContent=currentUser.nome;
   document.getElementById('perfil-cpf').textContent=currentUser.username || fmtCPF(currentUser.cpf);
-  document.getElementById('perfil-tipo').innerHTML=`<span class="tag tag-${currentUser.tipo==='admin'?'navy':currentUser.tipo==='socio'?'teal':'blue'}">${role}</span>`;
+  const _tagCls = currentUser.tipo==='master'?'navy':currentUser.tipo==='admin'?'navy':currentUser.tipo==='socio'?'teal':'blue';
+  document.getElementById('perfil-tipo').innerHTML=`<span class="tag tag-${_tagCls}">${role}</span>`;
   // Escolhe a primeira tela permitida (fallback pra perfil se nenhuma)
   const _telaInicial = (function(){
     const ordem = ['dashboard-vendas','assembleia','lances','simuladores','dashboard','historico','admin-faturamento'];
@@ -847,11 +852,11 @@ async function enterPortal() {
   })();
   nav(_telaInicial);
   if (!_isDemoBlocked) { await renderDashboard(); await renderHistorico(); }
-  if (currentUser.tipo==='admin') { await renderAdminMeses(); await renderUsers(); if (_isOverviewAllowed) { await renderAdminOverview(); } }
+  if (_isAdminLike) { await renderAdminMeses(); await renderUsers(); if (_isOverviewAllowed) { await renderAdminOverview(); } }
   // Atualiza imediatamente o label do menu (Faturamento ou Meus Processos) sem esperar entrar na tela
   try {
     const _lblMenu = document.getElementById('ni-admin-faturamento-label');
-    if (_lblMenu) _lblMenu.textContent = (currentUser.tipo === 'admin') ? 'Faturamento' : 'Meus Processos';
+    if (_lblMenu) _lblMenu.textContent = (currentUser.tipo === 'admin' || currentUser.tipo === 'master') ? 'Faturamento' : 'Meus Processos';
   } catch(e) {}
 }
 
@@ -861,12 +866,16 @@ function nav(id) {
   if (id === 'admin-overview' && currentUser && !['ALLAN ALMEIDA', 'ADMINISTRADOR'].includes((currentUser.nome||'').trim().toUpperCase())) {
     id = 'dashboard-vendas';
   }
+  // Gerenciar Usuários: só Master
+  if (id === 'admin-users' && currentUser && currentUser.tipo !== 'master') {
+    id = 'admin-overview';
+  }
   // Restrição: Claudia Barreto não acessa Demonstrativo nem Histórico mesmo via URL
   if ((id === 'dashboard' || id === 'historico') && currentUser && ['CLAUDIA BARRETO'].includes((currentUser.nome||'').trim().toUpperCase())) {
     id = 'assembleia';
   }
   // Bloqueio de acesso direto a módulo sem permissão (cai pra perfil)
-  if (currentUser && currentUser.tipo !== 'admin' && !podeAcessarScreen(id)) {
+  if (currentUser && currentUser.tipo !== 'master' && !podeAcessarScreen(id)) {
     id = 'perfil';
   }
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -1130,7 +1139,7 @@ async function delMes(m) { if(!confirm('Remover '+fmtMes(m)+'?'))return; await D
 // - Tabela com todos consultores e valor liquido (clicavel para ver demo completo)
 // - Modal/expansao com o demonstrativo completo de cada um
 async function renderAdminOverview() {
-  if (!currentUser || currentUser.tipo !== 'admin') return;
+  if (!currentUser || (currentUser.tipo !== 'admin' && currentUser.tipo !== 'master')) return;
   const sel = document.getElementById('overview-mes');
   const content = document.getElementById('overview-content');
   const sub = document.getElementById('overview-sub');
@@ -1323,15 +1332,16 @@ async function renderUsers() {
   const users = await DB.getAllUsers();
   const el = document.getElementById('users-list');
   document.getElementById('user-count').textContent = users.length + ' usuarios';
-  // Ordena: admin primeiro, depois por nome
+  // Ordena: master/admin primeiro, depois por nome
+  const _rank = t => (t==='master'?0:t==='admin'?1:t==='socio'?2:3);
   users.sort((a,b) => {
-    if (a.tipo === 'admin' && b.tipo !== 'admin') return -1;
-    if (b.tipo === 'admin' && a.tipo !== 'admin') return 1;
+    const ra = _rank(a.tipo), rb = _rank(b.tipo);
+    if (ra !== rb) return ra - rb;
     return (a.nome||'').localeCompare(b.nome||'');
   });
   const rows = users.map(u => {
-    const tc = u.tipo==='admin'?'tag-navy':u.tipo==='socio'?'tag-teal':'tag-blue';
-    const tl = u.tipo==='admin'?'Admin':u.tipo==='socio'?'S&oacute;cio':u.tipo==='parceiro'?'Parceiro':'Consultor';
+    const tc = u.tipo==='master'?'tag-amber':u.tipo==='admin'?'tag-navy':u.tipo==='socio'?'tag-teal':'tag-blue';
+    const tl = u.tipo==='master'?'Master':u.tipo==='admin'?'Admin':u.tipo==='socio'?'S&oacute;cio':u.tipo==='parceiro'?'Parceiro':'Consultor';
     const userLogin = u.username ? u.username : `<span style="color:var(--text3);font-style:italic">(sem usu&aacute;rio)</span>`;
     // Senha oculta por padrão; admin clica no olho para revelar (necessário para testar acesso)
     const senhaDisplay = u.senha
@@ -1344,7 +1354,7 @@ async function renderUsers() {
       <td class="mono" style="font-size:12px">${userLogin}</td>
       <td>${senhaDisplay}</td>
       <td style="text-align:right;white-space:nowrap">
-        ${u.tipo !== 'admin' ? `<button class="btn btn-outline btn-sm" onclick="abrirPermissoes('${u.cpf}')">Permissões</button>` : ''}
+        ${(currentUser.tipo === 'master' && u.tipo !== 'master') ? `<button class="btn btn-outline btn-sm" onclick="abrirPermissoes('${u.cpf}')">Permissões</button>` : ''}
         <button class="btn btn-outline btn-sm" onclick="resetPw('${u.cpf}')">Reset senha</button>
         ${canDel ? `<button class="btn btn-danger btn-sm" onclick="delUser('${u.cpf}')">Remover</button>` : ''}
       </td>
@@ -1474,8 +1484,8 @@ async function salvarPermissoes() {
 // Chamar após login e após qualquer refresh do usuário corrente.
 function aplicarPermissoesUI() {
   if (!currentUser) return;
-  // Admin sempre vê tudo (não respeita permissoes)
-  if (currentUser.tipo === 'admin') return;
+  // Master sempre vê tudo. Admin pode ser restrito (se permissoes definidas).
+  if (currentUser.tipo === 'master') return;
   const perms = currentUser.permissoes;
   // Sem config → vê tudo (compat retroativa)
   if (!perms || typeof perms !== 'object') return;
@@ -1491,7 +1501,7 @@ function aplicarPermissoesUI() {
 // Retorna true se permitido, false se bloqueado.
 function podeAcessarScreen(screenId) {
   if (!currentUser) return true;
-  if (currentUser.tipo === 'admin') return true;
+  if (currentUser.tipo === 'master') return true;
   const perms = currentUser.permissoes;
   if (!perms || typeof perms !== 'object') return true;
   const m = MODULOS_MENU.find(x => x.screen === screenId);
