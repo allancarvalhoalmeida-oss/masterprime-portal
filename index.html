@@ -31,7 +31,7 @@
   --blue:   #2563EB;  --blue-bg:#EFF6FF;
   --r: 10px;
   --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
-  --shadow-md: 0 4px 16px rgba(0,0,0,.10);
+  --shadow-md: 0 4px 6px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.05);
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; min-height: 100vh; }
@@ -104,6 +104,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-ser
   position:sticky; top:0; height:100vh; overflow-y:auto;
   transition:transform .25s ease;
 }
+/* Botão flutuante para reabrir o menu do portal quando em tela cheia */
 .portal-menu-fab {
   display:none; position:fixed; top:12px; left:12px; z-index:500;
   width:40px; height:40px; border-radius:10px; background:var(--sidebar-bg);
@@ -233,32 +234,6 @@ body.embedded-mode .portal-menu-fab { display:flex; }
 .config-banner strong { color:#78350F; }
 .config-banner code { background:rgba(0,0,0,.06); padding:2px 6px; border-radius:4px; font-family:'DM Mono',monospace; font-size:11px; }
 
-/* ═══ ADMIN ADESÕES (NOVO) ═══ */
-.adesao-card { background: #fff; border: 1px solid var(--border); border-radius: var(--r); box-shadow: var(--shadow); margin-bottom: 12px; overflow: hidden; }
-.adesao-card-header { padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; transition: background .1s; }
-.adesao-card-header:hover { background: #F8FAFC; }
-.adesao-card-header-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.adesao-card-header-right { display: flex; align-items: center; gap: 8px; }
-.adesao-card-body { padding: 0 20px 20px; display: none; }
-.adesao-card.open .adesao-card-body { display: block; }
-.adesao-detail-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-bottom: 16px; }
-.adesao-detail-item { background: var(--bg); border-radius: 6px; padding: 10px 14px; position: relative; transition: box-shadow .15s; }
-.adesao-detail-item:hover { box-shadow: 0 0 0 2px var(--mp-teal); }
-.adesao-detail-item-label { font-size: 9.5px; color: var(--text3); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; font-weight: 600; }
-.adesao-detail-item-value { font-size: 13px; font-weight: 500; color: var(--text); word-break: break-word; }
-.adesao-copy-btn { position: absolute; top: 6px; right: 8px; background: none; border: none; cursor: pointer; color: var(--text3); padding: 4px; border-radius: 4px; display: flex; align-items: center; transition: all .15s; }
-.adesao-copy-btn:hover { background: #fff; color: var(--mp-navy); }
-.adesao-copy-all-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: var(--mp-navy); color: #fff; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all .15s; }
-.adesao-copy-all-btn:hover { background: #1E2D45; }
-.adesao-search-box { background: #fff; border: 1px solid var(--border); border-radius: var(--r); padding: 16px 20px; margin-bottom: 20px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-.adesao-search-input { flex: 1; min-width: 250px; padding: 10px 14px; border: 1.5px solid var(--border2); border-radius: var(--r); font-size: 13px; font-family: 'Inter', sans-serif; outline: none; }
-.adesao-search-input:focus { border-color: var(--mp-teal); box-shadow: 0 0 0 3px rgba(77,188,200,.12); }
-.share-link-box { background: var(--mp-navy); border-radius: var(--r); padding: 16px 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; color: #fff; box-shadow: var(--shadow-md); }
-.share-link-box svg { color: var(--mp-yellow); flex-shrink: 0; }
-.share-link-url { flex: 1; font-size: 12px; color: #fff; background: rgba(255,255,255,.1); padding: 8px 12px; border-radius: 6px; font-family: 'DM Mono', monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border: 1px solid rgba(255,255,255,.2); }
-.btn-white { background: #fff; color: var(--mp-navy); border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 12px; transition: all .15s; white-space: nowrap; }
-.btn-white:hover { background: #f0f0f0; }
-
 /* ═══ RESPONSIVE ═══ */
 @media (max-width:768px) {
   .app { grid-template-columns:1fr; }
@@ -269,7 +244,6 @@ body.embedded-mode .portal-menu-fab { display:flex; }
   .stats { grid-template-columns:1fr 1fr; }
   .hist-grid { grid-template-columns:1fr; }
   .login-card { padding:32px 24px; }
-  .adesao-detail-grid { grid-template-columns:1fr; }
 }
 @media (min-width:769px) { .mobile-toggle { display:none; } }
 @media print {
@@ -289,11 +263,13 @@ body.embedded-mode .portal-menu-fab { display:flex; }
 </head>
 <body>
 
+<!-- ═══ LOADING ═══ -->
 <div id="loading-screen">
   <div class="spinner"></div>
   <div style="font-size:13px;color:var(--text2)">Conectando...</div>
 </div>
 
+<!-- ═══ LOGIN ═══ -->
 <div id="login-screen" style="display:none">
   <div class="login-card">
     <div class="login-logo">
@@ -319,9 +295,8 @@ body.embedded-mode .portal-menu-fab { display:flex; }
     <div class="login-footer">Sem acesso? Solicite ao administrador.</div>
   </div>
 </div>
-<!-- Container de notificações (toast) -->
-<div id="mp-toast-container" style="position:fixed; top:16px; right:16px; z-index:9999; display:flex; flex-direction:column; gap:10px; pointer-events:none;"></div>
 
+<!-- ═══ PORTAL ═══ -->
 <div id="portal-screen" style="display:none">
   <button class="mobile-toggle" onclick="toggleSidebar()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
   <div class="sidebar-backdrop" onclick="toggleSidebar()"></div>
@@ -336,38 +311,12 @@ body.embedded-mode .portal-menu-fab { display:flex; }
       <div class="sb-item" onclick="nav('assembleia')" id="ni-assembleia"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg></span> Resultado Assembleia</div>
       <div class="sb-item" onclick="nav('lances')" id="ni-lances"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span> Consulta de Lances</div>
       <div class="sb-item" onclick="nav('simuladores')" id="ni-simuladores"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="16" y1="14" x2="16" y2="18"/><line x1="16" y1="10" x2="16.01" y2="10"/><line x1="12" y1="10" x2="12.01" y2="10"/><line x1="8" y1="10" x2="8.01" y2="10"/><line x1="12" y1="14" x2="12.01" y2="14"/><line x1="8" y1="14" x2="8.01" y2="14"/><line x1="12" y1="18" x2="12.01" y2="18"/><line x1="8" y1="18" x2="8.01" y2="18"/></svg></span> Simuladores</div>
+      <!-- Formulários (Adesão Bradesco): em stand-by até refinamento. Tela e backend continuam funcionais via /adesao.html — basta remover a classe `hidden` para reativar. -->
       <div class="sb-item hidden" onclick="nav('adesao')" id="ni-adesao"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg></span> Formulários</div>
       <div class="sb-item" onclick="nav('dashboard')" id="ni-dashboard"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg></span> Demonstrativo</div>
       <div class="sb-item" onclick="nav('historico')" id="ni-historico"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg></span> Historico</div>
       <div class="sb-item" onclick="nav('perfil')" id="ni-perfil"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span> Meu Perfil</div>
       <div class="sb-item" onclick="nav('admin-faturamento')" id="ni-admin-faturamento"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span> <span id="ni-admin-faturamento-label">Faturamento</span></div>
-
-      <!-- Solicitar Adesão (público) -->
-      <div class="sb-item" onclick="window.open('formulario.html', '_blank')">
-        <span class="ic">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-            <polyline points="14 2 14 8 20 8"/>
-            <line x1="12" y1="18" x2="12" y2="12"/>
-            <line x1="9" y1="15" x2="15" y2="15"/>
-          </svg>
-        </span>
-        Solicitar Adesão
-      </div>
-
-      <!-- Formulários cadastrados (admin) — navegação interna -->
-      <div class="sb-item hidden" id="ni-admin-adesao" onclick="nav('admin-adesao')">
-        <span class="ic">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="7" height="9"/>
-            <rect x="14" y="3" width="7" height="5"/>
-            <rect x="14" y="12" width="7" height="9"/>
-            <rect x="3" y="16" width="7" height="5"/>
-          </svg>
-        </span>
-        Formulários cadastrados
-      </div>
-
       <div id="admin-nav" class="hidden">
         <div class="sb-section">Administracao</div>
         <div class="sb-item" onclick="nav('admin-overview')" id="ni-admin-overview"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg></span> Visao Geral</div>
@@ -497,7 +446,7 @@ body.embedded-mode .portal-menu-fab { display:flex; }
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px">
               <div><label class="login-label">Nome completo</label><input type="text" class="login-input" id="nu-nome" placeholder="NOME SOBRENOME" style="font-size:12px;padding:9px 12px;text-transform:uppercase"></div>
               <div><label class="login-label">CPF</label><input type="text" class="login-input" id="nu-cpf" placeholder="000.000.000-00" maxlength="14" oninput="maskCPF(this)" style="font-size:12px;padding:9px 12px"></div>
-              <div><label class="login-label">Tipo</label><select class="login-input" id="nu-tipo" style="font-size:12px;padding:9px 12px"><option value="consultor">Consultor</option><option value="socio">Socio</option><option value="admin">Administrador</option></select></div>
+              <div><label class="login-label">Tipo</label><select class="login-input" id="nu-tipo" style="font-size:12px;padding:9px 12px"><option value="consultor">Consultor</option><option value="parceiro">Parceiro</option><option value="socio">Socio</option><option value="admin">Administrador</option></select></div>
               <div><label class="login-label">Senha inicial (opcional)</label><input type="text" class="login-input" id="nu-senha" placeholder="Deixe vazio = CPF. Pode usar CNPJ." style="font-size:12px;padding:9px 12px"></div>
             </div>
             <div style="display:flex;gap:8px"><button class="btn btn-primary btn-sm" onclick="addUser()">Salvar</button><button class="btn btn-outline btn-sm" onclick="document.getElementById('add-form').classList.add('hidden')">Cancelar</button></div>
@@ -509,32 +458,30 @@ body.embedded-mode .portal-menu-fab { display:flex; }
         </div>
       </div>
 
-      <!-- ═══ NOVO: FORMULÁRIOS CADASTRADOS (ADMIN) ═══ -->
-      <div class="screen" id="s-admin-adesao">
-        <div class="page-title">Formulários cadastrados</div>
-        <div class="page-sub">Visualize e copie os dados das fichas de adesão</div>
-
-        <!-- LINK DO FORMULÁRIO -->
-        <div class="share-link-box">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-          </svg>
-          <span style="font-size:12px;">Link do formulário:</span>
-          <div class="share-link-url" id="form-link">Carregando...</div>
-          <button class="btn-white" onclick="copyFormLink()" title="Copiar link">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-            Copiar
-          </button>
-        </div>
-
-        <div class="adesao-search-box">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-          <input class="adesao-search-input" id="adesao-search" placeholder="Buscar por nome, CPF/CNPJ ou protocolo..." oninput="filtrarAdesoes()">
-          <span style="font-size:11px;color:var(--text2);white-space:nowrap;" id="adesao-count"></span>
-        </div>
-
-        <div id="adesao-list-container">
-          <div style="text-align:center;padding:40px;"><div class="spinner"></div></div>
+      <!-- MODAL: PERMISSÕES POR USUÁRIO -->
+      <div id="modal-permissoes" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center;padding:20px">
+        <div style="background:var(--bg,#fff);border-radius:12px;max-width:520px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+          <div style="padding:20px 24px;border-bottom:1px solid var(--border,#e5e7eb);display:flex;align-items:center;justify-content:space-between;gap:12px">
+            <div>
+              <div style="font-size:16px;font-weight:700;color:var(--text,#111)">Permissões de acesso</div>
+              <div id="perm-user-nome" style="font-size:12px;color:var(--text3,#6b7280);margin-top:2px"></div>
+            </div>
+            <button onclick="fecharPermissoes()" style="background:none;border:0;padding:4px;cursor:pointer;color:var(--text3,#6b7280);font-size:24px;line-height:1">&times;</button>
+          </div>
+          <div style="padding:20px 24px">
+            <div style="font-size:12px;color:var(--text3,#6b7280);margin-bottom:14px">Marque os módulos do menu lateral que este usuário pode acessar. Itens desmarcados ficam escondidos.</div>
+            <div id="perm-checklist" style="display:flex;flex-direction:column;gap:10px"></div>
+            <div style="margin-top:14px;padding-top:14px;border-top:1px dashed var(--border,#e5e7eb);font-size:11px;color:var(--text3,#6b7280)">
+              <strong>Meu Perfil</strong> e <strong>Administração</strong> não aparecem aqui — perfil é sempre visível e administração só para admins.
+            </div>
+          </div>
+          <div style="padding:14px 24px;border-top:1px solid var(--border,#e5e7eb);display:flex;justify-content:space-between;gap:8px;align-items:center">
+            <button class="btn btn-outline btn-sm" onclick="marcarTodasPerm(true)">Marcar todas</button>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-outline btn-sm" onclick="fecharPermissoes()">Cancelar</button>
+              <button class="btn btn-primary btn-sm" onclick="salvarPermissoes()">Salvar</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -544,12 +491,18 @@ body.embedded-mode .portal-menu-fab { display:flex; }
 
 <script>
 // ══════════════════════════════════════════════════════════════════════════
-//  CONFIGURACAO SUPABASE
+//  CONFIGURACAO SUPABASE — Preencha com seus dados
+//  (Instrucoes no arquivo SETUP.md)
 // ══════════════════════════════════════════════════════════════════════════
-const SUPABASE_URL = 'https://jhwciwvgagnuxakukyob.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_fy-iwSFNHKRuqP1pDokFuQ_X_UCiqzx';
+const SUPABASE_URL = 'https://jhwciwvgagnuxakukyob.supabase.co';  // Ex: 'https://xyzabc.supabase.co'
+const SUPABASE_KEY = 'sb_publishable_fy-iwSFNHKRuqP1pDokFuQ_X_UCiqzx';  // Publishable key (segura para frontend - respeita RLS)
+
+// ══════════════════════════════════════════════════════════════════════════
+//  MODO: SUPABASE ou DEMO (localStorage)
+// ══════════════════════════════════════════════════════════════════════════
 const USE_SUPABASE = !!(SUPABASE_URL && SUPABASE_KEY);
 let sb = null;
+// Cliente secundário usado só para signUp de novos usuários (não mexe na sessão do admin)
 let sbSignup = null;
 
 // ═══ DATA LAYER (abstrai Supabase vs localStorage) ═══
@@ -557,6 +510,7 @@ const DB = {
   async init() {
     if (USE_SUPABASE) {
       sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      // Cliente separado sem persistência de sessão: signUp aqui não deslogga o admin
       sbSignup = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
         auth: { persistSession: false, autoRefreshToken: false, storageKey: 'mp-signup-only' }
       });
@@ -578,9 +532,64 @@ const DB = {
       ],
       demonstrativos: {
         '2025-03': {
-          'ALLAN ALMEIDA': { nome:'ALLAN ALMEIDA', totalFinal:18542.67, linhas:[], avulsos:[], despesas:[] },
-          'ERIK GONCALVES': { nome:'ERIK GONCALVES', totalFinal:7823.45, linhas:[], avulsos:[], despesas:[] },
-          'LARISSA SANT ANNA': { nome:'LARISSA SANT ANNA', totalFinal:5214.88, linhas:[], avulsos:[], despesas:[] },
+          'ALLAN ALMEIDA': { nome:'ALLAN ALMEIDA', totalFinal:18542.67,
+            linhas:[
+              {adm:'PORTO',tipo:'Auto',ref:'123456',cliente:'JOAO SILVA',dataVenda:'15/03/2025',parcela:'1/12',bruto:4200,nf:294,adm:420,liquido:3486},
+              {adm:'PORTO',tipo:'Vida',ref:'234567',cliente:'MARIA SANTOS',dataVenda:'18/03/2025',parcela:'1/1',bruto:1800,nf:126,adm:180,liquido:1494},
+              {adm:'PORTO',tipo:'RE',ref:'345678',cliente:'CARLOS OLIVEIRA',dataVenda:'20/03/2025',parcela:'3/12',bruto:6500,nf:455,adm:650,liquido:5395},
+              {adm:'ITAU',tipo:'Vida',ref:'456789',cliente:'ANA PEREIRA',dataVenda:'22/03/2025',parcela:'1/1',bruto:3200,nf:224,adm:320,liquido:2656},
+              {adm:'BRADESCO',tipo:'Auto',ref:'567890',cliente:'PEDRO COSTA',dataVenda:'25/03/2025',parcela:'2/12',bruto:2800,nf:196,adm:280,liquido:2324},
+              {adm:'PORTO',tipo:'Empresa',ref:'678901',cliente:'TECH SOLUTIONS',dataVenda:'10/03/2025',parcela:'1/12',bruto:5100,nf:357,adm:510,liquido:4233},
+            ],
+            avulsos:[{descricao:'Ajuda de custo estacionamento',valor:450},{descricao:'Bonus trimestral Elite Gold',valor:1200},{descricao:'Desconto adiantamento',valor:-2695.33}],
+            despesas:[]
+          },
+          'ERIK GONCALVES': { nome:'ERIK GONCALVES', totalFinal:7823.45,
+            linhas:[
+              {adm:'PORTO',tipo:'Auto',ref:'111222',cliente:'ROBERTO ALVES',dataVenda:'12/03/2025',parcela:'1/12',bruto:3100,nf:217,adm:310,liquido:2573},
+              {adm:'PORTO',tipo:'Vida',ref:'222333',cliente:'FERNANDA LIMA',dataVenda:'14/03/2025',parcela:'1/1',bruto:2400,nf:168,adm:240,liquido:1992},
+              {adm:'BRADESCO',tipo:'RE',ref:'333444',cliente:'MARCOS SOUZA',dataVenda:'19/03/2025',parcela:'2/12',bruto:4500,nf:315,adm:450,liquido:3735},
+            ],
+            avulsos:[{descricao:'Ajuda de custo',valor:350},{descricao:'Desconto VR',valor:-826.55}],
+            despesas:[]
+          },
+          'LARISSA SANT ANNA': { nome:'LARISSA SANT ANNA', totalFinal:5214.88,
+            linhas:[
+              {adm:'PORTO',tipo:'Auto',ref:'444555',cliente:'LUCIA FERREIRA',dataVenda:'10/03/2025',parcela:'1/12',bruto:2900,nf:203,adm:290,liquido:2407},
+              {adm:'ITAU',tipo:'Vida',ref:'555666',cliente:'RAFAEL MENDES',dataVenda:'21/03/2025',parcela:'1/1',bruto:1500,nf:105,adm:150,liquido:1245},
+              {adm:'PORTO',tipo:'RE',ref:'666777',cliente:'PATRICIA ROCHA',dataVenda:'28/03/2025',parcela:'1/12',bruto:2200,nf:154,adm:220,liquido:1826},
+            ],
+            avulsos:[{descricao:'Ajuda de custo',valor:300},{descricao:'Desconto adiantamento',valor:-563.12}],
+            despesas:[]
+          },
+        },
+        '2025-02': {
+          'ALLAN ALMEIDA': { nome:'ALLAN ALMEIDA', totalFinal:15243.20,
+            linhas:[
+              {adm:'PORTO',tipo:'Auto',ref:'901234',cliente:'JOSE MARTINS',dataVenda:'10/02/2025',parcela:'2/12',bruto:3800,nf:266,adm:380,liquido:3154},
+              {adm:'BRADESCO',tipo:'RE',ref:'012345',cliente:'CAMILA REIS',dataVenda:'15/02/2025',parcela:'1/12',bruto:5200,nf:364,adm:520,liquido:4316},
+              {adm:'ITAU',tipo:'Vida',ref:'123450',cliente:'ROBERTO NUNES',dataVenda:'20/02/2025',parcela:'1/1',bruto:2100,nf:147,adm:210,liquido:1743},
+              {adm:'PORTO',tipo:'Auto',ref:'234501',cliente:'MARIANA LOPES',dataVenda:'22/02/2025',parcela:'5/12',bruto:4600,nf:322,adm:460,liquido:3818},
+            ],
+            avulsos:[{descricao:'Ajuda de custo estacionamento',valor:450},{descricao:'Desconto adiantamento',valor:-2238}],
+            despesas:[]
+          },
+          'ERIK GONCALVES': { nome:'ERIK GONCALVES', totalFinal:6205.30,
+            linhas:[
+              {adm:'PORTO',tipo:'Auto',ref:'345012',cliente:'CLAUDIA MENDES',dataVenda:'08/02/2025',parcela:'1/12',bruto:2800,nf:196,adm:280,liquido:2324},
+              {adm:'BRADESCO',tipo:'Vida',ref:'450123',cliente:'MARCOS OLIVEIRA',dataVenda:'18/02/2025',parcela:'1/1',bruto:3600,nf:252,adm:360,liquido:2988},
+            ],
+            avulsos:[{descricao:'Ajuda de custo',valor:350},{descricao:'Desconto VR',valor:-826.55},{descricao:'Bonus indicacao',valor:1369.85}],
+            despesas:[]
+          },
+          'LARISSA SANT ANNA': { nome:'LARISSA SANT ANNA', totalFinal:4102.50,
+            linhas:[
+              {adm:'PORTO',tipo:'RE',ref:'501234',cliente:'ANDERSON SILVA',dataVenda:'12/02/2025',parcela:'2/12',bruto:3400,nf:238,adm:340,liquido:2822},
+              {adm:'ITAU',tipo:'Auto',ref:'612345',cliente:'BEATRIZ COSTA',dataVenda:'25/02/2025',parcela:'1/12',bruto:1900,nf:133,adm:190,liquido:1577},
+            ],
+            avulsos:[{descricao:'Ajuda de custo',valor:300},{descricao:'Desconto adiantamento',valor:-596.50}],
+            despesas:[]
+          },
         },
       },
       meses: ['2025-02','2025-03'],
@@ -588,6 +597,8 @@ const DB = {
   },
   _local() { return JSON.parse(localStorage.getItem('mp_portal')); },
   _saveLocal(d) { localStorage.setItem('mp_portal', JSON.stringify(d)); },
+
+  // ── Users ──
   async getUser(cpf) {
     if (USE_SUPABASE) {
       const {data} = await sb.from('portal_users').select('*').eq('cpf', cpf).single();
@@ -634,6 +645,8 @@ const DB = {
       this._saveLocal(d);
     }
   },
+
+  // ── Demonstrativos ──
   async getMeses() {
     if (USE_SUPABASE) {
       const {data} = await sb.from('portal_demonstrativos').select('mes').order('mes', {ascending:false});
@@ -660,6 +673,7 @@ const DB = {
   async publishDemos(mes, consultores) {
     if (USE_SUPABASE) {
       const rows = Object.entries(consultores).map(([nome, dados]) => ({mes, nome, dados}));
+      // Upsert (replace existing month data)
       const {error} = await sb.from('portal_demonstrativos').upsert(rows, {onConflict:'mes,nome'});
       if (error) throw error;
     } else {
@@ -693,10 +707,23 @@ function togglePw(id,btn) { const i=document.getElementById(id); i.type=i.type==
 function getInitials(n) { const p=(n||'').split(' ').filter(Boolean); return p.length>=2?(p[0][0]+p[p.length-1][0]).toUpperCase():(p[0]||'--').slice(0,2).toUpperCase(); }
 function fmtMes(k) { const [y,m]=k.split('-'); return `${MESES_NOME[m]||m} ${y}`; }
 
-// ═══ AUTH ═══
+// ═══ AUTH (Supabase Auth + migração automática) ═══
+// Login usa "email fantasma" {cpf}@masterprime.internal.
+// Aceita login por USERNAME (formato nome.sobrenome) ou CPF (admin legado).
+// Se usuário ainda não foi migrado ao Supabase Auth (auth_id IS NULL em
+// portal_users), valida senha via RPC, faz signUp e vincula.
 function cpfToFakeEmail(cpf) { return cpf + '@masterprime.internal'; }
 function usernameToFakeEmail(username) { return username + '@masterprime.internal'; }
-function senhaForte(s) { return s && s.length >= 8 && /[A-Z]/.test(s) && /[a-z]/.test(s) && /\d/.test(s) && /[^A-Za-z0-9]/.test(s); }
+
+// Valida senha forte: >=8 chars, maiúscula, minúscula, número, símbolo
+function senhaForte(s) {
+  if (!s || s.length < 8) return false;
+  if (!/[A-Z]/.test(s)) return false;
+  if (!/[a-z]/.test(s)) return false;
+  if (!/\d/.test(s)) return false;
+  if (!/[^A-Za-z0-9]/.test(s)) return false;
+  return true;
+}
 
 async function doLogin() {
   const loginInput = (document.getElementById('login-cpf').value||'').trim();
@@ -707,6 +734,7 @@ async function doLogin() {
   if (!senha) { err.style.display='block'; err.textContent='Digite sua senha.'; return; }
   btn.disabled = true; btn.textContent = 'Entrando...';
   try {
+    // Detecta se é CPF (só dígitos, 11 chars) ou username
     const soDigitos = loginInput.replace(/\D/g,'');
     const ehCpf = soDigitos.length === 11 && /^\d+$/.test(loginInput.replace(/[.\-]/g,''));
     const identificador = ehCpf ? soDigitos : loginInput.toLowerCase();
@@ -718,16 +746,31 @@ async function doLogin() {
       btn.disabled=false; btn.textContent='Entrar'; return;
     }
     const email = ehCpf ? cpfToFakeEmail(identificador) : usernameToFakeEmail(identificador);
+    // 1) Tenta signIn direto
     let { data, error } = await sb.auth.signInWithPassword({ email, password: senha });
     if (error) {
+      // 2) User ainda não migrado: validar senha antiga
       const { data: ok, error: rpcErr } = await sb.rpc('validar_senha_portal', { cpf_param: identificador, senha_param: senha });
       if (rpcErr) throw rpcErr;
-      if (!ok) { err.style.display='block'; err.textContent='Usuario ou senha incorretos.'; btn.disabled=false; btn.textContent='Entrar'; return; }
+      if (!ok) {
+        err.style.display='block'; err.textContent='Usuario ou senha incorretos.';
+        btn.disabled=false; btn.textContent='Entrar'; return;
+      }
+      // 3) Cria conta no Supabase Auth
       const su = await sb.auth.signUp({ email, password: senha });
       if (su.error) throw su.error;
-      if (!su.data.session) { const si = await sb.auth.signInWithPassword({ email, password: senha }); if (si.error) throw si.error; }
-      if (ehCpf) { const linkRes = await sb.rpc('link_auth_to_portal', { cpf_param: identificador }); if (linkRes.error) throw linkRes.error; }
-      else { const linkRes = await sb.rpc('link_auth_by_username', { username_param: identificador }); if (linkRes.error) throw linkRes.error; }
+      if (!su.data.session) {
+        const si = await sb.auth.signInWithPassword({ email, password: senha });
+        if (si.error) throw si.error;
+      }
+      // 4) Vincula auth_id (por username ou por CPF)
+      if (ehCpf) {
+        const linkRes = await sb.rpc('link_auth_to_portal', { cpf_param: identificador });
+        if (linkRes.error) throw linkRes.error;
+      } else {
+        const linkRes = await sb.rpc('link_auth_by_username', { username_param: identificador });
+        if (linkRes.error) throw linkRes.error;
+      }
     }
     const authUser = (await sb.auth.getUser()).data.user;
     const r = await sb.from('portal_users').select('*').eq('auth_id', authUser.id).maybeSingle();
@@ -735,7 +778,9 @@ async function doLogin() {
     currentUser = r.data;
     err.style.display='none';
     await enterPortal();
-  } catch(e) { err.style.display='block'; err.textContent = 'Erro: ' + (e.message||e); }
+  } catch(e) {
+    err.style.display='block'; err.textContent = 'Erro: ' + (e.message||e);
+  }
   btn.disabled = false; btn.textContent = 'Entrar';
 }
 
@@ -754,7 +799,11 @@ async function checkSession() {
     if (data && data.session && data.session.user) {
       const authId = data.session.user.id;
       const r = await sb.from('portal_users').select('*').eq('auth_id', authId).maybeSingle();
-      if (r.data) { currentUser = r.data; await enterPortal(); return; }
+      if (r.data) {
+        currentUser = r.data;
+        await enterPortal();
+        return;
+      }
     }
   } else {
     const cpf = sessionStorage.getItem('mp_session');
@@ -764,7 +813,6 @@ async function checkSession() {
   document.getElementById('login-screen').style.display='flex';
   if (!USE_SUPABASE) document.getElementById('config-warn').classList.remove('hidden');
 }
-
 async function enterPortal() {
   document.getElementById('loading-screen').style.display='none';
   document.getElementById('login-screen').style.display='none';
@@ -774,151 +822,76 @@ async function enterPortal() {
   const role = currentUser.tipo==='admin'?'Administrador':currentUser.tipo==='socio'?'Socio':'Consultor';
   document.getElementById('sb-user-role').textContent=role;
   document.getElementById('admin-nav').classList.toggle('hidden', currentUser.tipo!=='admin');
-  const _isOverviewAllowed = ['ALLAN ALMEIDA', 'ADMINISTRADOR'].includes((currentUser.nome||'').trim().toUpperCase());
-  const ovItem = document.getElementById('ni-admin-overview');
-  if (ovItem) ovItem.style.display = _isOverviewAllowed ? '' : 'none';
-  const restrictedDemo = ['CLAUDIA BARRETO'];
-  const isDemoBlocked = restrictedDemo.includes((currentUser.nome||'').trim().toUpperCase());
-  document.getElementById('ni-dashboard').style.display = isDemoBlocked ? 'none' : '';
-  document.getElementById('ni-historico').style.display = isDemoBlocked ? 'none' : '';
+  // Visão Geral: acesso restrito aos donos da corretora
+  const _OVERVIEW_ALLOWED = ['ALLAN ALMEIDA', 'ADMINISTRADOR'];
+  const _isOverviewAllowed = _OVERVIEW_ALLOWED.includes((currentUser.nome||'').trim().toUpperCase());
+  const _ovItem = document.getElementById('ni-admin-overview');
+  if (_ovItem) _ovItem.style.display = _isOverviewAllowed ? '' : 'none';
+  // Restrição: Claudia Barreto não vê Demonstrativo nem Histórico
+  const _restrictedDemo = ['CLAUDIA BARRETO'];
+  const _isDemoBlocked = _restrictedDemo.includes((currentUser.nome||'').trim().toUpperCase());
+  const _demoItem = document.getElementById('ni-dashboard');
+  const _histItem = document.getElementById('ni-historico');
+  if (_demoItem) _demoItem.style.display = _isDemoBlocked ? 'none' : '';
+  if (_histItem) _histItem.style.display = _isDemoBlocked ? 'none' : '';
+  // Aplica permissões granulares por módulo (per-user). Admin sempre vê tudo.
+  aplicarPermissoesUI();
   document.getElementById('perfil-nome').textContent=currentUser.nome;
   document.getElementById('perfil-cpf').textContent=currentUser.username || fmtCPF(currentUser.cpf);
-  document.getElementById('perfil-tipo').innerHTML=`<span class="tag ${currentUser.tipo==='admin'?'tag-navy':currentUser.tipo==='socio'?'tag-teal':'tag-blue'}">${role}</span>`;
-  // Controle do item "Formulários cadastrados" (admin)
-  const niAdminAdesao = document.getElementById('ni-admin-adesao');
-  if (niAdminAdesao) niAdminAdesao.classList.toggle('hidden', currentUser.tipo !== 'admin');
-  // Definir o link do formulário
-  const formLinkEl = document.getElementById('form-link');
-  if (formLinkEl) formLinkEl.textContent = window.location.origin + '/formulario.html';
-  nav('dashboard-vendas');
-  if (!isDemoBlocked) { await renderDashboard(); await renderHistorico(); }
-  if (currentUser.tipo==='admin') { await renderAdminMeses(); await renderUsers(); if (_isOverviewAllowed) await renderAdminOverview(); }
+  document.getElementById('perfil-tipo').innerHTML=`<span class="tag tag-${currentUser.tipo==='admin'?'navy':currentUser.tipo==='socio'?'teal':'blue'}">${role}</span>`;
+  // Escolhe a primeira tela permitida (fallback pra perfil se nenhuma)
+  const _telaInicial = (function(){
+    const ordem = ['dashboard-vendas','assembleia','lances','simuladores','dashboard','historico','admin-faturamento'];
+    for (const t of ordem) { if (podeAcessarScreen(t)) return t; }
+    return 'perfil';
+  })();
+  nav(_telaInicial);
+  if (!_isDemoBlocked) { await renderDashboard(); await renderHistorico(); }
+  if (currentUser.tipo==='admin') { await renderAdminMeses(); await renderUsers(); if (_isOverviewAllowed) { await renderAdminOverview(); } }
+  // Atualiza imediatamente o label do menu (Faturamento ou Meus Processos) sem esperar entrar na tela
   try {
-    const lblMenu = document.getElementById('ni-admin-faturamento-label');
-    if (lblMenu) lblMenu.textContent = (currentUser.tipo === 'admin') ? 'Faturamento' : 'Meus Processos';
+    const _lblMenu = document.getElementById('ni-admin-faturamento-label');
+    if (_lblMenu) _lblMenu.textContent = (currentUser.tipo === 'admin') ? 'Faturamento' : 'Meus Processos';
   } catch(e) {}
 }
-    // ═══ NOTIFICAÇÕES EM TEMPO REAL ═══
-function showToastNotification(titulo, mensagem, tipo = 'info', duracao = 5000) {
-  const container = document.getElementById('mp-toast-container');
-  if (!container) return;
-  
-  const cores = {
-    success: { bg: '#F0FDF4', border: '#BBF7D0', icone: '✅' },
-    info:    { bg: '#EFF6FF', border: '#BFDBFE', icone: 'ℹ️' },
-    warning: { bg: '#FFFBEB', border: '#FDE68A', icone: '⚠️' },
-  };
-  const c = cores[tipo] || cores.info;
-  
-  const toast = document.createElement('div');
-  toast.style.cssText = `
-    background:${c.bg}; border:1px solid ${c.border}; border-radius:12px;
-    padding:14px 18px; box-shadow:0 12px 30px rgba(0,0,0,.15);
-    display:flex; gap:10px; align-items:flex-start; pointer-events:auto;
-    animation: slideInRight .3s ease; font-family:'Inter',sans-serif;
-    max-width:380px; word-break:break-word; font-size:13px;
-  `;
-  toast.innerHTML = `
-    <span style="font-size:20px;">${c.icone}</span>
-    <div style="flex:1;">
-      <div style="font-weight:700; color:#1E293B; margin-bottom:4px;">${titulo}</div>
-      <div style="color:#475569; line-height:1.4;">${mensagem}</div>
-    </div>
-    <button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:#94A3B8;font-size:16px;padding:0;line-height:1;">×</button>
-  `;
-  container.appendChild(toast);
-  setTimeout(() => { toast.style.opacity='0'; toast.style.transition='opacity .3s'; setTimeout(()=>toast.remove(),300); }, duracao);
-}
 
-// Adicione este CSS dinâmico para a animação
-const style = document.createElement('style');
-style.textContent = `
-  @keyframes slideInRight {
-    from { transform: translateX(120%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-  }
-`;
-document.head.appendChild(style);
-
-// Iniciar listeners Supabase Realtime
-function iniciarNotificacoesRealtime() {
-  if (!USE_SUPABASE || !sb) return;
-
-  // Canal de novos processos
-  const processoChannel = sb.channel('new-processos-notify')
-    .on('postgres_changes',
-      { event: 'INSERT', schema: 'public', table: 'portal_processos' },
-      (payload) => {
-        const novo = payload.new;
-        // Se o usuário for consultor, só notifica se for atribuído a ele
-        if (currentUser && currentUser.tipo === 'consultor') {
-          if (novo.consultor_id !== currentUser.auth_id) return;
-        }
-        const nome = novo.nome || 'Novo cliente';
-        const protocolo = novo.protocolo || 'Pendente';
-        showToastNotification('Novo processo', `${nome} acabou de enviar um faturamento (${protocolo})`, 'success');
-        
-        // Se o iframe de faturamento estiver aberto, manda recarregar
-        const iframe = document.getElementById('iframe-admin-faturamento');
-        if (iframe && iframe.contentWindow) {
-          iframe.contentWindow.postMessage({ tipo: 'refresh-faturamento' }, '*');
-        }
-      }
-    )
-    .subscribe();
-
-  // Canal de novas mensagens
-  const msgChannel = sb.channel('new-mensagens-notify')
-    .on('postgres_changes',
-      { event: 'INSERT', schema: 'public', table: 'portal_mensagens' },
-      async (payload) => {
-        const msg = payload.new;
-        // Se for mensagem enviada pelo admin, não notifica (pois o admin já sabe)
-        if (msg.autor === 'admin') return;
-        
-        // Buscar o nome do processo para exibir na notificação
-        const { data: processo } = await sb.from('portal_processos')
-          .select('nome, consultor_id, protocolo')
-          .eq('id', msg.processo_id)
-          .maybeSingle();
-          
-        if (!processo) return;
-        
-        // Se for consultor, verificar se o processo pertence a ele
-        if (currentUser && currentUser.tipo === 'consultor') {
-          if (processo.consultor_id !== currentUser.auth_id) return;
-        }
-        
-        const nome = processo.nome || 'Cliente';
-        showToastNotification('Nova mensagem', `${nome} enviou uma mensagem no processo ${processo.protocolo || 'sem protocolo'}`, 'warning');
-        
-        // Notificar o iframe para atualizar se estiver aberto
-        const iframe = document.getElementById('iframe-admin-faturamento');
-        if (iframe && iframe.contentWindow) {
-          iframe.contentWindow.postMessage({ tipo: 'refresh-faturamento' }, '*');
-        }
-      }
-    )
-    .subscribe();
-}
-
-// Chamar a inicialização após o login
-// Dentro da função enterPortal(), logo após definir currentUser, adicione:
-// iniciarNotificacoesRealtime();
 // ═══ NAV ═══
 function nav(id) {
-  if (id === 'admin-overview' && currentUser && !['ALLAN ALMEIDA', 'ADMINISTRADOR'].includes((currentUser.nome||'').trim().toUpperCase())) id = 'dashboard-vendas';
-  if ((id === 'dashboard' || id === 'historico') && currentUser && ['CLAUDIA BARRETO'].includes((currentUser.nome||'').trim().toUpperCase())) id = 'assembleia';
+  // Visão Geral: só para os donos. Outros admins/usuários redirecionados.
+  if (id === 'admin-overview' && currentUser && !['ALLAN ALMEIDA', 'ADMINISTRADOR'].includes((currentUser.nome||'').trim().toUpperCase())) {
+    id = 'dashboard-vendas';
+  }
+  // Restrição: Claudia Barreto não acessa Demonstrativo nem Histórico mesmo via URL
+  if ((id === 'dashboard' || id === 'historico') && currentUser && ['CLAUDIA BARRETO'].includes((currentUser.nome||'').trim().toUpperCase())) {
+    id = 'assembleia';
+  }
+  // Bloqueio de acesso direto a módulo sem permissão (cai pra perfil)
+  if (currentUser && currentUser.tipo !== 'admin' && !podeAcessarScreen(id)) {
+    id = 'perfil';
+  }
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
   const s=document.getElementById('s-'+id), n=document.getElementById('ni-'+id);
   if(s)s.classList.add('active'); if(n)n.classList.add('active');
   document.getElementById('sidebar').classList.remove('open');
+  // Lazy-load dos iframes: só carrega na primeira visita (evita 2.5 MB no login)
+  // Iframes com lazy-load (assembleia/lances/painel) — carrega só na primeira visita
   const iframeScreens = ['assembleia','lances','painel','simuladores','dashboard-vendas','adesao','admin-faturamento'];
   if (iframeScreens.includes(id)) {
     const ifr = document.getElementById('iframe-' + id);
-    if (ifr && ifr.dataset.target && ifr.getAttribute('src') === 'about:blank') ifr.src = ifr.dataset.target;
+    if (ifr && ifr.dataset.target && ifr.getAttribute('src') === 'about:blank') {
+      // Cache-buster por sessão: garante que o iframe carrega a versão mais nova
+      // depois de cada deploy, sem precisar de Cmd+Shift+R.
+      let bust = sessionStorage.getItem('portal_iframe_bust');
+      if (!bust) {
+        bust = Date.now().toString(36);
+        try { sessionStorage.setItem('portal_iframe_bust', bust); } catch(e) {}
+      }
+      const sep = ifr.dataset.target.includes('?') ? '&' : '?';
+      ifr.src = ifr.dataset.target + sep + 'v=' + bust;
+    }
   }
+  // Apenas o Painel Split abre em tela cheia (esconde sidebar do portal)
   const app = document.getElementById('portal-app');
   const fab = document.getElementById('portal-menu-fab');
   if (id === 'painel') {
@@ -930,8 +903,6 @@ function nav(id) {
     if (fab) fab.style.display = 'none';
     document.body.classList.remove('embedded-mode');
   }
-  // Se entrou na tela de admin-adesao, carrega os dados
-  if (id === 'admin-adesao') carregarAdesoes();
 }
 function exitEmbedded(){
   const app = document.getElementById('portal-app');
@@ -954,6 +925,9 @@ async function renderDashboard() {
   el.innerHTML=renderDemo(demo, mesAtual);
 }
 function renderDemo(data, mes) {
+  // Formato novo (v2): o painel entrega o HTML já renderizado, com todas
+  // as seções (ADM 10%, Excedente, Avulsos Corretora/Consultoria, Despesas
+  // separadas, Cartas de Parceria etc.). Renderizamos direto.
   if (data && data.html) {
     const nome = data.nome || currentUser.nome;
     const nomeSafe = nome.replace(/[^a-zA-Z0-9]/g,'_');
@@ -969,6 +943,7 @@ function renderDemo(data, mes) {
   const totalFinal=data.totalFinal||(tL+tAv+tD);
   const recP=tB+avulsos.filter(a=>a.valor>0).reduce((s,a)=>s+a.valor,0);
   const ded=tN+tA+Math.abs(avulsos.filter(a=>a.valor<0).reduce((s,a)=>s+a.valor,0))+Math.abs(despesas.filter(d=>d.valor<0).reduce((s,d)=>s+d.valor,0));
+
   let rows=linhas.map(l=>{
     const neg=(l.liquido||0)<0;
     return `<tr ${neg?'style="background:#FEF2F2;border-left:3px solid #EF4444"':''}>
@@ -984,6 +959,7 @@ function renderDemo(data, mes) {
       <td class="mono num ${(l.liquido||0)>=0?'pos':'neg'} fw6">${fmtBRL(l.liquido)}</td>
     </tr>`;
   }).join('');
+
   if(avulsos.length){
     rows+=`<tr><td colspan="10" style="padding:4px 12px;background:#F0FDF4;border-top:2px solid #22C55E;font-size:9px;color:#166534;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Lancamentos Avulsos</td></tr>`;
     avulsos.forEach(a=>{const c=a.valor>=0?'pos':'neg';const bg=a.valor>=0?'rgba(34,197,94,.05)':'#FEF2F2';const bd=a.valor>=0?'#22C55E':'#EF4444';
@@ -996,6 +972,7 @@ function renderDemo(data, mes) {
       rows+=`<tr style="background:${bg};border-left:3px solid ${bd}"><td colspan="6" style="font-size:11px;font-weight:500;padding:8px 12px"><span class="tag" style="font-size:9px;background:${bg};color:${bd};border:1px solid ${bd}">DESP</span> <span style="margin-left:8px">${d.descricao||'-'}</span></td><td class="mono num" style="color:var(--text3)">-</td><td class="mono num" style="color:var(--text3)">-</td><td class="mono num" style="color:var(--text3)">-</td><td class="mono num ${c} fw6">${fmtBRL(d.valor)}</td></tr>`;
     });
   }
+
   return `
   <div class="det-header"><div class="det-name">${nome}</div><div class="det-meta">${linhas.length} lancamentos &middot; ${fmtMes(mes)}</div>
     <div class="det-stats">
@@ -1041,10 +1018,11 @@ async function viewHist(mes) {
 async function changePw() {
   const cur=document.getElementById('pw-cur').value, nw=document.getElementById('pw-new').value, cf=document.getElementById('pw-conf').value, msg=document.getElementById('pw-msg');
   if(cur!==currentUser.senha){msg.innerHTML='<div class="alert alert-err">Senha atual incorreta.</div>';return;}
-  if(!senhaForte(nw)){msg.innerHTML='<div class="alert alert-warn">Senha fraca. Mínimo 8 caracteres, com maiúscula, minúscula, número e símbolo. Ex: Master26@</div>';return;}
+  if(!senhaForte(nw)){msg.innerHTML='<div class="alert alert-warn">Senha fraca. M&iacute;nimo 8 caracteres, com mai&uacute;scula, min&uacute;scula, n&uacute;mero e s&iacute;mbolo. Ex: Master26@</div>';return;}
   if(nw!==cf){msg.innerHTML='<div class="alert alert-err">Senhas nao conferem.</div>';return;}
   try {
     if (USE_SUPABASE) {
+      // Atualiza em portal_users E em auth.users (via RPC) de uma vez
       const { error } = await sb.rpc('trocar_senha_portal', { nova_senha: nw });
       if (error) throw error;
     } else {
@@ -1059,13 +1037,19 @@ async function changePw() {
 }
 
 // ═══ ADMIN: UPLOAD ═══
+// Cria conta no Supabase Auth + portal_users quando o consultor ainda não existe.
+// Usa cliente secundário (sbSignup) para não deslogar o admin.
+// Aceita username (preferido) ou faz fallback para cpf como identificador.
 async function criarUsuarioCompleto({ nome, cpf, username, senha, tipo }) {
+  // Email fantasma: se tem username, usa ele; senão, usa CPF (legado)
   const id = username || cpf;
   const email = id + '@masterprime.internal';
   let authId = null;
   if (USE_SUPABASE && sbSignup) {
     const su = await sbSignup.auth.signUp({ email, password: senha });
-    if (su.error && !/already registered|already exists|User already/i.test(su.error.message)) throw new Error('Supabase signUp: ' + su.error.message);
+    if (su.error && !/already registered|already exists|User already/i.test(su.error.message)) {
+      throw new Error('Supabase signUp: ' + su.error.message);
+    }
     authId = su.data?.user?.id || null;
     if (!authId) {
       const si = await sbSignup.auth.signInWithPassword({ email, password: senha });
@@ -1073,6 +1057,7 @@ async function criarUsuarioCompleto({ nome, cpf, username, senha, tipo }) {
     }
     await sbSignup.auth.signOut().catch(()=>{});
   }
+  // Insere/atualiza portal_users (com username)
   await DB.createUser({ nome, cpf, tipo: tipo||'consultor', senha, criado:new Date().toISOString().slice(0,10) });
   if (USE_SUPABASE) {
     const updates = { auth_id: authId };
@@ -1090,6 +1075,7 @@ async function adminUpload(evt) {
     const data = JSON.parse(text);
     if (!data.mes || !data.consultores) { res.innerHTML = '<div class="alert alert-err">Formato invalido. Precisa ter "mes" e "consultores".</div>'; return; }
     await DB.publishDemos(data.mes, data.consultores);
+    // Cria/atualiza contas usando username+senhaInicial do JSON
     let novos = 0, atualizados = 0;
     const users = await DB.getAllUsers();
     for (const [nome, dados] of Object.entries(data.consultores)) {
@@ -1108,19 +1094,20 @@ async function adminUpload(evt) {
       } else if (username && senhaInicial && !existente.username) {
         try {
           await sb.rpc('admin_set_username_senha', { cpf_param: existente.cpf, username_param: username, senha_param: senhaInicial });
-          if (!existente.auth_id) await criarUsuarioCompleto({ nome, cpf: existente.cpf, username, senha: senhaInicial, tipo: existente.tipo });
+          if (!existente.auth_id) {
+            await criarUsuarioCompleto({ nome, cpf: existente.cpf, username, senha: senhaInicial, tipo: existente.tipo });
+          }
           atualizados++;
         } catch(e) { console.warn('Erro atualizando', nome, e); }
       }
     }
     const nc = Object.keys(data.consultores).length;
     let msg = `<div class="alert alert-ok">Demonstrativos de <strong>${fmtMes(data.mes)}</strong> publicados! ${nc} pessoas`;
-    if (novos) msg += ` &middot; ${novos} usuários criados`;
+    if (novos) msg += ` &middot; ${novos} usu&aacute;rios criados`;
     if (atualizados) msg += ` &middot; ${atualizados} atualizados`;
-    msg += ` &middot; <a href="#" onclick="nav('admin-users');return false;" style="color:var(--mp-navy);font-weight:600">Ver usuários &rarr;</a></div>`;
+    msg += ` &middot; <a href="#" onclick="nav('admin-users');return false;" style="color:var(--mp-navy);font-weight:600">Ver usu&aacute;rios &rarr;</a></div>`;
     res.innerHTML = msg;
     await renderAdminMeses(); await renderUsers(); await renderDashboard(); await renderHistorico(); await renderAdminOverview();
-    iniciarNotificacoesRealtime();
   } catch(e) { res.innerHTML = `<div class="alert alert-err">Erro: ${e.message}</div>`; }
 }
 async function renderAdminMeses() {
@@ -1138,6 +1125,10 @@ async function renderAdminMeses() {
 async function delMes(m) { if(!confirm('Remover '+fmtMes(m)+'?'))return; await DB.deleteMes(m); await renderAdminMeses(); await renderDashboard(); await renderHistorico(); await renderAdminOverview(); }
 
 // ═══ ADMIN: VISAO GERAL ═══
+// Agrega todos os demonstrativos do mes selecionado e mostra:
+// - KPIs (total consultores, soma de liquidos, receita bruta, descontos)
+// - Tabela com todos consultores e valor liquido (clicavel para ver demo completo)
+// - Modal/expansao com o demonstrativo completo de cada um
 async function renderAdminOverview() {
   if (!currentUser || currentUser.tipo !== 'admin') return;
   const sel = document.getElementById('overview-mes');
@@ -1147,19 +1138,23 @@ async function renderAdminOverview() {
   const meses = await DB.getMeses();
   if (!meses.length) {
     sel.innerHTML = '<option value="">(nenhum)</option>';
-    content.innerHTML = '<div class="empty-state"><div class="empty-state-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg></div><div class="empty-state-title">Nenhum demonstrativo publicado</div></div>';
+    content.innerHTML = '<div class="empty-state"><div class="empty-state-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg></div><div class="empty-state-title">Nenhum demonstrativo publicado</div><div class="empty-state-desc">Faca o upload de um JSON em "Upload Demonstrativos" para comecar.</div></div>';
     return;
   }
+  // Preserva selecao atual
   const cur = sel.value || meses[0];
   sel.innerHTML = meses.map(m => `<option value="${m}" ${m===cur?'selected':''}>${fmtMes(m)}</option>`).join('');
   const mes = sel.value;
   sub.textContent = 'Dashboard administrativa - ' + fmtMes(mes);
-  const demos = await DB.getDemosMes(mes);
+
+  const demos = await DB.getDemosMes(mes); // { nome: dados }
   const nomes = Object.keys(demos).sort();
   if (!nomes.length) {
     content.innerHTML = '<div class="empty-state"><div class="empty-state-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="empty-state-title">Sem demos neste mes</div></div>';
     return;
   }
+
+  // KPIs
   let totalLiq = 0, totalPos = 0, totalNeg = 0, nPositivos = 0, nNegativos = 0;
   const rows = nomes.map(nome => {
     const d = demos[nome] || {};
@@ -1180,12 +1175,29 @@ async function renderAdminOverview() {
       <div style="padding:20px">${renderDemo(demos[nome], mes)}</div>
     </td></tr>`;
   }).join('');
+
   content.innerHTML = `
     <div class="stats" style="margin-bottom:20px">
-      <div class="stat stat-accent"><div class="stat-label">Consultores</div><div class="stat-value">${nomes.length}</div><div class="stat-sub">${nPositivos} a receber &middot; ${nNegativos} a pagar</div></div>
-      <div class="stat stat-teal"><div class="stat-label">Total a pagar</div><div class="stat-value">${fmtBRL(totalPos)}</div></div>
-      <div class="stat stat-navy"><div class="stat-label">Total a receber/descontar</div><div class="stat-value" style="color:var(--red)">${fmtBRL(totalNeg)}</div></div>
-      <div class="stat stat-green"><div class="stat-label">Saldo geral</div><div class="stat-value" style="color:var(--green)">${fmtBRL(totalLiq)}</div></div>
+      <div class="stat stat-accent">
+        <div class="stat-label">Consultores</div>
+        <div class="stat-value">${nomes.length}</div>
+        <div class="stat-sub">${nPositivos} a receber &middot; ${nNegativos} a pagar</div>
+      </div>
+      <div class="stat stat-teal">
+        <div class="stat-label">Total a pagar</div>
+        <div class="stat-value">${fmtBRL(totalPos)}</div>
+        <div class="stat-sub">liquidos positivos</div>
+      </div>
+      <div class="stat stat-navy">
+        <div class="stat-label">Total a receber/descontar</div>
+        <div class="stat-value" style="color:var(--red)">${fmtBRL(totalNeg)}</div>
+        <div class="stat-sub">liquidos negativos</div>
+      </div>
+      <div class="stat stat-green">
+        <div class="stat-label">Saldo geral</div>
+        <div class="stat-value" style="color:var(--green)">${fmtBRL(totalLiq)}</div>
+        <div class="stat-sub">soma de todos</div>
+      </div>
     </div>
     <div class="card">
       <div class="card-head"><div><div class="card-title">Demonstrativos de ${fmtMes(mes)}</div><div class="card-sub">${nomes.length} pessoas &middot; clique em qualquer linha para expandir</div></div></div>
@@ -1198,6 +1210,87 @@ async function renderAdminOverview() {
       </div>
     </div>`;
 }
+
+// ═══ EXPORTAR DEMO (Excel / PDF) ═══
+// Percorre as tabelas do demo e gera xlsx com valores NUMÉRICOS (não texto).
+// Detecta células de valor BRL ("R$ 1.234,56" ou "(R$ 123,45)") e converte pra number
+// aplicando formatação contábil, preservando sinal negativo de valores entre parênteses.
+// Reconhece APENAS valores em formato BRL:
+//   "R$ 1.234,56"   → 1234.56
+//   "(R$ 123,45)"   → -123.45
+//   "R$ -50,00"     → -50.00
+// Retorna null para qualquer outro formato (grupo/cota como "0485/269",
+// números sem vírgula decimal, texto comum etc.). Isso evita que células de
+// grupo/cota, parcela, ciclo etc. sejam convertidas em número errado.
+function parseBRLtoNumber(txt) {
+  if (!txt) return null;
+  const s = String(txt).trim();
+  if (!s) return null;
+  // Precisa ter "R$" em algum lugar (formato oficial do painel)
+  if (!/R\$/.test(s)) return null;
+  const neg = /^\(.*\)$/.test(s) || /R\$\s*-/.test(s);
+  const limpo = s.replace(/[R$()\s\-—]/g,'').replace(/\./g,'').replace(',','.');
+  if (!limpo) return null;
+  const v = parseFloat(limpo);
+  if (isNaN(v)) return null;
+  return neg ? -v : v;
+}
+
+function baixarDemoExcel(nomeSafe, nome, mes) {
+  try {
+    const container = document.getElementById('demo-body-' + nomeSafe);
+    if (!container) { alert('Demo não encontrado'); return; }
+    const tabelas = container.querySelectorAll('table');
+    if (!tabelas.length) { alert('Sem dados para exportar'); return; }
+    const wb = XLSX.utils.book_new();
+    tabelas.forEach((tbl, idx) => {
+      // Converte tabela HTML em array 2D, detectando valores numéricos
+      const rows = [];
+      tbl.querySelectorAll('tr').forEach(tr => {
+        const row = [];
+        tr.querySelectorAll('th, td').forEach(cell => {
+          const txt = cell.textContent.trim();
+          // Só converte se for claramente BRL (tem "R$"). Grupo/cota, parcela,
+          // ciclo, refs etc. não têm "R$" e são mantidos como texto.
+          const asNum = parseBRLtoNumber(txt);
+          if (asNum !== null) row.push(asNum);
+          else row.push(txt);
+        });
+        if (row.length) rows.push(row);
+      });
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      // Aplica formato BRL às células que viraram números
+      const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+      for (let R = range.s.r; R <= range.e.r; R++) {
+        for (let C = range.s.c; C <= range.e.c; C++) {
+          const addr = XLSX.utils.encode_cell({ r:R, c:C });
+          const cell = ws[addr];
+          if (cell && typeof cell.v === 'number') {
+            cell.t = 'n';
+            cell.z = '"R$ "#,##0.00;[Red]"(R$ "#,##0.00")"';
+          }
+        }
+      }
+      const nomeAba = (idx === 0 ? 'Demonstrativo' : 'Tabela ' + (idx+1)).slice(0,31);
+      XLSX.utils.book_append_sheet(wb, ws, nomeAba);
+    });
+    const filename = 'Demo_' + nome.replace(/\s+/g,'_') + '_' + mes + '.xlsx';
+    XLSX.writeFile(wb, filename);
+  } catch(e) { alert('Erro ao exportar Excel: ' + (e.message||e)); }
+}
+
+// Imprime o demo em janela nova (que vira PDF)
+function imprimirDemo(nomeSafe) {
+  const container = document.getElementById('demo-body-' + nomeSafe);
+  if (!container) { window.print(); return; }
+  // Abre janela nova com só o demo (estilo print)
+  const w = window.open('', '_blank', 'width=900,height=1000');
+  const stylesTags = Array.from(document.querySelectorAll('style,link[rel="stylesheet"]')).map(s => s.outerHTML).join('\n');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Demonstrativo</title>${stylesTags}<style>body{padding:20px;background:#fff}@media print{body{padding:0}}</style></head><body>${container.innerHTML}</body></html>`);
+  w.document.close();
+  setTimeout(() => { w.focus(); w.print(); }, 500);
+}
+
 function toggleOverviewDemo(nome) {
   const id = 'ov-demo-' + nome.replace(/[^a-zA-Z0-9]/g,'_');
   const el = document.getElementById(id);
@@ -1207,6 +1300,7 @@ function toggleOverviewDemo(nome) {
 // ═══ ADMIN: USERS ═══
 async function addUser() {
   const nome=document.getElementById('nu-nome').value.trim().toUpperCase(), cpf=cleanCPF(document.getElementById('nu-cpf').value), tipo=document.getElementById('nu-tipo').value, msg=document.getElementById('add-msg');
+  // Campo opcional "senha inicial" - se não preencher usa CPF
   const senhaInput = document.getElementById('nu-senha');
   const senhaCustom = senhaInput ? senhaInput.value.trim() : '';
   const senha = senhaCustom || cpf;
@@ -1221,12 +1315,15 @@ async function addUser() {
     document.getElementById('nu-nome').value='';document.getElementById('nu-cpf').value='';
     if (senhaInput) senhaInput.value='';
     await renderUsers();
-  } catch(e) { msg.innerHTML='<div class="alert alert-err">Erro: '+(e.message||e)+'</div>'; }
+  } catch(e) {
+    msg.innerHTML='<div class="alert alert-err">Erro: '+(e.message||e)+'</div>';
+  }
 }
 async function renderUsers() {
   const users = await DB.getAllUsers();
   const el = document.getElementById('users-list');
   document.getElementById('user-count').textContent = users.length + ' usuarios';
+  // Ordena: admin primeiro, depois por nome
   users.sort((a,b) => {
     if (a.tipo === 'admin' && b.tipo !== 'admin') return -1;
     if (b.tipo === 'admin' && a.tipo !== 'admin') return 1;
@@ -1234,8 +1331,9 @@ async function renderUsers() {
   });
   const rows = users.map(u => {
     const tc = u.tipo==='admin'?'tag-navy':u.tipo==='socio'?'tag-teal':'tag-blue';
-    const tl = u.tipo==='admin'?'Admin':u.tipo==='socio'?'Sócio':u.tipo==='parceiro'?'Parceiro':'Consultor';
-    const userLogin = u.username ? u.username : `<span style="color:var(--text3);font-style:italic">(sem usuário)</span>`;
+    const tl = u.tipo==='admin'?'Admin':u.tipo==='socio'?'S&oacute;cio':u.tipo==='parceiro'?'Parceiro':'Consultor';
+    const userLogin = u.username ? u.username : `<span style="color:var(--text3);font-style:italic">(sem usu&aacute;rio)</span>`;
+    // Senha oculta por padrão; admin clica no olho para revelar (necessário para testar acesso)
     const senhaDisplay = u.senha
       ? `<span class="senha-cell" data-senha="${(u.senha+'').replace(/"/g,'&quot;')}" style="display:inline-flex;align-items:center;gap:6px"><span class="senha-val mono" style="font-size:11px">&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;</span><button type="button" onclick="toggleSenhaCell(this)" title="Mostrar/ocultar senha" style="background:none;border:0;padding:2px;cursor:pointer;color:var(--text3)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button></span>`
       : '<span style="color:var(--text3)">&mdash;</span>';
@@ -1246,306 +1344,177 @@ async function renderUsers() {
       <td class="mono" style="font-size:12px">${userLogin}</td>
       <td>${senhaDisplay}</td>
       <td style="text-align:right;white-space:nowrap">
+        ${u.tipo !== 'admin' ? `<button class="btn btn-outline btn-sm" onclick="abrirPermissoes('${u.cpf}')">Permissões</button>` : ''}
         <button class="btn btn-outline btn-sm" onclick="resetPw('${u.cpf}')">Reset senha</button>
         ${canDel ? `<button class="btn btn-danger btn-sm" onclick="delUser('${u.cpf}')">Remover</button>` : ''}
       </td>
     </tr>`;
   }).join('');
-  el.innerHTML = `<div class="tbl-wrap" style="padding:0"><table class="tbl"><thead><tr><th>Tipo</th><th>Nome</th><th>Usuário</th><th>Senha</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  el.innerHTML = `
+    <div class="tbl-wrap" style="padding:0">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Tipo</th>
+            <th>Nome</th>
+            <th>Usu&aacute;rio</th>
+            <th>Senha</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
 }
+// Toggle de revelar senha na tabela de usuários (admin only)
 function toggleSenhaCell(btn) {
   const cell = btn.closest('.senha-cell');
   if (!cell) return;
   const span = cell.querySelector('.senha-val');
   const senha = cell.getAttribute('data-senha') || '';
   const oculta = '••••••••';
-  if (span.textContent === oculta) { span.textContent = senha; span.style.color = 'var(--text)'; }
-  else { span.textContent = oculta; span.style.color = ''; }
+  if (span.textContent === oculta) {
+    span.textContent = senha;
+    span.style.color = 'var(--text)';
+  } else {
+    span.textContent = oculta;
+    span.style.color = '';
+  }
 }
+
+// Gera senha temporária forte (10 chars: maiúscula+minúscula+número+símbolo)
 function gerarSenhaTemporaria() {
-  const mai = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const mai = 'ABCDEFGHJKLMNPQRSTUVWXYZ';   // sem I/O (confusão visual)
   const min = 'abcdefghjkmnpqrstuvwxyz';
-  const num = '23456789';
+  const num = '23456789';                     // sem 0/1
   const sim = '!@#$%&*';
   const todos = mai + min + num + sim;
   const pick = (s) => s[Math.floor(Math.random()*s.length)];
+  // Garante ao menos 1 de cada categoria
   let s = pick(mai) + pick(min) + pick(num) + pick(sim);
   for (let i=0; i<6; i++) s += pick(todos);
+  // Embaralha
   return s.split('').sort(()=>Math.random()-0.5).join('');
 }
+
 async function resetPw(cpf) {
   const u = await DB.getUser(cpf);
   if (!u) { alert('Usuário não encontrado.'); return; }
-  if (!confirm(`Resetar a senha de ${u.nome}?\n\nUma senha temporária forte será gerada.`)) return;
+  if (!confirm(`Resetar a senha de ${u.nome}?\n\nUma senha temporária forte será gerada. Você precisará informá-la ao usuário, que será obrigado a trocar no próximo login.`)) return;
   const senhaFinal = gerarSenhaTemporaria();
   try {
     if (USE_SUPABASE) {
       const { error } = await sb.rpc('admin_resetar_senha', { cpf_param: cpf, nova_senha: senhaFinal });
       if (error) throw error;
-    } else { await DB.updateUser(cpf, { senha: senhaFinal }); }
-    prompt(`Senha temporária de ${u.nome}:\n\nCopie e envie ao usuário.`, senhaFinal);
+    } else {
+      await DB.updateUser(cpf, { senha: senhaFinal });
+    }
+    // Mostra a senha temporária UMA vez para o admin copiar/passar ao usuário
+    prompt(`Senha temporária de ${u.nome}:\n\nCopie e envie ao usuário. Esta tela não vai mostrar a senha de novo.`, senhaFinal);
   } catch(e) { alert('Erro: ' + (e.message||e)); }
 }
+
+// ═══ PERMISSÕES POR USUÁRIO ═══
+// Módulos gateáveis do menu lateral. (perfil sempre visível; admin tem própria seção)
+const MODULOS_MENU = [
+  { key: 'dashboard_vendas', label: 'Dashboard Vendas',     navId: 'ni-dashboard-vendas',     screen: 'dashboard-vendas' },
+  { key: 'assembleia',       label: 'Resultado Assembleia', navId: 'ni-assembleia',           screen: 'assembleia' },
+  { key: 'lances',           label: 'Consulta de Lances',   navId: 'ni-lances',               screen: 'lances' },
+  { key: 'simuladores',      label: 'Simuladores',          navId: 'ni-simuladores',          screen: 'simuladores' },
+  { key: 'demonstrativo',    label: 'Demonstrativo',        navId: 'ni-dashboard',            screen: 'dashboard' },
+  { key: 'historico',        label: 'Histórico',            navId: 'ni-historico',            screen: 'historico' },
+  { key: 'faturamento',      label: 'Faturamento',          navId: 'ni-admin-faturamento',    screen: 'admin-faturamento' }
+];
+
+// CPF do usuário cuja modal de permissões está aberta no momento
+let _permCpfAtual = null;
+
+async function abrirPermissoes(cpf) {
+  const u = await DB.getUser(cpf);
+  if (!u) { alert('Usuário não encontrado.'); return; }
+  _permCpfAtual = cpf;
+  document.getElementById('perm-user-nome').textContent = u.nome + (u.tipo ? ' · ' + u.tipo : '');
+  const perms = u.permissoes || {};
+  // Se permissoes é null/undefined → checa tudo (default = vê tudo)
+  const semConfig = !u.permissoes;
+  const html = MODULOS_MENU.map(m => {
+    const checked = semConfig || perms[m.key] !== false;
+    return `<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border,#e5e7eb);border-radius:8px;cursor:pointer;font-size:13px;color:var(--text,#111)">
+      <input type="checkbox" data-perm-key="${m.key}" ${checked ? 'checked' : ''} style="width:16px;height:16px;cursor:pointer">
+      <span>${m.label}</span>
+    </label>`;
+  }).join('');
+  document.getElementById('perm-checklist').innerHTML = html;
+  document.getElementById('modal-permissoes').style.display = 'flex';
+}
+
+function fecharPermissoes() {
+  document.getElementById('modal-permissoes').style.display = 'none';
+  _permCpfAtual = null;
+}
+
+function marcarTodasPerm(valor) {
+  document.querySelectorAll('#perm-checklist input[type="checkbox"]').forEach(cb => cb.checked = !!valor);
+}
+
+async function salvarPermissoes() {
+  if (!_permCpfAtual) return;
+  const perms = {};
+  document.querySelectorAll('#perm-checklist input[type="checkbox"]').forEach(cb => {
+    perms[cb.getAttribute('data-perm-key')] = cb.checked;
+  });
+  try {
+    await DB.updateUser(_permCpfAtual, { permissoes: perms });
+    fecharPermissoes();
+    await renderUsers();
+  } catch(e) { alert('Erro ao salvar: ' + (e.message||e)); }
+}
+
+// Aplica filtro de permissões no sidebar (esconde itens não permitidos).
+// Chamar após login e após qualquer refresh do usuário corrente.
+function aplicarPermissoesUI() {
+  if (!currentUser) return;
+  // Admin sempre vê tudo (não respeita permissoes)
+  if (currentUser.tipo === 'admin') return;
+  const perms = currentUser.permissoes;
+  // Sem config → vê tudo (compat retroativa)
+  if (!perms || typeof perms !== 'object') return;
+  MODULOS_MENU.forEach(m => {
+    const el = document.getElementById(m.navId);
+    if (!el) return;
+    if (perms[m.key] === false) el.classList.add('hidden');
+    else el.classList.remove('hidden');
+  });
+}
+
+// Bloqueia navegação direta a um módulo que o usuário não pode acessar.
+// Retorna true se permitido, false se bloqueado.
+function podeAcessarScreen(screenId) {
+  if (!currentUser) return true;
+  if (currentUser.tipo === 'admin') return true;
+  const perms = currentUser.permissoes;
+  if (!perms || typeof perms !== 'object') return true;
+  const m = MODULOS_MENU.find(x => x.screen === screenId);
+  if (!m) return true; // screens não-gateáveis (perfil, admin-*) liberadas
+  return perms[m.key] !== false;
+}
+
 async function delUser(cpf) {
   const u = await DB.getUser(cpf);
   if (!u || !confirm('Remover ' + u.nome + '? Essa ação é irreversível.')) return;
   try {
-    if (USE_SUPABASE) { await sb.rpc('admin_deletar_user', { cpf_param: cpf }); }
-    else { await DB.deleteUser(cpf); }
+    if (USE_SUPABASE) {
+      const { error } = await sb.rpc('admin_deletar_user', { cpf_param: cpf });
+      if (error) throw error;
+    } else {
+      await DB.deleteUser(cpf);
+    }
     await renderUsers();
   } catch(e) { alert('Erro: ' + (e.message||e)); }
 }
 
-// ═══ NOVO: ADMIN ADESÕES (FORMULÁRIOS CADASTRADOS) ═══
-let allAdesoesData = [];
-const CAMPOS_ADESAO = {
-  bradesco_pf: [
-    { section: 'Dados Pessoais' },
-    { id:'cpf', label:'CPF' }, { id:'nome_completo', label:'Nome Completo' }, { id:'data_nascimento', label:'Data Nasc.' },
-    { id:'nacionalidade', label:'Nacionalidade' }, { id:'nome_pai', label:'Nome do Pai' }, { id:'nome_mae', label:'Nome da Mãe' },
-    { section: 'Estado Civil' },
-    { id:'estado_civil', label:'Estado Civil' }, { id:'nome_conjuge', label:'Cônjuge' }, { id:'cpf_conjuge', label:'CPF Cônjuge' }, { id:'data_nascimento_conjuge', label:'Data Nasc. Cônjuge' },
-    { section: 'Profissão e Renda' },
-    { id:'nome_empresa', label:'Empresa' }, { id:'data_admissao', label:'Data Admissão' }, { id:'renda_mensal', label:'Renda Mensal' },
-    { section: 'Endereço' },
-    { id:'cep', label:'CEP' }, { id:'logradouro', label:'Logradouro' }, { id:'numero', label:'Número' }, { id:'complemento', label:'Complemento' },
-    { id:'bairro', label:'Bairro' }, { id:'cidade', label:'Cidade' }, { id:'estado', label:'Estado' }, { id:'tempo_residencia', label:'Tempo Residência' },
-    { section: 'Contato e Pagamento' },
-    { id:'email', label:'E-mail' }, { id:'celular', label:'Celular' }, { id:'forma_pagamento', label:'Forma Pagamento' }, { id:'deseja_seguro', label:'Deseja Seguro?' },
-  ],
-  bradesco_pj: [
-    { section: 'Dados da Empresa' },
-    { id:'cnpj', label:'CNPJ' }, { id:'razao_social', label:'Razão Social' }, { id:'nome_fantasia', label:'Nome Fantasia' }, { id:'ramo_atividade', label:'Ramo Atividade' },
-    { section: 'Sócio Administrador' },
-    { id:'socio_nome', label:'Nome do Sócio' }, { id:'socio_cpf', label:'CPF do Sócio' }, { id:'socio_data_nascimento', label:'Data Nasc. Sócio' },
-    { id:'socio_tipo_documento', label:'Tipo Documento' }, { id:'socio_numero_documento', label:'Nº Documento' }, { id:'socio_percentual_empresa', label:'% Empresa' },
-    { id:'socio_estado_civil', label:'Estado Civil' }, { id:'socio_nome_conjuge', label:'Cônjuge' }, { id:'socio_cpf_conjuge', label:'CPF Cônjuge' },
-    { section: 'Contato' },
-    { id:'email', label:'E-mail' }, { id:'celular', label:'Celular' },
-    { section: 'Endereço' },
-    { id:'cep', label:'CEP' }, { id:'logradouro', label:'Logradouro' }, { id:'numero', label:'Número' }, { id:'complemento', label:'Complemento' },
-    { id:'bairro', label:'Bairro' }, { id:'cidade', label:'Cidade' }, { id:'estado', label:'Estado' },
-    { section: 'Pagamento' },
-    { id:'forma_pagamento', label:'Forma Pagamento' }, { id:'deseja_seguro', label:'Deseja Seguro?' },
-  ],
-  itau_pf: [
-    { section: 'Dados Pessoais' },
-    { id:'cpf', label:'CPF' }, { id:'nome_completo', label:'Nome Completo' }, { id:'data_nascimento', label:'Data Nasc.' },
-    { id:'tipo_documento', label:'Tipo Documento' }, { id:'numero_documento', label:'Nº Documento' }, { id:'data_emissao', label:'Data Emissão' },
-    { id:'orgao_expedidor', label:'Órgão Expedidor' }, { id:'sexo', label:'Sexo' }, { id:'nacionalidade', label:'Nacionalidade' }, { id:'estado_civil', label:'Estado Civil' },
-    { section: 'Endereço Residencial' },
-    { id:'cep', label:'CEP' }, { id:'tipo_residencia', label:'Tipo Residência' }, { id:'logradouro', label:'Logradouro' }, { id:'numero', label:'Número' },
-    { id:'complemento', label:'Complemento' }, { id:'bairro', label:'Bairro' }, { id:'estado', label:'Estado' }, { id:'cidade', label:'Cidade' },
-    { section: 'Contato' },
-    { id:'ddd', label:'DDD' }, { id:'celular', label:'Celular' }, { id:'email', label:'E-mail' },
-    { section: 'Dados Comerciais' },
-    { id:'profissao', label:'Profissão' }, { id:'renda_mensal', label:'Renda Mensal' }, { id:'patrimonio', label:'Patrimônio' },
-    { section: 'Pagamento' },
-    { id:'forma_pagamento_1', label:'Forma Pagamento 1ª' }, { id:'forma_pagamento_plano', label:'Forma Pagamento Plano' },
-    { section: 'Resgate' },
-    { id:'banco_resgate', label:'Banco' }, { id:'agencia_resgate', label:'Agência' }, { id:'conta_resgate', label:'Conta' },
-    { section: 'Seguro' },
-    { id:'aceita_seguro', label:'Aceita Seguro?' },
-  ],
-  itau_pj: [
-    { section: 'Dados da Empresa' },
-    { id:'cnpj', label:'CNPJ' }, { id:'data_constituicao', label:'Data Constituição' }, { id:'ramo_atividade', label:'Ramo Atividade' },
-    { id:'razao_social', label:'Razão Social' }, { id:'faturamento_12m', label:'Faturamento 12m' }, { id:'inscricao_estadual', label:'Inscrição Estadual' },
-    { id:'inscricao_municipal', label:'Inscrição Municipal' }, { id:'valor_capital', label:'Valor Capital' }, { id:'cnae_principal', label:'CNAE' }, { id:'natureza_juridica', label:'Natureza Jurídica' },
-    { section: '1° Sócio' },
-    { id:'socio1_nome', label:'Nome' }, { id:'socio1_administrador', label:'Administrador' }, { id:'socio1_cpf_cnpj', label:'CPF/CNPJ' },
-    { id:'socio1_rg', label:'RG' }, { id:'socio1_data_emissao_rg', label:'Data Emissão RG' }, { id:'socio1_orgao_expedidor', label:'Órgão Expedidor' },
-    { id:'socio1_data_nascimento', label:'Data Nasc.' }, { id:'socio1_nome_pai', label:'Pai' }, { id:'socio1_nome_mae', label:'Mãe' },
-    { id:'socio1_data_entrada', label:'Data Entrada' }, { id:'socio1_participacao', label:'Participação %' },
-    { section: '2° Sócio' },
-    { id:'socio2_nome', label:'Nome' }, { id:'socio2_administrador', label:'Administrador' }, { id:'socio2_cpf_cnpj', label:'CPF/CNPJ' },
-    { id:'socio2_rg', label:'RG' }, { id:'socio2_data_emissao_rg', label:'Data Emissão RG' }, { id:'socio2_orgao_expedidor', label:'Órgão Expedidor' },
-    { id:'socio2_data_nascimento', label:'Data Nasc.' }, { id:'socio2_nome_pai', label:'Pai' }, { id:'socio2_nome_mae', label:'Mãe' },
-    { id:'socio2_data_entrada', label:'Data Entrada' }, { id:'socio2_participacao', label:'Participação %' },
-    { section: 'Endereço' },
-    { id:'cep', label:'CEP' }, { id:'endereco_exterior', label:'Endereço Exterior?' }, { id:'logradouro', label:'Logradouro' },
-    { id:'numero', label:'Número' }, { id:'complemento', label:'Complemento' }, { id:'bairro', label:'Bairro' }, { id:'estado', label:'Estado' }, { id:'cidade', label:'Cidade' },
-    { section: 'Contato' },
-    { id:'ddd_telefone', label:'DDD Tel' }, { id:'telefone', label:'Telefone' }, { id:'ramal', label:'Ramal' },
-    { id:'ddd_fax', label:'DDD Fax' }, { id:'fax', label:'Fax' }, { id:'ramal_fax', label:'Ramal Fax' },
-    { id:'ddd_celular', label:'DDD Cel' }, { id:'celular', label:'Celular' }, { id:'email', label:'E-mail' },
-    { section: 'Pagamento' },
-    { id:'forma_pagamento_1', label:'Forma Pagamento 1ª' }, { id:'forma_pagamento_plano', label:'Forma Pagamento Plano' },
-    { section: 'Resgate' },
-    { id:'banco_resgate', label:'Banco' }, { id:'agencia_resgate', label:'Agência' }, { id:'conta_resgate', label:'Conta' },
-  ],
-  porto_pf: [
-    { section: 'Ficha Cadastral' },
-    { id:'cpf', label:'CPF' }, { id:'nome_completo', label:'Nome Completo' }, { id:'data_nascimento', label:'Data Nasc.' }, { id:'estado_civil', label:'Estado Civil' },
-    { id:'email', label:'E-mail' }, { id:'confirme_email', label:'Confirme E-mail' },
-    { section: 'Contato' },
-    { id:'tel_residencial', label:'Tel Residencial' }, { id:'tel_comercial', label:'Tel Comercial' }, { id:'celular', label:'Celular' }, { id:'celular2', label:'Celular 2' },
-    { section: 'Documento' },
-    { id:'tipo_documento', label:'Tipo Documento' }, { id:'numero_documento', label:'Nº Documento' }, { id:'orgao_emissor_uf', label:'Órgão Emissor/UF' },
-    { id:'data_emissao', label:'Data Emissão' }, { id:'nacionalidade', label:'Nacionalidade' }, { id:'cidade_nascimento', label:'Cidade Nasc.' }, { id:'nome_mae', label:'Nome da Mãe' },
-    { section: 'Remuneração e Profissão' },
-    { id:'remuneracao', label:'Remuneração' }, { id:'profissao', label:'Profissão' },
-    { section: 'Endereço' },
-    { id:'cep', label:'CEP' }, { id:'tipo_logradouro', label:'Tipo Logradouro' }, { id:'endereco', label:'Endereço' }, { id:'numero', label:'Número' },
-    { id:'complemento', label:'Complemento' }, { id:'bairro', label:'Bairro' }, { id:'cidade', label:'Cidade' }, { id:'estado', label:'Estado' },
-    { section: 'Pagamento' },
-    { id:'forma_pagamento_1', label:'Forma Pagamento 1ª' }, { id:'forma_pagamento_2', label:'Forma Pagamento 2ª em diante' },
-    { section: 'Dados Bancários' },
-    { id:'nome_correntista', label:'Correntista' }, { id:'cpf_correntista', label:'CPF Correntista' }, { id:'banco', label:'Banco' }, { id:'agencia', label:'Agência' }, { id:'conta_corrente', label:'Conta Corrente' },
-    { section: 'Seguro' },
-    { id:'aceita_seguro', label:'Aceita Seguro?' },
-  ],
-  porto_pj: [
-    { section: 'Ficha Cadastral' },
-    { id:'cnpj', label:'CNPJ' }, { id:'razao_social', label:'Razão Social' }, { id:'inscricao_estadual', label:'Inscrição Estadual' },
-    { id:'data_constituicao', label:'Data Constituição' }, { id:'email', label:'E-mail' }, { id:'confirme_email', label:'Confirme E-mail' },
-    { section: 'Contato' },
-    { id:'tel_comercial', label:'Tel Comercial' }, { id:'celular', label:'Celular' }, { id:'celular2', label:'Celular 2' },
-    { section: 'Atividade' },
-    { id:'ramo_atividade', label:'Ramo Atividade' }, { id:'receita_mensal', label:'Receita Mensal' },
-    { section: 'Endereço' },
-    { id:'cep', label:'CEP' }, { id:'tipo_logradouro', label:'Tipo Logradouro' }, { id:'endereco', label:'Endereço' }, { id:'numero', label:'Número' },
-    { id:'complemento', label:'Complemento' }, { id:'bairro', label:'Bairro' }, { id:'cidade', label:'Cidade' }, { id:'estado', label:'Estado' },
-    { section: 'Sócio' },
-    { id:'socio_nome', label:'Nome do Sócio' }, { id:'socio_cpf', label:'CPF do Sócio' },
-    { section: 'Pagamento' },
-    { id:'forma_pagamento_1', label:'Forma Pagamento 1ª' }, { id:'forma_pagamento_2', label:'Forma Pagamento 2ª em diante' },
-    { section: 'Dados Bancários' },
-    { id:'nome_correntista', label:'Correntista' }, { id:'cnpj_correntista', label:'CNPJ Correntista' }, { id:'banco', label:'Banco' }, { id:'agencia', label:'Agência' }, { id:'conta_corrente', label:'Conta Corrente' },
-  ],
-};
 
-async function carregarAdesoes() {
-  const container = document.getElementById('adesao-list-container');
-  if (!container) return;
-  container.innerHTML = '<div style="text-align:center;padding:40px;"><div class="spinner"></div></div>';
-  try {
-    const { data, error } = await sb.from('portal_adesoes').select('*').order('criado_em', { ascending: false });
-    if (error) throw error;
-    allAdesoesData = data || [];
-    filtrarAdesoes();
-  } catch(e) {
-    container.innerHTML = `<div class="empty-state"><p>Erro ao carregar: ${e.message}</p></div>`;
-  }
-}
-
-function filtrarAdesoes() {
-  const query = (document.getElementById('adesao-search')?.value || '').toLowerCase().trim();
-  let filtradas = allAdesoesData;
-  if (query) {
-    filtradas = allAdesoesData.filter(a => {
-      const nome = (a.nome_cliente || '').toLowerCase();
-      const cpfCnpj = (a.cpf_cnpj || '').replace(/\D/g, '');
-      const proto = (a.protocolo || '').toLowerCase();
-      const q = query.replace(/\D/g, '');
-      return nome.includes(query) || cpfCnpj.includes(q) || proto.includes(query);
-    });
-  }
-  const countEl = document.getElementById('adesao-count');
-  if (countEl) countEl.textContent = `${filtradas.length} de ${allAdesoesData.length} formulários`;
-  renderizarAdesoes(filtradas);
-}
-
-function renderizarAdesoes(lista) {
-  const container = document.getElementById('adesao-list-container');
-  if (!container) return;
-  if (!lista.length) {
-    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><p>Nenhum formulário encontrado.</p></div>';
-    return;
-  }
-  container.innerHTML = lista.map(a => {
-    const dados = a.dados || {};
-    const adm = a.administradora;
-    const tipo = a.tipo_pessoa;
-    const key = `${adm}_${tipo}`;
-    const campos = CAMPOS_ADESAO[key] || [];
-    let detailHtml = '';
-    let currentSection = '';
-    campos.forEach(c => {
-      if (c.section) {
-        if (currentSection) detailHtml += '</div>';
-        detailHtml += `<div class="section-label" style="margin:16px 0 8px;font-size:11px;color:var(--text2);border-bottom:1px solid var(--border);padding-bottom:6px;">${c.section}</div><div class="adesao-detail-grid">`;
-        currentSection = c.section;
-        return;
-      }
-      if (!currentSection) { detailHtml += '<div class="adesao-detail-grid">'; currentSection = 'default'; }
-      const val = dados[c.id] || '—';
-      detailHtml += `
-        <div class="adesao-detail-item">
-          <button class="adesao-copy-btn" title="Copiar ${c.label}" onclick="copyAdesaoItem('${val.replace(/'/g, "\\'")}')">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-          </button>
-          <div class="adesao-detail-item-label">${c.label}</div>
-          <div class="adesao-detail-item-value">${val}</div>
-        </div>`;
-    });
-    if (currentSection) detailHtml += '</div>';
-    return `
-    <div class="adesao-card" id="acard-${a.id}">
-      <div class="adesao-card-header" onclick="toggleAdesaoCard('${a.id}')">
-        <div class="adesao-card-header-left">
-          <strong style="font-size:14px;color:var(--mp-navy);">${a.nome_cliente || 'Sem nome'}</strong>
-          <span class="tag ${adm==='bradesco'?'tag-red':adm==='itau'?'tag-amber':'tag-blue'}">${adm}</span>
-          <span class="tag ${tipo==='pf'?'tag-blue-cat':'tag-black'}">${tipo.toUpperCase()}</span>
-          <span class="tag tag-gray">${a.status || 'recebido'}</span>
-        </div>
-        <div class="adesao-card-header-right">
-          <span class="mono" style="font-size:11px;color:var(--text2);">${a.protocolo || ''}</span>
-          <span style="color:var(--text3);">${new Date(a.criado_em).toLocaleDateString('pt-BR')}</span>
-        </div>
-      </div>
-      <div class="adesao-card-body">
-        ${detailHtml}
-        <div style="margin-top:16px; display:flex; gap:12px; flex-wrap:wrap;">
-          <button class="adesao-copy-all-btn" onclick="copyAllAdesao('${a.id}')">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-            Copiar todos os dados (JSON)
-          </button>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function toggleAdesaoCard(id) {
-  document.getElementById('acard-' + id)?.classList.toggle('open');
-}
-
-function copyAdesaoItem(text) {
-  navigator.clipboard.writeText(text).then(() => {
-    const toast = document.createElement('div');
-    toast.textContent = 'Copiado!';
-    toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:var(--mp-navy);color:#fff;padding:10px 20px;border-radius:8px;font-weight:600;z-index:999;';
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 2000);
-  });
-}
-
-async function copyAllAdesao(id) {
-  const a = allAdesoesData.find(x => x.id === id);
-  if (!a) return;
-  const json = JSON.stringify(a.dados, null, 2);
-  copyAdesaoItem(json);
-}
-
-function copyFormLink() {
-  const linkEl = document.getElementById('form-link');
-  if (!linkEl) return;
-  const url = linkEl.textContent.trim();
-  navigator.clipboard.writeText(url).then(() => {
-    const btn = document.querySelector('#s-admin-adesao .btn-white');
-    if (btn) {
-      const orig = btn.innerHTML;
-      btn.innerHTML = '✓ Copiado!';
-      setTimeout(() => btn.innerHTML = orig, 2000);
-    }
-    const toast = document.createElement('div');
-    toast.textContent = 'Link copiado!';
-    toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:var(--mp-navy);color:#fff;padding:10px 20px;border-radius:8px;font-weight:600;z-index:999;';
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 2000);
-  });
-}
+// MÓDULO FATURAMENTO: extraído para faturamento.html (carregado via iframe lazy-load).
 
 // ═══ INIT ═══
 (async()=>{ await DB.init(); await checkSession(); })();
