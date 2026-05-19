@@ -314,6 +314,8 @@ body.embedded-mode .portal-menu-fab { display:flex; }
       <!-- Formulário de Adesão (visível para todos os tipos) -->
       <div class="sb-item" onclick="nav('admin-adesao')" id="ni-admin-adesao"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 15l2 2 4-4"/></svg></span> Formulário de Adesão</div>
       <div class="sb-item" onclick="nav('admin-faturamento')" id="ni-admin-faturamento"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span> <span id="ni-admin-faturamento-label">Faturamento</span></div>
+      <!-- Feedbacks (visível só pra master e sócio) -->
+      <div class="sb-item hidden" onclick="nav('feedbacks')" id="ni-feedbacks"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></span> Feedbacks</div>
       <!-- Formulários (Adesão Bradesco): em stand-by até refinamento. Tela e backend continuam funcionais via /adesao.html — basta remover a classe `hidden` para reativar. -->
       <div class="sb-item hidden" onclick="nav('adesao')" id="ni-adesao"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg></span> Formulários</div>
       <div class="sb-item" onclick="nav('dashboard')" id="ni-dashboard"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg></span> Demonstrativo</div>
@@ -378,6 +380,10 @@ body.embedded-mode .portal-menu-fab { display:flex; }
       <!-- ADESÃO ADMIN (iframe carregado sob demanda) — NOVA TELA -->
       <div class="screen" id="s-admin-adesao" style="padding:0;height:calc(100vh - 0px);overflow:hidden">
         <iframe id="iframe-admin-adesao" src="about:blank" data-target="admin-adesao.html" style="width:100%;height:100%;border:0;display:block" title="Adesão Admin"></iframe>
+      </div>
+      <!-- FEEDBACKS (iframe carregado sob demanda) -->
+      <div class="screen" id="s-feedbacks" style="padding:0;height:calc(100vh - 0px);overflow:hidden">
+        <iframe id="iframe-feedbacks" src="about:blank" data-target="feedbacks.html" style="width:100%;height:100%;border:0;display:block" title="Feedbacks"></iframe>
       </div>
 
       <!-- PAINEL SPLIT (iframe carregado sob demanda) -->
@@ -914,6 +920,12 @@ async function enterPortal() {
   if (_adesaoAdminItem) {
     _adesaoAdminItem.style.display = '';
   }
+  // NOVA ABA: Feedbacks — visível APENAS para master e sócio
+  const _feedbacksItem = document.getElementById('ni-feedbacks');
+  if (_feedbacksItem) {
+    const podeVerFeedbacks = (currentUser.tipo === 'master' || currentUser.tipo === 'socio');
+    _feedbacksItem.classList.toggle('hidden', !podeVerFeedbacks);
+  }
   // Aplica permissões granulares por módulo (per-user). Admin sempre vê tudo.
   aplicarPermissoesUI();
   document.getElementById('perfil-nome').textContent=currentUser.nome;
@@ -952,6 +964,10 @@ function nav(id) {
   }
   // NOVA ABA: Formulário de Adesão — liberado pra todos os tipos
   // (qualquer consultor/sócio/parceiro precisa preencher pros clientes)
+  // FEEDBACKS — só master e sócio (privado dos avaliadores)
+  if (id === 'feedbacks' && currentUser && !(currentUser.tipo === 'master' || currentUser.tipo === 'socio')) {
+    id = 'perfil';
+  }
   // Bloqueio de acesso direto a módulo sem permissão (cai pra perfil)
   if (currentUser && currentUser.tipo !== 'master' && !podeAcessarScreen(id)) {
     id = 'perfil';
@@ -963,7 +979,7 @@ function nav(id) {
   document.getElementById('sidebar').classList.remove('open');
   // Lazy-load dos iframes: só carrega na primeira visita (evita 2.5 MB no login)
   // Iframes com lazy-load (assembleia/lances/painel) — carrega só na primeira visita
-  const iframeScreens = ['assembleia','lances','painel','simuladores','dashboard-vendas','adesao','admin-faturamento','admin-adesao'];
+  const iframeScreens = ['assembleia','lances','painel','simuladores','dashboard-vendas','adesao','admin-faturamento','admin-adesao','feedbacks'];
   if (iframeScreens.includes(id)) {
     const ifr = document.getElementById('iframe-' + id);
     if (ifr && ifr.dataset.target && ifr.getAttribute('src') === 'about:blank') {
@@ -1684,6 +1700,8 @@ function podeAcessarScreen(screenId) {
   if (currentUser.tipo === 'master') return true;
   // Formulário de Adesão é permitido pra TODOS os tipos
   if (screenId === 'admin-adesao') return true;
+  // Feedbacks: só master e sócio
+  if (screenId === 'feedbacks') return (currentUser.tipo === 'master' || currentUser.tipo === 'socio');
   const m = MODULOS_MENU.find(x => x.screen === screenId);
   if (!m) return true; // screens não-gateáveis (perfil etc) liberadas
   const perms = currentUser.permissoes || {};
