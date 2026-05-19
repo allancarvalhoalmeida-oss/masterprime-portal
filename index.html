@@ -298,6 +298,17 @@ body.embedded-mode .portal-menu-fab { display:flex; }
 
 <!-- ═══ PORTAL ═══ -->
 <div id="portal-screen" style="display:none">
+
+  <!-- BANNER GLOBAL DA SALA DE REUNIÃO (visível em qualquer tela) -->
+  <div id="sala-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9998;padding:10px 18px;font-size:13px;font-weight:600;display:none;align-items:center;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,.08);cursor:pointer" onclick="navSalaBanner()">
+    <span id="sala-banner-icon" style="font-size:18px"></span>
+    <div style="flex:1;line-height:1.4">
+      <div id="sala-banner-title" style="font-weight:700"></div>
+      <div id="sala-banner-sub" style="font-size:11.5px;opacity:.85;margin-top:1px"></div>
+    </div>
+    <button onclick="event.stopPropagation();fecharSalaBanner()" style="background:rgba(0,0,0,.12);border:0;color:inherit;padding:4px 8px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:600">Fechar ×</button>
+  </div>
+
   <button class="mobile-toggle" onclick="toggleSidebar()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
   <div class="sidebar-backdrop" onclick="toggleSidebar()"></div>
   <button class="portal-menu-fab" id="portal-menu-fab" onclick="exitEmbedded()" title="Voltar ao menu do portal"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
@@ -321,6 +332,8 @@ body.embedded-mode .portal-menu-fab { display:flex; }
       <div class="sb-item" onclick="nav('perfil')" id="ni-perfil"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span> Meu Perfil</div>
       <div id="admin-nav" class="hidden">
         <div class="sb-section">Administracao</div>
+        <!-- Sala de Reunião (em fase de teste — visível pra master/admin/sócio só) -->
+        <div class="sb-item hidden" onclick="nav('sala')" id="ni-sala"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span> Sala de Reunião</div>
         <!-- Feedbacks (master e sócio) — dentro da Administração -->
         <div class="sb-item hidden" onclick="nav('feedbacks')" id="ni-feedbacks"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></span> Feedbacks</div>
         <div class="sb-item" onclick="nav('admin-overview')" id="ni-admin-overview"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg></span> Visao Geral</div>
@@ -384,6 +397,10 @@ body.embedded-mode .portal-menu-fab { display:flex; }
       <!-- FEEDBACKS (iframe carregado sob demanda) -->
       <div class="screen" id="s-feedbacks" style="padding:0;height:calc(100vh - 0px);overflow:hidden">
         <iframe id="iframe-feedbacks" src="about:blank" data-target="feedbacks.html" style="width:100%;height:100%;border:0;display:block" title="Feedbacks"></iframe>
+      </div>
+      <!-- SALA DE REUNIÃO (iframe carregado sob demanda) -->
+      <div class="screen" id="s-sala" style="padding:0;height:calc(100vh - 0px);overflow:hidden">
+        <iframe id="iframe-sala" src="about:blank" data-target="sala.html" style="width:100%;height:100%;border:0;display:block" title="Sala de Reunião"></iframe>
       </div>
 
       <!-- PAINEL SPLIT (iframe carregado sob demanda) -->
@@ -868,6 +885,121 @@ function _iniciarAutoLogout() {
   _resetTimerInatividade();
 }
 
+// ═══ BANNER GLOBAL DA SALA DE REUNIÃO ═══
+// Aparece em QUALQUER tela quando há reserva sua próxima/ativa/atrasada
+let _salaBannerTimer = null;
+let _salaBannerDismissed = null;  // timestamp + tipo da última situação fechada
+
+function _iniciarSalaBanner() {
+  if (_salaBannerTimer) clearInterval(_salaBannerTimer);
+  // Só roda pra quem pode ter reserva — todos exceto parceiro/consultor por enquanto (fase teste)
+  if (!currentUser || !['master','admin','socio'].includes(currentUser.tipo)) return;
+  _checarSalaBanner();
+  _salaBannerTimer = setInterval(_checarSalaBanner, 60000); // a cada 1 min
+}
+
+async function _checarSalaBanner() {
+  try {
+    if (!sb || !currentUser) return;
+    const now = new Date();
+    const desde = new Date(now.getTime() - 60*60000); // 1h atrás
+    const ate   = new Date(now.getTime() + 60*60000); // 1h pra frente
+    const { data } = await sb.from('portal_sala_reservas')
+      .select('id, consultor_auth_id, consultor_nome, inicio, fim, cliente_nome')
+      .eq('consultor_auth_id', currentUser.auth_id || (await sb.auth.getUser()).data?.user?.id)
+      .gte('inicio', desde.toISOString())
+      .lte('inicio', ate.toISOString())
+      .eq('cancelada', false)
+      .order('inicio');
+    const reservas = data || [];
+    // Busca também a próxima reserva geral (de outros consultores) pra mostrar "Vagner às 15h"
+    const { data: prox } = await sb.from('portal_sala_reservas')
+      .select('consultor_nome, inicio')
+      .gt('inicio', now.toISOString())
+      .eq('cancelada', false)
+      .order('inicio').limit(1);
+    const proxOutra = (prox && prox[0]) || null;
+
+    // Estado a mostrar
+    const ativa = reservas.find(r => new Date(r.inicio) <= now && new Date(r.fim) > now);
+    const futura = reservas.find(r => new Date(r.inicio) > now);
+    const passada = reservas.find(r => new Date(r.fim) < now && (now - new Date(r.fim)) < 10*60000);
+
+    let bannerInfo = null;
+    if (passada && proxOutra && new Date(proxOutra.inicio) <= new Date(passada.fim).getTime() + 30*60000) {
+      // Você passou da hora e tem alguém na fila
+      const minPassados = Math.floor((now - new Date(passada.fim)) / 60000);
+      bannerInfo = {
+        tipo: 'atrasado',
+        bg: '#FEE2E2', fg: '#991B1B',
+        icon: '🔴',
+        title: `Você passou ${minPassados} min do horário`,
+        sub: `Próxima reserva: ${proxOutra.consultor_nome} às ${new Date(proxOutra.inicio).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`
+      };
+    } else if (ativa) {
+      const minRest = Math.floor((new Date(ativa.fim) - now) / 60000);
+      const fimStr = new Date(ativa.fim).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+      if (minRest <= 10 && proxOutra && new Date(proxOutra.inicio) <= new Date(ativa.fim).getTime() + 30*60000) {
+        bannerInfo = {
+          tipo: 'acaba-logo',
+          bg: '#FEF3C7', fg: '#92400E',
+          icon: '🟡',
+          title: `Sua reserva acaba em ${minRest} min (às ${fimStr})`,
+          sub: `Próxima: ${proxOutra.consultor_nome} às ${new Date(proxOutra.inicio).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`
+        };
+      } else {
+        bannerInfo = {
+          tipo: 'em-uso',
+          bg: '#DBEAFE', fg: '#1E40AF',
+          icon: '🔵',
+          title: `Sua reserva acaba às ${fimStr} (em ${minRest} min)`,
+          sub: ativa.cliente_nome ? `Cliente: ${ativa.cliente_nome}` : 'Reserva ativa'
+        };
+      }
+    } else if (futura) {
+      const minAteInicio = Math.floor((new Date(futura.inicio) - now) / 60000);
+      if (minAteInicio <= 30) {
+        bannerInfo = {
+          tipo: 'comeca-em-breve',
+          bg: '#DCFCE7', fg: '#166534',
+          icon: '🟢',
+          title: `Sua reserva começa em ${minAteInicio} min`,
+          sub: `${new Date(futura.inicio).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})} – ${new Date(futura.fim).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}${futura.cliente_nome ? ' · ' + futura.cliente_nome : ''}`
+        };
+      }
+    }
+
+    const banner = document.getElementById('sala-banner');
+    if (!banner) return;
+    if (!bannerInfo) {
+      banner.style.display = 'none';
+      return;
+    }
+    // Se foi fechado pelo user na MESMA situação há menos de 5 min, mantém escondido
+    if (_salaBannerDismissed && _salaBannerDismissed.tipo === bannerInfo.tipo && (Date.now() - _salaBannerDismissed.ts) < 5*60000) {
+      banner.style.display = 'none';
+      return;
+    }
+    banner.style.display = 'flex';
+    banner.style.background = bannerInfo.bg;
+    banner.style.color = bannerInfo.fg;
+    document.getElementById('sala-banner-icon').textContent = bannerInfo.icon;
+    document.getElementById('sala-banner-title').textContent = bannerInfo.title;
+    document.getElementById('sala-banner-sub').textContent = bannerInfo.sub;
+    banner.dataset.tipo = bannerInfo.tipo;
+  } catch(e) { /* silent */ }
+}
+
+function fecharSalaBanner() {
+  const banner = document.getElementById('sala-banner');
+  if (!banner) return;
+  _salaBannerDismissed = { ts: Date.now(), tipo: banner.dataset.tipo };
+  banner.style.display = 'none';
+}
+function navSalaBanner() {
+  if (typeof nav === 'function') nav('sala');
+}
+
 async function checkSession() {
   if (USE_SUPABASE) {
     const { data } = await sb.auth.getSession();
@@ -893,6 +1025,7 @@ async function enterPortal() {
   document.getElementById('login-screen').style.display='none';
   document.getElementById('portal-screen').style.display='block';
   _iniciarAutoLogout();
+  _iniciarSalaBanner();
   document.getElementById('sb-avatar').textContent=getInitials(currentUser.nome);
   document.getElementById('sb-user-name').textContent=currentUser.nome;
   const role = currentUser.tipo==='master'?'Master':currentUser.tipo==='admin'?'Administrador':currentUser.tipo==='socio'?'Socio':currentUser.tipo==='parceiro'?'Parceiro':'Consultor';
@@ -927,6 +1060,12 @@ async function enterPortal() {
   if (_feedbacksItem) {
     const podeVerFeedbacks = (currentUser.tipo === 'master' || currentUser.tipo === 'socio');
     _feedbacksItem.classList.toggle('hidden', !podeVerFeedbacks);
+  }
+  // NOVA ABA: Sala de Reunião — em FASE DE TESTE, só master/admin/sócio
+  const _salaItem = document.getElementById('ni-sala');
+  if (_salaItem) {
+    const podeVerSala = ['master','admin','socio'].includes(currentUser.tipo);
+    _salaItem.classList.toggle('hidden', !podeVerSala);
   }
   // Aplica permissões granulares por módulo (per-user). Admin sempre vê tudo.
   aplicarPermissoesUI();
@@ -970,6 +1109,10 @@ function nav(id) {
   if (id === 'feedbacks' && currentUser && !(currentUser.tipo === 'master' || currentUser.tipo === 'socio')) {
     id = 'perfil';
   }
+  // SALA DE REUNIÃO — fase de teste, só master/admin/sócio
+  if (id === 'sala' && currentUser && !['master','admin','socio'].includes(currentUser.tipo)) {
+    id = 'perfil';
+  }
   // Bloqueio de acesso direto a módulo sem permissão (cai pra perfil)
   if (currentUser && currentUser.tipo !== 'master' && !podeAcessarScreen(id)) {
     id = 'perfil';
@@ -981,7 +1124,7 @@ function nav(id) {
   document.getElementById('sidebar').classList.remove('open');
   // Lazy-load dos iframes: só carrega na primeira visita (evita 2.5 MB no login)
   // Iframes com lazy-load (assembleia/lances/painel) — carrega só na primeira visita
-  const iframeScreens = ['assembleia','lances','painel','simuladores','dashboard-vendas','adesao','admin-faturamento','admin-adesao','feedbacks'];
+  const iframeScreens = ['assembleia','lances','painel','simuladores','dashboard-vendas','adesao','admin-faturamento','admin-adesao','feedbacks','sala'];
   if (iframeScreens.includes(id)) {
     const ifr = document.getElementById('iframe-' + id);
     if (ifr && ifr.dataset.target && ifr.getAttribute('src') === 'about:blank') {
@@ -1704,6 +1847,8 @@ function podeAcessarScreen(screenId) {
   if (screenId === 'admin-adesao') return true;
   // Feedbacks: só master e sócio
   if (screenId === 'feedbacks') return (currentUser.tipo === 'master' || currentUser.tipo === 'socio');
+  // Sala de Reunião: fase de teste — só master/admin/sócio
+  if (screenId === 'sala') return ['master','admin','socio'].includes(currentUser.tipo);
   const m = MODULOS_MENU.find(x => x.screen === screenId);
   if (!m) return true; // screens não-gateáveis (perfil etc) liberadas
   const perms = currentUser.permissoes || {};
