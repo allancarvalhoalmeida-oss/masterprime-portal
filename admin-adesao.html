@@ -359,6 +359,12 @@ async function checkSession() {
     }
   }
   document.getElementById('loading-state').style.display = 'none';
+  // Se estamos rodando dentro do iframe do portal, recarrega o pai
+  // (deixa o index.html cuidar do redirect de login com o layout completo).
+  // Só mostra a tela interna "Faça login" se for acesso direto (fora do iframe).
+  if (window.top !== window.self) {
+    try { window.top.location.reload(); return; } catch(e) {}
+  }
   document.getElementById('unauth-state').style.display = 'block';
 }
 
