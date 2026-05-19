@@ -664,6 +664,8 @@ init();
 // Aplica lock do admin no select de Consórcio depois que o form é renderizado
 function aplicarAdminLock(prefix) {
   const admin = getAdminLocked();
+  // Sem ?admin= (link Master Prime geral): cliente escolhe o consórcio normalmente.
+  // origem_link é setada no submit pra registrar que veio do link Master Prime.
   if (!admin) return;
   // Esconde campos não-pedidos por aquele admin
   const skipList = (SKIP_FIELDS[admin] && SKIP_FIELDS[admin][prefix]) || [];
@@ -1313,6 +1315,7 @@ function coletarPF() {
   return {
     tipo: 'pf',
     administradora: get('administradora'),
+    origem_link: getAdminLocked() || 'master_prime',
     cpf: unmaskNum(get('cpf')),
     nome: get('nome').trim(),
     data_nascimento: brDateToISO(get('data_nascimento')),
@@ -1392,6 +1395,7 @@ function coletarPJ() {
   return {
     tipo: 'pj',
     administradora: get('administradora'),
+    origem_link: getAdminLocked() || 'master_prime',
     cnpj: unmaskNum(get('cnpj')),
     nome: get('razao_social').trim(),
     nome_fantasia: get('nome_fantasia'),

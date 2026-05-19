@@ -1482,24 +1482,25 @@ async function renderUsers() {
       </td>
     </tr>`;
   }).join('');
-  const sortArrow = (key) => _usersSort === key ? ' ↑' : '';
+  // Cabeçalho clicável: alterna direção quando já ativo (ex: login_recent ↔ login_oldest)
+  const sortArrow = (cols) => {
+    if (cols.includes(_usersSort)) {
+      if (_usersSort === 'login_recent') return ' <span style="color:var(--mp-yellow,#C8C84A)">▼</span>';
+      if (_usersSort === 'login_oldest') return ' <span style="color:var(--mp-yellow,#C8C84A)">▲</span>';
+      return ' <span style="color:var(--mp-yellow,#C8C84A)">▼</span>';
+    }
+    return '';
+  };
   el.innerHTML = `
-    <div style="display:flex;gap:8px;flex-wrap:wrap;padding:8px 0;font-size:11px;color:var(--text2)">
-      <span style="font-weight:600">Ordenar:</span>
-      <button onclick="setUsersSort('role')" style="background:none;border:1px solid var(--border);padding:3px 8px;border-radius:6px;cursor:pointer;font-size:11px;${_usersSort==='role'?'background:var(--mp-navy);color:#fff;border-color:var(--mp-navy)':''}">Tipo${sortArrow('role')}</button>
-      <button onclick="setUsersSort('name')" style="background:none;border:1px solid var(--border);padding:3px 8px;border-radius:6px;cursor:pointer;font-size:11px;${_usersSort==='name'?'background:var(--mp-navy);color:#fff;border-color:var(--mp-navy)':''}">Nome${sortArrow('name')}</button>
-      <button onclick="setUsersSort('login_recent')" style="background:none;border:1px solid var(--border);padding:3px 8px;border-radius:6px;cursor:pointer;font-size:11px;${_usersSort==='login_recent'?'background:var(--mp-navy);color:#fff;border-color:var(--mp-navy)':''}">Login mais recente${sortArrow('login_recent')}</button>
-      <button onclick="setUsersSort('login_oldest')" style="background:none;border:1px solid var(--border);padding:3px 8px;border-radius:6px;cursor:pointer;font-size:11px;${_usersSort==='login_oldest'?'background:var(--mp-navy);color:#fff;border-color:var(--mp-navy)':''}">Login mais antigo${sortArrow('login_oldest')}</button>
-    </div>
     <div class="tbl-wrap" style="padding:0">
       <table class="tbl">
         <thead>
           <tr>
-            <th>Tipo</th>
-            <th>Nome</th>
+            <th onclick="setUsersSort('role')" style="cursor:pointer;user-select:none" title="Ordenar por tipo">Tipo${sortArrow(['role'])}</th>
+            <th onclick="setUsersSort('name')" style="cursor:pointer;user-select:none" title="Ordenar por nome">Nome${sortArrow(['name'])}</th>
             <th>Usu&aacute;rio</th>
             <th>Senha</th>
-            <th>&Uacute;ltimo login</th>
+            <th onclick="toggleUsersSortLogin()" style="cursor:pointer;user-select:none" title="Clique pra alternar mais recente / mais antigo">&Uacute;ltimo login${sortArrow(['login_recent','login_oldest'])}</th>
             <th></th>
           </tr>
         </thead>
@@ -1510,6 +1511,12 @@ async function renderUsers() {
 
 function setUsersSort(key) {
   _usersSort = key;
+  renderUsers();
+}
+
+// Header "Último login": alterna entre mais recente (▼) e mais antigo (▲)
+function toggleUsersSortLogin() {
+  _usersSort = (_usersSort === 'login_recent') ? 'login_oldest' : 'login_recent';
   renderUsers();
 }
 // Toggle de revelar senha na tabela de usuários (admin only)

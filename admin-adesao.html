@@ -183,6 +183,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-ser
 .tag-bradesco { background: #FEE2E2; color: #DC2626; }
 .tag-itau     { background: #FEF3C7; color: #D97706; }
 .tag-porto    { background: #EFF6FF; color: #2563EB; }
+.tag-master_prime { background: #2D3F5E; color: #C8C84A; font-weight: 700; }
 .tag-pf       { background: #F0F9FF; color: #0369A1; }
 .tag-pj       { background: #FDF4FF; color: #7E22CE; }
 .tag-status   { background: #F1F5F9; color: #475569; }
@@ -483,6 +484,7 @@ async function loadAdesoes() {
       nome_cliente: p.nome,
       cpf_cnpj: p.tipo === 'pf' ? p.cpf : p.cnpj,
       administradora: p.administradora || 'pendente',
+      origem_link: p.origem_link || null,
       tipo_pessoa: p.tipo,
       status: p.status,
       criado_em: p.criado_em,
@@ -604,7 +606,8 @@ function renderList() {
       <div class="ad-card-header" onclick="toggleCard('${a.id}')">
         <div class="ad-card-header-left">
           <strong style="font-size:14px;color:var(--mp-navy);">${a.nome_cliente || 'Sem nome'}</strong>
-          <span class="tag ${admTag}">${a.administradora}</span>
+          <span class="tag ${admTag}">${a.administradora || 'pendente'}</span>
+          ${a.origem_link === 'master_prime' ? '<span class="tag tag-master_prime" title="Cliente preencheu via link geral Master Prime, não via link dedicado da admin">via Master Prime</span>' : ''}
           <span class="tag ${tipoTag}">${tipoLabel}</span>
           <span class="tag tag-status">${a.status || 'recebido'}</span>
         </div>
