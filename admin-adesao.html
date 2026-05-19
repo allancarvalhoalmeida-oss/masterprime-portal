@@ -378,10 +378,16 @@ function renderLinks() {
         <div class="link-mini-label" title="${l.url}">${l.label}</div>
         <div class="link-mini-sub">${l.sub}</div>
       </div>
-      <button class="link-mini-copy" onclick="copyLinkMini(this, '${l.url}', '${l.label.replace(/'/g, "\\'")}')">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-        Copiar
-      </button>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <button class="link-mini-copy" onclick="copyLinkMini(this, '${l.url}', '${l.label.replace(/'/g, "\\'")}')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copiar
+        </button>
+        <button class="link-mini-copy" style="background:transparent;border:1px solid currentColor;color:var(--mp-navy)" onclick="window.open('${l.url}', '_blank')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          Abrir
+        </button>
+      </div>
     </div>
   `).join('');
 }
@@ -505,7 +511,10 @@ function renderList() {
     const tipoLabel = a.tipo_pessoa === 'pf' ? 'PF' : 'PJ';
 
     let detailHtml = '';
-    const campos = getCamposPorAdmTipo(a.administradora, a.tipo_pessoa);
+    // Escolhe schema dependendo da origem: legacy (portal_adesoes) ou nova (portal_propostas)
+    const campos = a._source === 'nova'
+      ? getCamposNova(a.tipo_pessoa)
+      : getCamposPorAdmTipo(a.administradora, a.tipo_pessoa);
     let currentSection = '';
     campos.forEach(c => {
       if (c.section) {
@@ -518,7 +527,9 @@ function renderList() {
         detailHtml += '<div class="detail-grid">';
         currentSection = 'default';
       }
-      const val = dados[c.id] || '—';
+      // pra nova: dados é a linha completa (vem direto da tabela)
+      // pra legacy: dados é a.dados (JSONB)
+      const val = (dados[c.id] != null && dados[c.id] !== '') ? String(dados[c.id]) : '—';
       detailHtml += `
         <div class="detail-item">
           <button class="copy-btn" title="Copiar ${c.label}" onclick="copyText('${val.replace(/'/g, "\\'")}')">
@@ -529,6 +540,10 @@ function renderList() {
         </div>`;
     });
     if (currentSection) detailHtml += '</div>';
+    // Sócios PJ — array JSONB
+    if (a._source === 'nova' && a.tipo_pessoa === 'pj' && dados.socios?.length) {
+      detailHtml += renderSocios(dados.socios);
+    }
 
     const jsonStr = JSON.stringify(dados, null, 2);
 
@@ -600,6 +615,102 @@ function copyTextAsPlain(id) {
     text += `*${c.label}:* ${dados[c.id] || ''}\n`;
   });
   copyText(text);
+}
+
+// Campos pras propostas NOVAS (portal_propostas) — schema unificado Master Prime
+function getCamposNova(tipo) {
+  if (tipo === 'pf') {
+    return [
+      { section: 'Dados Pessoais' },
+      { id:'cpf', label:'CPF', mask:'cpf' }, { id:'nome', label:'Nome Completo' }, { id:'data_nascimento', label:'Data Nasc.', mask:'date' },
+      { id:'sexo', label:'Sexo' }, { id:'nacionalidade', label:'Nacionalidade' },
+      { id:'uf_naturalidade', label:'UF Naturalidade' }, { id:'cidade_nascimento', label:'Naturalidade (Cidade)' },
+      { id:'nome_mae', label:'Nome da Mãe' }, { id:'nome_pai', label:'Nome do Pai' },
+      { section: 'Documento' },
+      { id:'tipo_documento', label:'Tipo Documento' }, { id:'numero_documento', label:'Número' },
+      { id:'data_emissao', label:'Data Emissão', mask:'date' }, { id:'orgao_expedidor', label:'Órgão Expedidor' },
+      { section: 'Estado Civil' },
+      { id:'estado_civil', label:'Estado Civil' },
+      { id:'nome_conjuge', label:'Cônjuge' }, { id:'cpf_conjuge', label:'CPF Cônjuge', mask:'cpf' },
+      { id:'rg_conjuge', label:'RG Cônjuge' }, { id:'data_nascimento_conjuge', label:'Data Nasc. Cônjuge', mask:'date' },
+      { section: 'Endereço' },
+      { id:'cep', label:'CEP' }, { id:'logradouro', label:'Logradouro' },
+      { id:'numero', label:'Número' }, { id:'complemento', label:'Complemento' },
+      { id:'bairro', label:'Bairro' }, { id:'cidade', label:'Cidade' }, { id:'estado', label:'UF' },
+      { section: 'Profissão e Renda' },
+      { id:'nome_empresa', label:'Empresa' }, { id:'data_admissao', label:'Data Admissão', mask:'date' },
+      { id:'renda_mensal', label:'Renda Mensal', mask:'money' },
+      { section: 'Contato' },
+      { id:'email', label:'E-mail' }, { id:'celular', label:'Celular' },
+      { section: 'Pagamento' },
+      { id:'administradora', label:'Consórcio' },
+      { id:'forma_pagamento_1', label:'Forma de Pagamento' },
+      { section: 'Dados Bancários para Devolução (titular da cota)' },
+      { id:'banco_codigo', label:'Banco (código)' }, { id:'banco_nome', label:'Banco (nome)' },
+      { id:'agencia', label:'Agência' }, { id:'conta_corrente', label:'Conta' }, { id:'dac', label:'Dígito' },
+      { section: 'Seguro' },
+      { id:'aceita_seguro', label:'Aceita Seguro' },
+      { section: 'Observações' },
+      { id:'observacoes', label:'Observações' }
+    ];
+  }
+  // PJ
+  return [
+    { section: 'Dados da Empresa' },
+    { id:'cnpj', label:'CNPJ', mask:'cnpj' }, { id:'nome', label:'Razão Social' },
+    { id:'nome_fantasia', label:'Nome Fantasia' }, { id:'data_nascimento', label:'Data Constituição', mask:'date' },
+    { section: 'Atividade' },
+    { id:'ramo_atividade', label:'Ramo de Atividade' }, { id:'cnae_principal', label:'CNAE' },
+    { id:'natureza_juridica', label:'Natureza Jurídica' },
+    { id:'inscricao_estadual', label:'Inscrição Estadual' }, { id:'inscricao_municipal', label:'Inscrição Municipal' },
+    { id:'valor_capital', label:'Capital Social', mask:'money' },
+    { id:'faturamento', label:'Faturamento', mask:'money' }, { id:'faturamento_periodo', label:'Período' },
+    { id:'endereco_exterior', label:'Endereço Exterior?' }, { id:'divulgar_endereco', label:'Divulgar Endereço?' },
+    { section: 'Endereço' },
+    { id:'cep', label:'CEP' }, { id:'tipo_logradouro', label:'Tipo Logradouro' },
+    { id:'logradouro', label:'Logradouro' }, { id:'numero', label:'Número' },
+    { id:'complemento', label:'Complemento' }, { id:'bairro', label:'Bairro' },
+    { id:'cidade', label:'Cidade' }, { id:'estado', label:'UF' },
+    { section: 'Contato' },
+    { id:'email', label:'E-mail' }, { id:'celular', label:'Celular' },
+    { id:'tel_comercial', label:'Tel. Comercial' }, { id:'fax', label:'Fax' },
+    { section: 'Pagamento' },
+    { id:'administradora', label:'Consórcio' },
+    { id:'forma_pagamento_1', label:'Forma de Pagamento' },
+    { section: 'Dados Bancários para Devolução (CNPJ titular)' },
+    { id:'banco_codigo', label:'Banco (código)' }, { id:'banco_nome', label:'Banco (nome)' },
+    { id:'agencia', label:'Agência' }, { id:'conta_corrente', label:'Conta' }, { id:'dac', label:'Dígito' },
+    { section: 'Seguro' },
+    { id:'aceita_seguro', label:'Aceita Seguro' },
+    { section: 'Observações' },
+    { id:'observacoes', label:'Observações' }
+  ];
+}
+
+// Sócios PJ — render separado pq é JSONB array
+function renderSocios(socios) {
+  if (!socios || !socios.length) return '';
+  return socios.map((s, i) => `
+    <div class="section-label" style="margin-top:12px">${i+1}º Sócio</div>
+    <div class="detail-grid">
+      ${[
+        ['Nome', s.nome], ['CPF', s.cpf], ['RG', s.rg],
+        ['Data Emissão RG', s.data_emissao_rg], ['Órgão Expedidor', s.orgao_expedidor],
+        ['Data Nascimento', s.data_nascimento], ['Nome do Pai', s.nome_pai], ['Nome da Mãe', s.nome_mae],
+        ['Data Entrada', s.data_entrada], ['Participação %', s.participacao], ['Administrador', s.administrador],
+        ['Estado Civil', s.estado_civil], ['Cônjuge', s.nome_conjuge], ['CPF Cônjuge', s.cpf_conjuge],
+        ['E-mail', s.email], ['Telefone', s.telefone]
+      ].filter(([_, v]) => v).map(([l, v]) => `
+        <div class="detail-item">
+          <button class="copy-btn" title="Copiar ${l}" onclick="copyText('${String(v).replace(/'/g, "\\'")}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+          <div class="detail-item-label">${l}</div>
+          <div class="detail-item-value">${v}</div>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
 }
 
 function getCamposPorAdmTipo(adm, tipo) {
