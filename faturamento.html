@@ -754,6 +754,16 @@ function fatRenderDadosExtras(proc, isAdm) {
   }
 
   // Corretor e observações gerais
+  html += secao('Informações Adicionais', gridInfo([
+    { label: 'Corretor', valor: dados.corretor || proc.corretor },
+    { label: 'Observações', valor: dados.descricao || proc.descricao },
+    { label: 'Administradora', valor: dados.banco || proc.banco },
+    { label: 'Tipo Operação', valor: dados.tipo_operacao || proc.operacao },
+    { label: 'Tipo Pessoa', valor: dados.tipo_pessoa === 'pj' ? 'Pessoa Jurídica' : 'Pessoa Física' },
+  ]));
+
+  return html || '<p style="color:var(--text3);font-size:12px;">Nenhum dado adicional disponível.</p>';
+}
 
 async function fatVerProcesso(id) {
   const overlay = document.getElementById('fat-overlay');
