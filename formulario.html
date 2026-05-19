@@ -397,6 +397,89 @@ body {
 
 </div>
 
+<!-- Lista de bancos do BACEN (top 50 mais usados) -->
+<datalist id="bancos-list">
+  <option value="001 - Banco do Brasil">
+  <option value="033 - Santander">
+  <option value="041 - Banrisul (Banco do Estado RS)">
+  <option value="070 - BRB - Banco de Brasília">
+  <option value="077 - Banco Inter">
+  <option value="082 - Banco Topázio">
+  <option value="084 - Uniprime Norte do Paraná">
+  <option value="085 - Cooperativa Central Ailos">
+  <option value="097 - Cooperativa Central Cresol">
+  <option value="104 - Caixa Econômica Federal">
+  <option value="121 - Banco Agibank">
+  <option value="125 - Plural Banco">
+  <option value="136 - Unicred">
+  <option value="151 - Banco Nossa Caixa">
+  <option value="197 - Stone Pagamentos">
+  <option value="208 - Banco BTG Pactual">
+  <option value="212 - Banco Original">
+  <option value="218 - Banco BS2">
+  <option value="237 - Bradesco">
+  <option value="246 - Banco ABC Brasil">
+  <option value="260 - Nu Pagamentos (Nubank)">
+  <option value="265 - Banco Fator">
+  <option value="269 - HSBC Bank Brasil">
+  <option value="290 - PagSeguro / PagBank">
+  <option value="318 - Banco BMG">
+  <option value="323 - Mercado Pago">
+  <option value="332 - Acesso Soluções de Pagamento">
+  <option value="335 - Banco Digio">
+  <option value="336 - Banco C6 (C6 Bank)">
+  <option value="341 - Itaú Unibanco">
+  <option value="342 - Creditas">
+  <option value="348 - Banco XP">
+  <option value="349 - Amaggi Bank">
+  <option value="364 - Gerencianet Pagamentos">
+  <option value="376 - J.P. Morgan">
+  <option value="380 - PicPay">
+  <option value="389 - Mercantil do Brasil">
+  <option value="394 - Bradesco Financiamentos">
+  <option value="399 - Kirton Bank">
+  <option value="403 - Cora Sociedade de Crédito Direto">
+  <option value="412 - Banco Capital">
+  <option value="422 - Banco Safra">
+  <option value="450 - Fitbank">
+  <option value="473 - Banco Caixa Geral - Brasil">
+  <option value="479 - Banco ItauBank">
+  <option value="487 - Deutsche Bank">
+  <option value="488 - JPMorgan Chase">
+  <option value="492 - ING Bank">
+  <option value="505 - Banco Credit Suisse">
+  <option value="600 - Banco Luso Brasileiro">
+  <option value="604 - Banco Industrial">
+  <option value="611 - Banco Paulista">
+  <option value="612 - Banco Guanabara">
+  <option value="623 - Banco Pan">
+  <option value="630 - Smartbank">
+  <option value="633 - Banco Rendimento">
+  <option value="637 - Banco Sofisa">
+  <option value="643 - Banco Pine">
+  <option value="652 - Itaú Unibanco Holding">
+  <option value="653 - Banco Indusval">
+  <option value="654 - Banco A.J. Renner">
+  <option value="655 - Banco Votorantim / BV">
+  <option value="707 - Banco Daycoval">
+  <option value="712 - Banco Ourinvest">
+  <option value="720 - Banco RNX">
+  <option value="735 - Neon Pagamentos">
+  <option value="739 - Banco Cetelem">
+  <option value="741 - Banco Ribeirão Preto">
+  <option value="743 - Banco Semear">
+  <option value="745 - Citibank">
+  <option value="746 - Banco Modal">
+  <option value="747 - Rabobank International">
+  <option value="748 - Sicredi">
+  <option value="751 - Scotiabank Brasil">
+  <option value="752 - BNP Paribas Brasil">
+  <option value="753 - Banco Rendimento (NBC)">
+  <option value="755 - Bank of America Merrill Lynch">
+  <option value="756 - Sicoob (Banco Cooperativo)">
+  <option value="757 - Banco KEB Hana do Brasil">
+</datalist>
+
 <div class="footer">
   MASTER PRIME · CORRETORA DE CONSÓRCIOS E SEGUROS
 </div>
@@ -478,12 +561,35 @@ function brDateToISO(s) {
 function upperNoAccent(s) {
   return (s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase();
 }
+// Separa "341 - Itaú Unibanco" em { codigo: '341', nome: 'Itaú Unibanco' }
+function parseBanco(s) {
+  if (!s) return { codigo: '', nome: '' };
+  const m = String(s).match(/^(\d+)\s*[-–]\s*(.+)$/);
+  if (m) return { codigo: m[1], nome: m[2].trim() };
+  // Se digitou apenas o código ou só o nome
+  if (/^\d+$/.test(s.trim())) return { codigo: s.trim(), nome: '' };
+  return { codigo: '', nome: s.trim() };
+}
 
 function bindMasks(root = document) {
   // Define teclado numérico em mobile para campos com máscara numérica
   $$('[data-mask="cpf"], [data-mask="cnpj"], [data-mask="cep"], [data-mask="phone"], [data-mask="money"], [data-mask="date"]', root).forEach(el => {
     el.setAttribute('inputmode', 'numeric');
     el.setAttribute('autocomplete', 'off');
+  });
+  // Campos numéricos sem máscara: número do endereço, agência, conta, dígito, banco, número doc
+  const numericIds = [
+    'pf-numero','pj-numero',
+    'pf-agencia','pj-agencia',
+    'pf-conta_corrente','pj-conta_corrente',
+    'pf-dac','pj-dac',
+    'pf-debito_agencia','pf-debito_conta','pf-debito_dac',
+    'pj-debito_agencia','pj-debito_conta','pj-debito_dac',
+    'pf-numero_documento'
+  ];
+  numericIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && !el.getAttribute('inputmode')) el.setAttribute('inputmode', 'numeric');
   });
   $$('[data-mask="cpf"]', root).forEach(el => el.addEventListener('input', e => e.target.value = maskCPF(e.target.value)));
   $$('[data-mask="cnpj"]', root).forEach(el => el.addEventListener('input', e => e.target.value = maskCNPJ(e.target.value)));
@@ -867,11 +973,12 @@ function buildFormPF() {
       <h3>Dados Bancários para Devolução de Valores</h3>
       <p style="font-size:12px;color:var(--text2);margin-bottom:14px">Conta para receber devoluções (encerramento de grupo, cancelamento, etc.). <strong>A conta deve estar obrigatoriamente no nome e CPF do titular da cota.</strong></p>
       <div class="grid-3">
-        <div class="field"><label>Código do Banco<span class="req">*</span></label><input id="pf-banco_codigo" placeholder="Ex: 341" data-no-upper required></div>
-        <div class="field"><label>Nome do Banco<span class="req">*</span></label><input id="pf-banco_nome" placeholder="Itaú, Bradesco..." required></div>
-        <div class="field"><label>Agência (sem dígito)<span class="req">*</span></label><input id="pf-agencia" placeholder="0000" data-no-upper required></div>
+        <div class="field field-full"><label>Banco<span class="req">*</span></label>
+          <input id="pf-banco" list="bancos-list" placeholder="Digite ou selecione (ex: Itaú)" data-no-upper required>
+        </div>
       </div>
       <div class="grid-3" style="margin-top:14px">
+        <div class="field"><label>Agência (sem dígito)<span class="req">*</span></label><input id="pf-agencia" placeholder="0000" data-no-upper required></div>
         <div class="field"><label>Conta Corrente<span class="req">*</span></label><input id="pf-conta_corrente" placeholder="00000" data-no-upper required></div>
         <div class="field"><label>Dígito<span class="req">*</span></label><input id="pf-dac" placeholder="0" data-no-upper required></div>
       </div>
@@ -1079,11 +1186,12 @@ function buildFormPJ() {
       <h3>Dados Bancários para Devolução de Valores</h3>
       <p style="font-size:12px;color:var(--text2);margin-bottom:14px">Conta para receber devoluções (encerramento de grupo, cancelamento, etc.). <strong>A conta deve estar obrigatoriamente no CNPJ da empresa titular.</strong></p>
       <div class="grid-3">
-        <div class="field"><label>Código do Banco<span class="req">*</span></label><input id="pj-banco_codigo" placeholder="Ex: 341" data-no-upper required></div>
-        <div class="field"><label>Nome do Banco<span class="req">*</span></label><input id="pj-banco_nome" required></div>
-        <div class="field"><label>Agência (sem dígito)<span class="req">*</span></label><input id="pj-agencia" data-no-upper required></div>
+        <div class="field field-full"><label>Banco<span class="req">*</span></label>
+          <input id="pj-banco" list="bancos-list" placeholder="Digite ou selecione (ex: Itaú)" data-no-upper required>
+        </div>
       </div>
       <div class="grid-3" style="margin-top:14px">
+        <div class="field"><label>Agência (sem dígito)<span class="req">*</span></label><input id="pj-agencia" data-no-upper required></div>
         <div class="field"><label>Conta Corrente<span class="req">*</span></label><input id="pj-conta_corrente" data-no-upper required></div>
         <div class="field"><label>Dígito<span class="req">*</span></label><input id="pj-dac" data-no-upper required></div>
       </div>
@@ -1242,8 +1350,8 @@ function coletarPF() {
     tempo_residencia: get('tempo_residencia'),
     forma_pagamento_1: get('forma_pagamento_1'),
     forma_pagamento_demais: get('forma_pagamento_1'), // mesma forma p/ todas as parcelas
-    banco_codigo: get('banco_codigo'),
-    banco_nome: get('banco_nome'),
+    banco_codigo: parseBanco(get('banco')).codigo,
+    banco_nome: parseBanco(get('banco')).nome,
     agencia: get('agencia'),
     conta_corrente: get('conta_corrente'),
     dac: get('dac'),
@@ -1314,8 +1422,8 @@ function coletarPJ() {
     estado: get('estado').toUpperCase(),
     forma_pagamento_1: get('forma_pagamento_1'),
     forma_pagamento_demais: get('forma_pagamento_1'),
-    banco_codigo: get('banco_codigo'),
-    banco_nome: get('banco_nome'),
+    banco_codigo: parseBanco(get('banco')).codigo,
+    banco_nome: parseBanco(get('banco')).nome,
     agencia: get('agencia'),
     conta_corrente: get('conta_corrente'),
     dac: get('dac'),
@@ -1355,7 +1463,7 @@ function validarPF(d) {
     if (!ag || !cc) return `Para Débito Automático ${ADMINS_LABEL[d.administradora]||''}, preencha a conta corrente`;
   }
   // Bancário pra devolução = sempre obrigatório (TITULAR DA COTA)
-  if (!d.banco_codigo || !d.banco_nome || !d.agencia || !d.conta_corrente || !d.dac) return 'Preencha os dados bancários para devolução (obrigatório, deve ser do titular)';
+  if (!d.banco_codigo || !d.agencia || !d.conta_corrente || !d.dac) return 'Preencha os dados bancários para devolução (selecione o banco da lista, agência, conta e dígito)';
   if (!d.aceita_seguro) return 'Informe se aceita o seguro';
   if (d.lgpd_aceito !== 'true') return 'É necessário aceitar a autorização LGPD para prosseguir';
   return null;
@@ -1393,7 +1501,7 @@ function validarPJ(d) {
     const cc = $('pj-debito_conta')?.value || '';
     if (!ag || !cc) return `Para Débito Automático ${ADMINS_LABEL[d.administradora]||''}, preencha a conta corrente`;
   }
-  if (!d.banco_codigo || !d.banco_nome || !d.agencia || !d.conta_corrente || !d.dac) return 'Preencha os dados bancários para devolução (obrigatório, deve ser do CNPJ da empresa)';
+  if (!d.banco_codigo || !d.agencia || !d.conta_corrente || !d.dac) return 'Preencha os dados bancários da empresa (selecione o banco da lista, agência, conta e dígito)';
   if (!d.aceita_seguro) return 'Informe se aceita o seguro';
   if (d.lgpd_aceito !== 'true') return 'É necessário aceitar a autorização LGPD para prosseguir';
   return null;
