@@ -335,6 +335,7 @@ let allAdesoes = [];
 let filteredAdesoes = [];
 let currentUserCodigo = '';
 let currentUserTipo = '';
+let currentUserAuthId = '';
 
 // ═══ VERIFICA SESSÃO ═══
 async function checkSession() {
@@ -349,6 +350,7 @@ async function checkSession() {
     if (profile && ['admin','master','consultor','socio','parceiro'].includes(profile.tipo)) {
       currentUserCodigo = profile.codigo_link || '';
       currentUserTipo = profile.tipo;
+      currentUserAuthId = session.user.id;
       document.getElementById('loading-state').style.display = 'none';
       document.getElementById('main-state').style.display = 'block';
       renderLinks();
@@ -454,7 +456,13 @@ async function loadAdesoes() {
       consultor_auth_id: p.consultor_auth_id,
       dados: p  // toda a linha completa
     }));
-    allAdesoes = [...novasNorm, ...legacyNorm].sort((a,b) => new Date(b.criado_em) - new Date(a.criado_em));
+    let merged = [...novasNorm, ...legacyNorm].sort((a,b) => new Date(b.criado_em) - new Date(a.criado_em));
+    // Filtro por visibilidade: admin/master veem TUDO; consultor/socio/parceiro vê só os seus
+    // (vinculados pelo auth_id do consultor atribuído à proposta)
+    if (currentUserTipo !== 'admin' && currentUserTipo !== 'master') {
+      merged = merged.filter(a => a.consultor_auth_id === currentUserAuthId);
+    }
+    allAdesoes = merged;
     applyFilter();
   } catch(e) {
     listEl.innerHTML = `<div class="empty-state"><p>Erro ao carregar: ${e.message}</p></div>`;
