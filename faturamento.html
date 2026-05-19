@@ -387,16 +387,16 @@ let fatProcessos = [];
 let fatFiltrados = [];
 let fatConsultores = []; // lista de portal_users (consultor/socio) para o dropdown
 
-// É admin de verdade?
+// É admin/master? (ambos veem tudo + podem atribuir consultor)
 function fatIsAdmin() {
-  return currentUser && (currentUser.tipo === 'admin');
+  return currentUser && (currentUser.tipo === 'admin' || currentUser.tipo === 'master');
 }
 
-// Carrega a lista de consultores (somente admin precisa para o dropdown)
+// Carrega a lista de consultores (somente admin/master precisa para o dropdown)
 async function fatCarregarConsultores() {
   if (!fatIsAdmin()) { fatConsultores = []; return; }
   const { data } = await sb.from('portal_users').select('auth_id, nome, tipo').order('nome');
-  fatConsultores = (data || []).filter(u => u.auth_id && ['consultor','socio','admin'].includes(u.tipo));
+  fatConsultores = (data || []).filter(u => u.auth_id && ['consultor','socio','admin','master'].includes(u.tipo));
 }
 
 async function renderAdminFaturamento() {
